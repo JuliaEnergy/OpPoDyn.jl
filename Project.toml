@@ -21,7 +21,7 @@ Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
 [compat]
 ArgCheck = "2.3.0"
-DiffEqCallbacks = "3.7.0"
+DiffEqCallbacks = "3.7.0, 4"
 Graphs = "1.9.0"
 LinearAlgebra = "1.10.0"
 ModelingToolkit = "9.33.0"
