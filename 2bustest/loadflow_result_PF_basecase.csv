@@ -1,0 +1,4 @@
+Alle Berechnungsarten;L1-2;L1-2;L1-2;L1-2;L1-2;L1-2;L1-2;L1-2
+;Bus 2;Bus 2;Bus 2;Bus 2;Bus 1;Bus 1;Bus 1;Bus 1
+Zeitpunkt in s;u1, Betrag/Anschluss i in p.u.;Mitsystem-Spannung, Winkel/Anschluss i in deg;Gesamte Wirkleistung/Anschluss i in MW;Gesamte Blindleistung/Anschluss i in Mvar;u1, Betrag/Anschluss j in p.u.;Mitsystem-Spannung, Winkel/Anschluss j in deg;Gesamte Wirkleistung/Anschluss j in MW;Gesamte Blindleistung/Anschluss j in Mvar
+-0,1;0,99408624;-4,81449662;-0,49992558;-0,00000207;0,99999976;0,00000069;0,50490389;-0,04794267

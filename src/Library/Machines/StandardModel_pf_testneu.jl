@@ -7,10 +7,10 @@
         terminal=Terminal()
         # inputs
         if vf_input
-            vf_in = RealInput(guess=1) # field voltage input [pu]
+            vf_in = RealInput(guess=0.432461454) # field voltage input [pu]
         end
         if τ_m_input
-            τ_m_in = RealInput() # mechanical torque [pu]
+            τ_m_in = RealInput(guess=0.289459) # mechanical torque [pu]
         end
         # outputs
         δout = RealOutput() # rotor angle
@@ -36,7 +36,6 @@
         #T″_q0, [description="q-axis subtransient time constant"]
         X_ad, [description="Mutual (magnetising) reactance, d-axis"]
         X_aq, [description="Mutual (magnetising) reactance, q-axis"]
-        X_1q, [description="Hilfsvariable"]
         X_det_d, [description="Hilfsvariable"]
         X_det_q, [description="Hilfsvariable"]
         X_fd_loop, [description="Hilfsvariable"]
@@ -47,10 +46,10 @@
         k_1d, [description="Hilfsvariable"]
         k_1q, [description="Hilfsvariable"]
         k_2q, [description="Hilfsvariable"]
-        #X_fd, [description="Reactance of excitation (field) winding (d-axis)"]
-        #X_1d, [description="Reactance of 1d-damper winding (d-axis)"]
-        #X_1q, [description="Reactance of 1q-damper winding (q-axis)"]
-        #X_2q, [description="Reactance of 2q-damper winding (q-axis)"]
+        X_fd, [description="Reactance of excitation (field) winding (d-axis)"]
+        X_1d, [description="Reactance of 1d-damper winding (d-axis)"]
+        X_1q, [description="Reactance of 1q-damper winding (q-axis)"]
+        X_2q, [description="Reactance of 2q-damper winding (q-axis)"]
         R_fd, [description="Resistance of excitation winding (d-axis)"]
         R_1d, [description="Resistance of 1d-damper winding (d-axis)"]
         R_1q, [description="Resistance of 1q-damper winding (q-axis)"]
@@ -60,6 +59,7 @@
         S_b, [description="System power basis in MVA"]
         V_b, [description="System voltage basis in kV"]
         ω_b, [description="System base frequency in rad/s"] #(106)
+        f_ref=1, [description="reference machine frequency in p.u."] 
         Sn=S_b, [description="Machine power rating in MVA"]
         Vn=V_b, [description="Machine voltage rating in kV"]
         cosn, [description="rated power factor - ??"] #oder ist das Variable?
@@ -72,6 +72,8 @@
         addmt=0, [description="Additional Torque parameter in p.u."]
         pt, [description="Turbine Power input signal in p.u."]
         dpu=0, [description="dpu * n is turbine shaft friction torque in p.u.;"]
+        #τ_m_test_in, [description="testen mit Werten von PF"]
+        #vf_test_in, [description="testen mit Werten von PF"]
         # input/parameter switches
         if !vf_input
             vf_set, [guess=1, description="field voltage"]
@@ -100,10 +102,10 @@
         ψ_1d(t), [guess=1, description=" flux linkage"]
         ψ_1q(t), [guess=0, description=" flux linkage"]
         ψ_2q(t), [guess=0,description=" flux linkage"]
-        I_fd(t), [description="d-axis current"]
+        I_fd(t), [guess=0, description="d-axis current"]
         I_1d(t), [description="d-axis current"]
-        I_1q(t), [description="d-axis current"]
-        I_2q(t), [description="d-axis current"]
+        I_1q(t), [guess=0, description="d-axis current"]
+        I_2q(t), [guess=0, description="d-axis current"]
         # observables
         v_mag(t), [description="terminal voltage [machine pu]"]
         v_arg(t), [description="Generator terminal angle"]
@@ -119,22 +121,30 @@
         n(t), [guess=1, description="rotor speed"] 
     end
     begin
-        T_park(α) = [sin(α) cos(α); -cos(α) sin(α)] #α and q-axis aligned, Inverse ist -α einsetzen und Matrix *(-1)
+        #T_park(α) = [sin(α) cos(α); -cos(α) sin(α)] #α and q-axis aligned, Inverse ist -α einsetzen und Matrix *(-1)
         #T_park(α) = [cos(α) sin(α); -sin(α) cos(α)] #α and d-axis aligned, Inverse ist -α einsetzen
+        # milano
+        #T_to_glob(α) = [sin(α)  cos(α); -cos(α) sin(α)]
+        #T_to_loc(α)  = [sin(α) -cos(α);  cos(α) sin(α)]
+        # powerfactory
+        T_to_loc(α)  = [cos(α)  sin(α); -sin(α) cos(α)]
+        T_to_glob(α) = [cos(α) -sin(α);  sin(α) cos(α)]
     end
     @equations begin
         # Park's transformations
-        [terminal.u_r, terminal.u_i] .~ T_park(δ)*[V_d, V_q] * V_b/Vn
+        [terminal.u_r, terminal.u_i] .~ T_to_glob(δ)*[V_d, V_q] * V_b/Vn
         # [terminal.i_r, terminal.i_i] .~ T_park(δ)*[I_d, I_q] * Ibase(S_b, V_b)/Ibase(Sn, Vn)
         # [V_d, V_q] .~ T_park(-δ)*[terminal.u_r, terminal.u_i] * Vn/V_b
-        [I_d, I_q] .~ T_park(-δ)*[terminal.i_r, terminal.i_i] * Ibase(Sn, Vn)/Ibase(S_b, V_b)
+        [I_d, I_q] .~ T_to_loc(δ)*[terminal.i_r, terminal.i_i] * Ibase(Sn, Vn)/Ibase(S_b, V_b)
         
-        #stator flux equations (55), (60) ((59) wird indirekt über ks und Definitionen von ψ_1d abgedeckt?, (56) und (57) sind nur andere Darstellungsform)
+        #stator flux equations (55) ((56) und (57) sind nur andere Darstellungsform)
         ψ_d ~ -(X_ls + X_ad) * I_d + X_ad * I_fd + X_ad * I_1d
         ψ_q ~ -(X_ls + X_aq) * I_q + X_aq * I_2q + X_aq * I_1q
+
+        #(60) - müsste das im Endeffekt nicht das gleiche sein wie (55)?
         ψ_d ~ -X″_d * I_d + ψ″_d
         ψ_q ~ -X″_q * I_q + ψ″_q
-        #ψ″_d ~ k_fd * ψ_fd + k_1d * ψ_1d #(59)
+        #ψ″_d ~ k_fd * ψ_fd + k_1d * ψ_1d #(59) (mit dieser Gleichung drin sind die Läuferwinkle bei 2000°...)
         #ψ″_q ~ k_1q * ψ_1q + k_2q * ψ_2q
 
 
@@ -150,14 +160,12 @@
         #mechanical equation motor (103), (104), (105)
         τ_dkd ~ dkd * (n - n_ref)
         τ_dpe ~ dpe/n * (n - n_ref)
-        τ_ag ~ 2 * H * 100 / (S_b * cosn)   #τ_ag und H werden dann hier auf Pgn bezogen - ist das richtig??     
+        τ_ag ~ 2 * H #* 100 / (S_b * cosn)   #τ_ag und H werden dann hier auf Pgn bezogen - ist das richtig??     
         Dt(n) ~ (τ_m - τ_e - τ_dkd - τ_dpe) / τ_ag #(100), (101) wird gar nicht gebraucht (t_base?)
         
-        #Dt(ϕ) ~ ω_b * (n - ω_b/(2*π)) #(115) wenn δ = ϕ -> stimmt nicht. ϕ ist rotor Position im Vergleich zur Referenz-Spannung des Netzes. Ich brauche aber firel, also Winkel zwischen Refernzmaschine d-Achse und Generator d-Achse
-        #δ ~ ϕ + π/2 #- phiu #phiu is the voltage angle of the machine terminal m:phiu (scheint 0 zu sein #(112), passt das mit den Achsen überhaupt?; δ hier in rad; fipol ist von Generator terminal zu q-Achse, δ in Milano zur d-Achse, und da sind d- und q-Achse auch vertauscht
-        Dt(δ) ~ ω_b * (n - 1) 
-
-        #rotor flux linkage (58), überflüssig
+        Dt(δ) ~ ω_b * (n - f_ref) #* (1-salientpole)#(115) wenn δ = ϕ; für reference machine ist f_ref=n, also Dt(δ)=0, in bsp ist einzige salient pole machine die reference machine
+        
+        #rotor flux linkage (58)
         #ψ_fd ~ -X_ad * I_d + (X_ad + X_rld + X_fd) * I_fd + (X_ad + X_rld) * I_1d
         #ψ_1d ~ -X_ad * I_d + (X_ad + X_rld) * I_fd + (X_ad + X_rld + X_1d) * I_1d
         #ψ_1q ~ -X_aq * I_q + (X_aq + X_rlq) * I_2q + (X_aq + X_rlq + X_1q) * I_1q
@@ -175,8 +183,8 @@
         R_2q * I_2q + 1/ω_b * Dt(ψ_2q) ~ 0
 
         # inputs
-        vf ~ vf_input ? vf_in.u : vf_set
-        τ_m ~ τ_m_input ? τ_m_in.u : τ_m_set 
+        vf ~ vf_input ? vf_in.u : vf_set #0.432461454 für Gen1 nach PF (?), Gen2: 0.880099185, Gen3: 0.705415229 #vf_test_in 
+        τ_m ~ τ_m_input ? τ_m_in.u : τ_m_set #0.289459 für Gen1 nach PF, Gen2: 1.002816, Gen 3: 0.78125 #τ_m_test_in
         #Alternativ: (102)
         #τ_m ~ pt/n - xmdm - dpu * n + addmt #xmdm Torque input signal; addmt additional torque parameter; dpu * n turbine shaft friction torque
 

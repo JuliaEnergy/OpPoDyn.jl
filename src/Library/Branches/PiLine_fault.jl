@@ -44,6 +44,50 @@
         isrc = -i_m1 - i₁
         idst = i_m2 - i₂
         i_f = i_m1 - i_m2
+
+        #Y_a = Ysrc * pos #Annahme: Ysrc=Ydst=Y_quer/2
+        #Y_b = Ysrc * (1-pos)
+        #i_11 = Y_a * V₁
+        #i_22 = Y_b * V₂
+        #V_mnormal = (V₁/Z_a + V₂/Z_b)/(Y_a+Y_b+1/Z_a+1/Z_b)
+        #V_mnormal = (V₁ * (1-pos) + V₂ * pos)/(Ysrc * Z * pos * (1-pos) + 1) #Z und Y eingesetzt und zusammengefasst
+        #V_m = V_mnormal * (1-shortcircuit) + shortcircuit * (0+0*im) #ifelse(shortcircuit>0, 0.0, V_mnormal)
+        #i_12 = Y_a * V_m
+        #i_21 = Y_b * V_m
+        #V_a = V₁ - V_m
+        #V_b = V_m - V₂
+        #i_a = V_a / Z_a
+        #i_b = V_b / Z_b
+        #i_m1 = i_a - i_12
+        #i_m2 = i_21 + i_b
+        #isrc = -i_a - i_11
+        #idst = i_b - i_22
+        #i_f = i_m1 - i_m2
+        
+
+        #Z_ges = Z_a+ (Ysrc * Z * (1-pos)+1)/(Y_f + Ysrc * (2 + (1-pos) * Z * (Ysrc + Y_f))) #gesamter Widerstand über den V_1 abfällt (ohne Y_src), im pi Modell, vereinfacht
+        #i_a = V₁ / Z_ges
+        #V_a = i_a * Z_a
+        #V_m = V₁ - V_a
+        #i_f = V_m * Y_f
+        #i_12 = V_m * Y_a
+        #i_21 = V_m * Y_b
+        #i_m1 = i_a - i_12
+        #i_m2 = i_m1 - i_f
+        #i_b = i_m2 - i_21
+        #isrc = -i_a - i_11
+        #idst = i_b - i_22
+
+
+        #Z_ges = Z_a+ 1/(Y_f + 1/(Z_b+1/Ydst)) #gesamter Widerstand über den V_1 abfällt (ohne Y_src)
+        #i_m1 = V₁ * 1/Z_ges
+        #V_a = i_m1 * Z_a
+        #V_fault = V₁ - V_a
+        #V_b = V_fault - V₂
+        #i_f = Y_f * V_fault
+        #i_m2 = i_m1 - i_f
+        #isrc = -i_m1 - i₁
+        #idst =  i_m2 - i₂
     end
     @equations begin
         src.i_r ~ active * simplify(real(isrc))

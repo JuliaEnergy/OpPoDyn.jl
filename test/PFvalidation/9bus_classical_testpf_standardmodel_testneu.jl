@@ -1,7 +1,7 @@
 using OpPoDyn
 using OpPoDyn.Library
 using ModelingToolkit
-using NetworkDynamics
+das
 using Graphs
 using OrdinaryDiffEqRosenbrock
 using OrdinaryDiffEqNonlinearSolve
@@ -68,6 +68,9 @@ end
             k_1d, 
             k_1q, 
             k_2q,
+            X_fd,
+            X_1d,
+            X_2q,
             R_fd, 
             R_1d, 
             R_1q, 
@@ -81,7 +84,9 @@ end
             pt,
             dpu,
             addmt,
-            xmdm
+            xmdm,
+            #τ_m_test_in,
+            #vf_test_in
         )
         busbar = BusBar()
     end
@@ -140,16 +145,16 @@ function create_standardgenerator(; ω_b, H, S_b, V_b, D, R_s, X_rld, X_rlq, X_d
     #(63)-(65)
     k_fd = (X_ad * X_1d) / ((X_ad + X_rld) * (X_1d + X_fd) + X_fd * X_1d)
     k_1d = (X_ad * X_fd) / ((X_ad + X_rld) * (X_1d + X_fd) + X_fd * X_1d)
-    #X″_d = X_ad + X_ls - (k_1d + k_fd) * X_ad #??
+    X″_d = X_ad + X_ls - (k_1d + k_fd) * X_ad #??
     k_1qs = X_aq / (X_aq + X_rlq + X_1q) #salient pole
         #k_2qs = 0 #salient pole
-    #X″_qs = X_aq + X_ls - k_1qs * X_aq #salient pole
+    X″_qs = X_aq + X_ls - k_1qs * X_aq #salient pole
     k_1qr = (X_aq * X_2q)/((X_aq + X_rlq) * (X_2q + X_1q) + X_2q * X_1q) #round rotor
     k_2qr = (X_aq * X_1q)/((X_aq + X_rlq) * (X_2q + X_1q) + X_2q * X_1q) #round rotor
-    #X″_qr = X_aq + X_ls - (k_2qr + k_1qr) * X_aq #round rotor
+    X″_qr = X_aq + X_ls - (k_2qr + k_1qr) * X_aq #round rotor
     k_1q = salientpole * k_1qs + (1-salientpole) * k_1qr
     k_2q = (1-salientpole) * k_2qr
-    #X″_q = salientpole * X″_qs + (1-salientpole)* X″_qr
+    X″_q = salientpole * X″_qs + (1-salientpole)* X″_qr
 
     #(69), (71)
     X_det_d = (X_ad + X_rld) * (X_1d + X_fd) + X_fd * X_1d 
@@ -158,21 +163,56 @@ function create_standardgenerator(; ω_b, H, S_b, V_b, D, R_s, X_rld, X_rlq, X_d
     X_1d_loop = X_ad + X_rld + X_1d
     X_1q_loop = X_aq + X_rlq + X_1q 
     X_2q_loop = X_aq + X_rlq + X_2q
-    return ω_b, X_rld, X_rlq, X″_d, X″_q, X_ls, X_ad, X_aq, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q, X_1q, R_1q, X_2q, R_2q, X_fd, R_1d, R_fd, X_1d, R_s, H, S_b, V_b, D, cosn, dkd, dpe, salientpole, pt, dpu, addmt, xmdm
+    return ω_b, X_rld, X_rlq, X″_d, X″_q, X_ls, X_ad, X_aq, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q, X_1q, R_1q, X_2q, R_2q, X_fd, R_1d, R_fd, X_1d, R_s, H, S_b, V_b, D, cosn, dkd, dpe, salientpole, pt, dpu, addmt, xmdm, X′_d, X′_q, X_d, X_q
 end 
 
 # generate all MTK bus models
-(ω_b, X_rld, X_rlq, X″_d, X″_q, X_ls, X_ad, X_aq, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q, X_1q, R_1q, X_2q, R_2q, X_fd, R_1d, R_fd, X_1d, R_s, H, S_b, V_b, D, cosn, dkd, dpe, salientpole, pt, dpu, addmt, xmdm) = 
-    create_standardgenerator(; ω_b=2π*60, H=23.64, S_b=247.5, V_b=16.5, D=0, R_s=0, X_rld=0, X_rlq=0, X_d=0.36135, X_q=0.2398275, X′_d=0.15048, X′_q=0.0001, X″_d=0.1, X″_q=0.1, X_ls=0.08316, T′_d0=8.96, T″_d0=0.075, T′_q0=0.0001, T″_q0=0.15, cosn=1, dkd=0, dpe=0, salientpole=1, pt=0.2895, dpu=0, addmt=0, xmdm=0)
-@named mtkbus1 = StandardBus(; machine__S_b=S_b, machine__V_b=V_b, machine__H=H, machine__D=D, machine__R_s=R_s, machine__X_rld=X_rld, machine__X_rlq=X_rlq, machine__X″_d=X″_d, machine__X″_q=X″_q, machine__X_ls=X_ls, machine__X_ad=X_ad, machine__X_aq=X_aq, machine__X_1q=X_1q, machine__X_det_d=X_det_d, machine__X_det_q=X_det_q, machine__X_fd_loop=X_fd_loop, machine__X_1d_loop=X_1d_loop, machine__X_1q_loop=X_1q_loop, machine__X_2q_loop=X_2q_loop, machine__k_fd=k_fd, machine__k_1d=k_1d, machine__k_1q=k_1q, machine__k_2q=k_2q, machine__R_fd=R_fd, machine__R_1d=R_1d, machine__R_1q=R_1q, machine__R_2q=R_2q, machine__cosn=cosn, machine__dkd=dkd, machine__dpe=dpe, machine__salientpole=salientpole, machine__pt=pt, machine__dpu=dpu, machine__addmt=addmt, machine__xmdm=xmdm) 
+#aus PF Implementierung
+(ω_b, X_rld, X_rlq, X″_d, X″_q, X_ls, X_ad, X_aq, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q, X_1q, R_1q, X_2q, R_2q, X_fd, R_1d, R_fd, X_1d, R_s, H, S_b, V_b, D, cosn, dkd, dpe, salientpole, pt, dpu, addmt, xmdm, X′_d, X′_q, X_d, X_q) = 
+    create_standardgenerator(; ω_b=2π*60, H=9.551516, S_b=247.5, V_b=16.5, D=0, R_s=0, X_rld=0, X_rlq=0, X_d=0.36135, X_q=0.2398275, X′_d=0.15048, X′_q=0.0001, X″_d=0.1, X″_q=0.1, X_ls=0.08316, T′_d0=8.96, T″_d0=0.075, T′_q0=0.0001, T″_q0=0.15, cosn=1, dkd=0, dpe=0, salientpole=1, pt=0.2895, dpu=0, addmt=0, xmdm=0)
+variable_names = [:X_ad, :X_aq, :X_ls, :R_s, :X_rld, :X_rlq, :X″_d, :X″_q, :X′_d, :X′_q, :X_d, :X_q, :X_fd, :X_1d, :X_1q, :X_2q, :R_fd, :R_1d, :R_1q, :R_2q, :X_det_d, :X_det_q, :X_fd_loop, :X_1d_loop, :X_1q_loop, :X_2q_loop, :k_fd, :k_1d, :k_1q, :k_2q]
+values = [X_ad, X_aq, X_ls, R_s, X_rld, X_rlq, X″_d, X″_q, X′_d, X′_q, X_d, X_q, X_fd, X_1d, X_1q, X_2q, R_fd, R_1d, R_1q, R_2q, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q]
+df = DataFrame(Variable=variable_names, Value=values)
+formatted_df = DataFrame(
+    Variable=df.Variable, 
+    Value=map(x -> replace(string(round(x, digits=8)), "." => ","), df.Value)
+)
+transposed_df = permutedims(formatted_df)
+CSV.write("gen1_parameter_oppodyn_test.csv", transposed_df; delim=';')
+#aus PF Ergebnissen
+#(ω_b, X_rld, X_rlq, X″_d, X″_q, X_ls, X_ad, X_aq, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q, X_1q, R_1q, X_2q, R_2q, X_fd, R_1d, R_fd, X_1d, R_s, H, S_b, V_b, D, cosn, dkd, dpe, salientpole, pt, dpu, addmt, xmdm) = 
+    #create_standardgenerator(; ω_b=2π*60, H=9.551516, S_b=247.5, V_b=16.5, D=0, R_s=0, X_rld=0, X_rlq=0, X_d=0.320644, X_q=0.226036, X′_d=0.15048, X′_q=0.15, X″_d=0.99827, X″_q=0.99827, X_ls=0.08316, T′_d0=8.96, T″_d0=0.075, T′_q0=0.0001, T″_q0=0.15, cosn=1, dkd=0, dpe=0, salientpole=1, pt=0.2895, dpu=0, addmt=0, xmdm=0)
+@named mtkbus1 = StandardBus(; machine__S_b=S_b, machine__V_b=V_b, machine__H=H, machine__D=D, machine__R_s=R_s, machine__X_rld=X_rld, machine__X_rlq=X_rlq, machine__X″_d=X″_d, machine__X″_q=X″_q, machine__X_ls=X_ls, machine__X_ad=X_ad, machine__X_aq=X_aq, machine__X_1d=X_1d, machine__X_1q=X_1q, machine__X_2q=X_2q, machine__X_fd=X_fd, machine__X_det_d=X_det_d, machine__X_det_q=X_det_q, machine__X_fd_loop=X_fd_loop, machine__X_1d_loop=X_1d_loop, machine__X_1q_loop=X_1q_loop, machine__X_2q_loop=X_2q_loop, machine__k_fd=k_fd, machine__k_1d=k_1d, machine__k_1q=k_1q, machine__k_2q=k_2q, machine__R_fd=R_fd, machine__R_1d=R_1d, machine__R_1q=R_1q, machine__R_2q=R_2q, machine__cosn=cosn, machine__dkd=dkd, machine__dpe=dpe, machine__salientpole=salientpole, machine__pt=pt, machine__dpu=dpu, machine__addmt=addmt, machine__xmdm=xmdm)#, machine__τ_m_test_in=0.289459, machine__vf_test_in=0.432461454) 
 
-(ω_b, X_rld, X_rlq, X″_d, X″_q, X_ls, X_ad, X_aq, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q, X_1q, R_1q, X_2q, R_2q, X_fd, R_1d, R_fd, X_1d, R_s, H, S_b, V_b, D, cosn, dkd, dpe, salientpole, pt, dpu, addmt, xmdm) = 
-    create_standardgenerator(; ω_b=2π*60, H=6.40, S_b=192, V_b=18, D=0, R_s=0.005, X_rld=0, X_rlq=0, X_d=1.719936, X_q=1.65984, X′_d=0.230016, X′_q=0.378048, X″_d=0.2, X″_q=0.2, X_ls=0.100032, T′_d0=6, T″_d0=0.0575, T′_q0=0.535, T″_q0=0.0945, cosn=0.85, dkd=0, dpe=0, salientpole=0, pt=1.003, dpu=0, addmt=0, xmdm=0)
-@named mtkbus2 = StandardBus(; machine__S_b=S_b, machine__V_b=V_b, machine__H=H, machine__D=D, machine__R_s=R_s, machine__X_rld=X_rld, machine__X_rlq=X_rlq, machine__X″_d=X″_d, machine__X″_q=X″_q, machine__X_ls=X_ls, machine__X_ad=X_ad, machine__X_aq=X_aq, machine__X_1q=X_1q, machine__X_det_d=X_det_d, machine__X_det_q=X_det_q, machine__X_fd_loop=X_fd_loop, machine__X_1d_loop=X_1d_loop, machine__X_1q_loop=X_1q_loop, machine__X_2q_loop=X_2q_loop, machine__k_fd=k_fd, machine__k_1d=k_1d, machine__k_1q=k_1q, machine__k_2q=k_2q, machine__R_fd=R_fd, machine__R_1d=R_1d, machine__R_1q=R_1q, machine__R_2q=R_2q, machine__cosn=cosn, machine__dkd=dkd, machine__dpe=dpe, machine__salientpole=salientpole, machine__pt=pt, machine__dpu=dpu, machine__addmt=addmt, machine__xmdm=xmdm)  
+(ω_b, X_rld, X_rlq, X″_d, X″_q, X_ls, X_ad, X_aq, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q, X_1q, R_1q, X_2q, R_2q, X_fd, R_1d, R_fd, X_1d, R_s, H, S_b, V_b, D, cosn, dkd, dpe, salientpole, pt, dpu, addmt, xmdm, X′_d, X′_q, X_d, X_q) =  
+    create_standardgenerator(; ω_b=2π*60, H=3.921568, S_b=192, V_b=18, D=0, R_s=0.005, X_rld=0, X_rlq=0, X_d=1.719936, X_q=1.65984, X′_d=0.230016, X′_q=0.378048, X″_d=0.2, X″_q=0.2, X_ls=0.100032, T′_d0=6, T″_d0=0.0575, T′_q0=0.535, T″_q0=0.0945, cosn=0.85, dkd=0, dpe=0, salientpole=0, pt=1.003, dpu=0, addmt=0, xmdm=0)
+#(ω_b, X_rld, X_rlq, X″_d, X″_q, X_ls, X_ad, X_aq, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q, X_1q, R_1q, X_2q, R_2q, X_fd, R_1d, R_fd, X_1d, R_s, H, S_b, V_b, D, cosn, dkd, dpe, salientpole, pt, dpu, addmt, xmdm) = 
+    #create_standardgenerator(; ω_b=2π*60, H=3.921568, S_b=192, V_b=18, D=0, R_s=0.005, X_rld=0, X_rlq=0, X_d=1.496622, X_q=1.451723, X′_d=0.230016, X′_q=0.378048, X″_d=0.199023, X″_q=0.199023, X_ls=0.100032, T′_d0=6, T″_d0=0.0575, T′_q0=0.535, T″_q0=0.0945, cosn=0.85, dkd=0, dpe=0, salientpole=0, pt=1.003, dpu=0, addmt=0, xmdm=0)
+variable_names = [:X_ad, :X_aq, :X_ls, :R_s, :X_rld, :X_rlq, :X″_d, :X″_q, :X′_d, :X′_q, :X_d, :X_q, :X_fd, :X_1d, :X_1q, :X_2q, :R_fd, :R_1d, :R_1q, :R_2q, :X_det_d, :X_det_q, :X_fd_loop, :X_1d_loop, :X_1q_loop, :X_2q_loop, :k_fd, :k_1d, :k_1q, :k_2q]
+values = [X_ad, X_aq, X_ls, R_s, X_rld, X_rlq, X″_d, X″_q, X′_d, X′_q, X_d, X_q, X_fd, X_1d, X_1q, X_2q, R_fd, R_1d, R_1q, R_2q, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q]
+df = DataFrame(Variable=variable_names, Value=values)
+formatted_df = DataFrame(
+    Variable=df.Variable, 
+    Value=map(x -> replace(string(round(x, digits=8)), "." => ","), df.Value)
+)
+transposed_df = permutedims(formatted_df)
+CSV.write("gen2_parameter_oppodyn_test.csv", transposed_df; delim=';')
+@named mtkbus2 = StandardBus(; machine__S_b=S_b, machine__V_b=V_b, machine__H=H, machine__D=D, machine__R_s=R_s, machine__X_rld=X_rld, machine__X_rlq=X_rlq, machine__X″_d=X″_d, machine__X″_q=X″_q, machine__X_ls=X_ls, machine__X_ad=X_ad, machine__X_aq=X_aq, machine__X_1d=X_1d, machine__X_1q=X_1q, machine__X_2q=X_2q, machine__X_fd=X_fd, machine__X_det_d=X_det_d, machine__X_det_q=X_det_q, machine__X_fd_loop=X_fd_loop, machine__X_1d_loop=X_1d_loop, machine__X_1q_loop=X_1q_loop, machine__X_2q_loop=X_2q_loop, machine__k_fd=k_fd, machine__k_1d=k_1d, machine__k_1q=k_1q, machine__k_2q=k_2q, machine__R_fd=R_fd, machine__R_1d=R_1d, machine__R_1q=R_1q, machine__R_2q=R_2q, machine__cosn=cosn, machine__dkd=dkd, machine__dpe=dpe, machine__salientpole=salientpole, machine__pt=pt, machine__dpu=dpu, machine__addmt=addmt, machine__xmdm=xmdm)#, machine__τ_m_test_in=1.002816, machine__vf_test_in=0.880099185)  
 
-(ω_b, X_rld, X_rlq, X″_d, X″_q, X_ls, X_ad, X_aq, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q, X_1q, R_1q, X_2q, R_2q, X_fd, R_1d, R_fd, X_1d, R_s, H, S_b, V_b, D, cosn, dkd, dpe, salientpole, pt, dpu, addmt, xmdm) = 
-    create_standardgenerator(; ω_b=2π*60, H=3.01, S_b=128, V_b=13.8, D=0, R_s=0.0001, X_rld=0, X_rlq=0, X_d=1.68, X_q=1.609984, X′_d=0.232064, X′_q=0.32, X″_d=0.2, X″_q=0.2, X_ls=0.094976, T′_d0=5.89, T″_d0=0.0575, T′_q0=0.6, T″_q0=0.08, cosn=0.85, dkd=0, dpe=0, salientpole=0, pt=0.7813, dpu=0, addmt=0, xmdm=0)
-@named mtkbus3 = StandardBus(; machine__S_b=S_b, machine__V_b=V_b, machine__H=H, machine__D=D, machine__R_s=R_s, machine__X_rld=X_rld, machine__X_rlq=X_rlq, machine__X″_d=X″_d, machine__X″_q=X″_q, machine__X_ls=X_ls, machine__X_ad=X_ad, machine__X_aq=X_aq, machine__X_1q=X_1q, machine__X_det_d=X_det_d, machine__X_det_q=X_det_q, machine__X_fd_loop=X_fd_loop, machine__X_1d_loop=X_1d_loop, machine__X_1q_loop=X_1q_loop, machine__X_2q_loop=X_2q_loop, machine__k_fd=k_fd, machine__k_1d=k_1d, machine__k_1q=k_1q, machine__k_2q=k_2q, machine__R_fd=R_fd, machine__R_1d=R_1d, machine__R_1q=R_1q, machine__R_2q=R_2q, machine__cosn=cosn, machine__dkd=dkd, machine__dpe=dpe, machine__salientpole=salientpole, machine__pt=pt, machine__dpu=dpu, machine__addmt=addmt, machine__xmdm=xmdm)  
+(ω_b, X_rld, X_rlq, X″_d, X″_q, X_ls, X_ad, X_aq, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q, X_1q, R_1q, X_2q, R_2q, X_fd, R_1d, R_fd, X_1d, R_s, H, S_b, V_b, D, cosn, dkd, dpe, salientpole, pt, dpu, addmt, xmdm, X′_d, X′_q, X_d, X_q) =  
+    create_standardgenerator(; ω_b=2π*60, H=2.766544, S_b=128, V_b=13.8, D=0, R_s=0, X_rld=0, X_rlq=0, X_d=1.68, X_q=1.609984, X′_d=0.232064, X′_q=0.32, X″_d=0.2, X″_q=0.2, X_ls=0.094976, T′_d0=5.89, T″_d0=0.0575, T′_q0=0.6, T″_q0=0.08, cosn=0.85, dkd=0, dpe=0, salientpole=0, pt=0.7813, dpu=0, addmt=0, xmdm=0)
+#(ω_b, X_rld, X_rlq, X″_d, X″_q, X_ls, X_ad, X_aq, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q, X_1q, R_1q, X_2q, R_2q, X_fd, R_1d, R_fd, X_1d, R_s, H, S_b, V_b, D, cosn, dkd, dpe, salientpole, pt, dpu, addmt, xmdm) = 
+    #create_standardgenerator(; ω_b=2π*60, H=2.766544, S_b=128, V_b=13.8, D=0, R_s=0.0001, X_rld=0, X_rlq=0, X_d=1.478564, X_q=1.424912, X′_d=0.232064, X′_q=0.32, X″_d=0.198997, X″_q=0.198997, X_ls=0.094976, T′_d0=5.89, T″_d0=0.0575, T′_q0=0.6, T″_q0=0.08, cosn=0.85, dkd=0, dpe=0, salientpole=0, pt=0.7813, dpu=0, addmt=0, xmdm=0)
+variable_names = [:X_ad, :X_aq, :X_ls, :R_s, :X_rld, :X_rlq, :X″_d, :X″_q, :X′_d, :X′_q, :X_d, :X_q, :X_fd, :X_1d, :X_1q, :X_2q, :R_fd, :R_1d, :R_1q, :R_2q, :X_det_d, :X_det_q, :X_fd_loop, :X_1d_loop, :X_1q_loop, :X_2q_loop, :k_fd, :k_1d, :k_1q, :k_2q]
+values = [X_ad, X_aq, X_ls, R_s, X_rld, X_rlq, X″_d, X″_q, X′_d, X′_q, X_d, X_q, X_fd, X_1d, X_1q, X_2q, R_fd, R_1d, R_1q, R_2q, X_det_d, X_det_q, X_fd_loop, X_1d_loop, X_1q_loop, X_2q_loop, k_fd, k_1d, k_1q, k_2q]
+df = DataFrame(Variable=variable_names, Value=values)
+formatted_df = DataFrame(
+    Variable=df.Variable, 
+    Value=map(x -> replace(string(round(x, digits=8)), "." => ","), df.Value)
+)
+transposed_df = permutedims(formatted_df)
+CSV.write("gen3_parameter_oppodyn_test.csv", transposed_df; delim=';')
+@named mtkbus3 = StandardBus(; machine__S_b=S_b, machine__V_b=V_b, machine__H=H, machine__D=D, machine__R_s=R_s, machine__X_rld=X_rld, machine__X_rlq=X_rlq, machine__X″_d=X″_d, machine__X″_q=X″_q, machine__X_ls=X_ls, machine__X_ad=X_ad, machine__X_aq=X_aq, machine__X_1d=X_1d, machine__X_1q=X_1q, machine__X_2q=X_2q, machine__X_fd=X_fd, machine__X_det_d=X_det_d, machine__X_det_q=X_det_q, machine__X_fd_loop=X_fd_loop, machine__X_1d_loop=X_1d_loop, machine__X_1q_loop=X_1q_loop, machine__X_2q_loop=X_2q_loop, machine__k_fd=k_fd, machine__k_1d=k_1d, machine__k_1q=k_1q, machine__k_2q=k_2q, machine__R_fd=R_fd, machine__R_1d=R_1d, machine__R_1q=R_1q, machine__R_2q=R_2q, machine__cosn=cosn, machine__dkd=dkd, machine__dpe=dpe, machine__salientpole=salientpole, machine__pt=pt, machine__dpu=dpu, machine__addmt=addmt, machine__xmdm=xmdm)#, machine__τ_m_test_in=0.78125, machine__vf_test_in=0.705415229)  
 #@named mtkbus1 = ClassicBus(; machine__H=23.64, machine__X′_d=0.0608)
 #@named mtkbus2 = ClassicBus(; machine__H= 6.40, machine__X′_d=0.1198)
 #@named mtkbus3 = ClassicBus(; machine__H= 3.01, machine__X′_d=0.1813)
@@ -269,13 +309,43 @@ nothing
 
 break # stop execution of script here
 
+
+
+function normalize_angle(ϕ; base=2π)
+    ϕ = mod(ϕ, base)
+    if ϕ > base/2
+        ϕ -= base
+    end
+    return ϕ
+end
+
+function print_init(vert)
+    printstyled("Initialization results for $(vert.name)\n", bold=true)
+    init_residual(vert) > 1e-8 && @warn "It seems like the model initialisation did not converge! The residual is $(init_residual(vert))."
+    types = ["States" => sym(vert), "Parameters" => psym(vert)]
+    for (name, syms) in types
+        printstyled("Initialized $name:\n"; bold=true)
+        syms_with_init = filter(s -> has_init(vert, s), syms)
+        maxlen = mapreduce(length, max, string.(syms_with_init))
+        for s in syms_with_init
+            val = s == :machine₊δ ?  normalize_angle(get_init(vert, s)) : get_init(vert, s)
+            print("  ", lpad(string(s), maxlen), " = ", val)
+            has_guess(vert, s) && print(" (from default ", get_guess(vert, s), ")")
+            println()
+        end
+    end
+end
+print_init(bus1)
+print_init(bus2)
+print_init(bus3)
+
 #### Machine Angle
-ref = CSV.read("RotorAngle_standardModelPF_ohneAusfall.csv", DataFrame; header=2, decimal=',')
+ref = CSV.read("RotorAngle_standardModelPF_ohneAusfalluSättigung.csv", DataFrame; header=2, decimal=',')
 fig = Figure();
 ax = Axis(fig[1, 1]; title="Läuferwinkel (Power Factory Standard Model)")
 ts = range(sol.t[begin],sol.t[end],length=1000)
-δ2 = sol(ts, idxs=VIndex(2, :machine₊δ)).u - sol(ts, idxs=VIndex(1, :machine₊δ)).u
-δ3 = sol(ts, idxs=VIndex(3, :machine₊δ)).u - sol(ts, idxs=VIndex(1, :machine₊δ)).u
+δ2 = sol(ts, idxs=VIndex(2, :machine₊δ)).u - sol(ts, idxs=VIndex(1, :machine₊δ)).u 
+δ3 = sol(ts, idxs=VIndex(3, :machine₊δ)).u - sol(ts, idxs=VIndex(1, :machine₊δ)).u 
 lines!(ax, ts, rad2deg.(δ2); label="Bus 2")
 lines!(ax, ref."Zeitpunkt in s", ref."firel in deg", color=Cycled(1), linestyle=:dash, label="Bus 2 ref")
 lines!(ax, ts, rad2deg.(δ3); label="Bus 3")
@@ -283,6 +353,31 @@ lines!(ax, ref."Zeitpunkt in s", ref."firel in deg_1", color=Cycled(2), linestyl
 axislegend(ax; position=:lt)
 fig
 
+ref = CSV.read("RotorAnglephi_standardModelPF_ohneAusfall.csv", DataFrame; header=2, decimal=',')
+fig = Figure();
+ax = Axis(fig[1, 1]; title="Läuferwinkel (Power Factory Standard Model)")
+ts = range(sol.t[begin],sol.t[end],length=1000)
+δ2 = sol(ts, idxs=VIndex(2, :machine₊δ)).u 
+δ3 = sol(ts, idxs=VIndex(3, :machine₊δ)).u 
+lines!(ax, ts, δ2; label="Bus 2")
+lines!(ax, ref."Zeitpunkt in s", ref."phi in rad", color=Cycled(1), linestyle=:dash, label="Bus 2 ref")
+lines!(ax, ts, δ3; label="Bus 3")
+lines!(ax, ref."Zeitpunkt in s", ref."phi in rad_1", color=Cycled(2), linestyle=:dash, label="Bus 3 ref")
+axislegend(ax; position=:lt)
+fig
+
+ref = CSV.read("BusAngle_standardModelPF_ohneAusfall.csv", DataFrame; header=2, decimal=',')
+fig = Figure();
+ax = Axis(fig[1, 1]; title="Spannungswinkel (Power Factory Standard Model)")
+ts = range(sol.t[begin],sol.t[end],length=1000)
+uarg2 = sol(ts, idxs=VIndex(2, :busbar₊u_arg)).u #atan.(sol(ts; idxs=VIndex(2, :busbar₊u_r)).u, sol(ts; idxs=VIndex(2, :busbar₊u_i)).u)
+uarg3 = sol(ts, idxs=VIndex(3, :busbar₊u_arg)).u #atan.(sol(ts; idxs=VIndex(3, :busbar₊u_r)).u, sol(ts; idxs=VIndex(3, :busbar₊u_i)).u)
+lines!(ax, ts, rad2deg.(uarg2); label="Bus 2")
+lines!(ax, ref."Zeitpunkt in s", ref."U, Winkel in deg", color=Cycled(1), linestyle=:dash, label="Bus 2 ref")
+lines!(ax, ts, rad2deg.(uarg3); label="Bus 3")
+lines!(ax, ref."Zeitpunkt in s", ref."U, Winkel in deg_1", color=Cycled(2), linestyle=:dash, label="Bus 3 ref")
+axislegend(ax; position=:lt)
+fig
 
 #### Voltage Magnitude
 ref = CSV.read("Bus5-7_standardModelPF_ohneAusfall.csv", DataFrame; header=2, decimal=',') #_faultimp #ref = CSV.read("Bus5-7_voltage.csv", DataFrame; header=2, decimal=',')
@@ -295,6 +390,18 @@ lines!(ax, ts, umag5.u; label="Bus5")
 lines!(ax, ref."Zeitpunkt in s", ref."u1, Betrag in p.u._1", color=Cycled(1), linestyle=:dash, label="Bus 5 ref")
 lines!(ax, ts, umag7.u; label="Bus7")
 lines!(ax, ref."Zeitpunkt in s", ref."u1, Betrag in p.u.", color=Cycled(2), linestyle=:dash, label="Bus 7 ref")
+axislegend(ax; position=:rb)
+fig
+
+
+ref = CSV.read("Bus5-7_standardModelPF_ohneAusfall.csv", DataFrame; header=2, decimal=',') #_faultimp #ref = CSV.read("Bus5-7_voltage.csv", DataFrame; header=2, decimal=',')
+fig = Figure();
+ax = Axis(fig[1, 1]; title="Bus voltage magnitude (Power Factory Standard Model)")
+ts = range(sol.t[begin],sol.t[end],length=1000)
+τ_m = sol(ts, idxs=VIndex(1, :machine₊τ_m)).u 
+vf = sol(ts, idxs=VIndex(1, :machine₊vf)).u 
+lines!(ax, ts, τ_m; label="τ_m Gen1")
+lines!(ax, ts, vf; label="vf Gen1")
 axislegend(ax; position=:rb)
 fig
 
@@ -312,7 +419,7 @@ for i in 1:9
     lines!(ax, sol; idxs=VIndex(i,:busbar₊u_mag), label="Bus $i", color=Cycled(i))
 end
 axislegend(ax)
-ax = Axis(fig[3, 1]; title="Voltag angel")
+ax = Axis(fig[3, 1]; title="Voltag angle")
 for i in 1:9
     lines!(ax, sol; idxs=VIndex(i,:busbar₊u_arg), label="Bus $i", color=Cycled(i))
 end
@@ -324,3 +431,33 @@ end
 axislegend(ax)
 fig
 =#
+
+#csv Datei Ergebnisse
+ts=0
+n=1
+variable_names = [:machine₊τ_m, :machine₊τ_e, :machine₊I_d, :machine₊I_q, :machine₊I_fd, :machine₊I_1d, :machine₊I_1q, :machine₊I_2q, :machine₊ψ_d, :machine₊ψ_q, :machine₊ψ″_d, :machine₊ψ″_q, :machine₊ψ_fd, :machine₊ψ_1d, :machine₊ψ_1q, :machine₊ψ_2q, :machine₊V_d, :machine₊V_q, :machine₊V″_d, :machine₊V″_q, :machine₊vf]
+values = [sol(ts, idxs=VIndex(n, :machine₊τ_m)), sol(ts, idxs=VIndex(n, :machine₊τ_e)), sol(ts, idxs=VIndex(n, :machine₊I_d)), sol(ts, idxs=VIndex(n, :machine₊I_q)), sol(ts, idxs=VIndex(n, :machine₊I_fd)), sol(ts, idxs=VIndex(n, :machine₊I_1d)), sol(ts, idxs=VIndex(n, :machine₊I_1q)), sol(ts, idxs=VIndex(n, :machine₊I_2q)), sol(ts, idxs=VIndex(n, :machine₊ψ_d)), sol(ts, idxs=VIndex(n, :machine₊ψ_q)), sol(ts, idxs=VIndex(n, :machine₊ψ″_d)), sol(ts, idxs=VIndex(n, :machine₊ψ″_q)), sol(ts, idxs=VIndex(n, :machine₊ψ_fd)), sol(ts, idxs=VIndex(n, :machine₊ψ_1d)), sol(ts, idxs=VIndex(n, :machine₊ψ_1q)), sol(ts, idxs=VIndex(n, :machine₊ψ_2q)), sol(ts, idxs=VIndex(n, :machine₊V_d)), sol(ts, idxs=VIndex(n, :machine₊V_q)), sol(ts, idxs=VIndex(n, :machine₊V″_d)), sol(ts, idxs=VIndex(n, :machine₊V″_q)), sol(ts, idxs=VIndex(n, :machine₊vf)) ]
+df = DataFrame(Variable=variable_names, Value=values)
+formatted_df = DataFrame(
+    Variable=df.Variable,
+    Value=map(x -> replace(string(round(x, digits=8)), "." => ","), df.Value))
+transposed_df = permutedims(formatted_df)
+CSV.write("gen1_variableresults_oppodyn.csv", transposed_df; delim=";")
+
+n=2
+values = [sol(ts, idxs=VIndex(n, :machine₊τ_m)), sol(ts, idxs=VIndex(n, :machine₊τ_e)), sol(ts, idxs=VIndex(n, :machine₊I_d)), sol(ts, idxs=VIndex(n, :machine₊I_q)), sol(ts, idxs=VIndex(n, :machine₊I_fd)), sol(ts, idxs=VIndex(n, :machine₊I_1d)), sol(ts, idxs=VIndex(n, :machine₊I_1q)), sol(ts, idxs=VIndex(n, :machine₊I_2q)), sol(ts, idxs=VIndex(n, :machine₊ψ_d)), sol(ts, idxs=VIndex(n, :machine₊ψ_q)), sol(ts, idxs=VIndex(n, :machine₊ψ″_d)), sol(ts, idxs=VIndex(n, :machine₊ψ″_q)), sol(ts, idxs=VIndex(n, :machine₊ψ_fd)), sol(ts, idxs=VIndex(n, :machine₊ψ_1d)), sol(ts, idxs=VIndex(n, :machine₊ψ_1q)), sol(ts, idxs=VIndex(n, :machine₊ψ_2q)), sol(ts, idxs=VIndex(n, :machine₊V_d)), sol(ts, idxs=VIndex(n, :machine₊V_q)), sol(ts, idxs=VIndex(n, :machine₊V″_d)), sol(ts, idxs=VIndex(n, :machine₊V″_q)), sol(ts, idxs=VIndex(n, :machine₊vf)) ]
+df = DataFrame(Variable=variable_names, Value=values)
+formatted_df = DataFrame(
+    Variable=df.Variable,
+    Value=map(x -> replace(string(round(x, digits=8)), "." => ","), df.Value))
+transposed_df = permutedims(formatted_df)
+CSV.write("gen2_variableresults_oppodyn.csv", transposed_df; delim=";")
+
+n=3
+values = [sol(ts, idxs=VIndex(n, :machine₊τ_m)), sol(ts, idxs=VIndex(n, :machine₊τ_e)), sol(ts, idxs=VIndex(n, :machine₊I_d)), sol(ts, idxs=VIndex(n, :machine₊I_q)), sol(ts, idxs=VIndex(n, :machine₊I_fd)), sol(ts, idxs=VIndex(n, :machine₊I_1d)), sol(ts, idxs=VIndex(n, :machine₊I_1q)), sol(ts, idxs=VIndex(n, :machine₊I_2q)), sol(ts, idxs=VIndex(n, :machine₊ψ_d)), sol(ts, idxs=VIndex(n, :machine₊ψ_q)), sol(ts, idxs=VIndex(n, :machine₊ψ″_d)), sol(ts, idxs=VIndex(n, :machine₊ψ″_q)), sol(ts, idxs=VIndex(n, :machine₊ψ_fd)), sol(ts, idxs=VIndex(n, :machine₊ψ_1d)), sol(ts, idxs=VIndex(n, :machine₊ψ_1q)), sol(ts, idxs=VIndex(n, :machine₊ψ_2q)), sol(ts, idxs=VIndex(n, :machine₊V_d)), sol(ts, idxs=VIndex(n, :machine₊V_q)), sol(ts, idxs=VIndex(n, :machine₊V″_d)), sol(ts, idxs=VIndex(n, :machine₊V″_q)), sol(ts, idxs=VIndex(n, :machine₊vf)) ]
+df = DataFrame(Variable=variable_names, Value=values)
+formatted_df = DataFrame(
+    Variable=df.Variable,
+    Value=map(x -> replace(string(round(x, digits=8)), "." => ","), df.Value))
+transposed_df = permutedims(formatted_df)
+CSV.write("gen3_variableresults_oppodyn.csv", transposed_df; delim=";")
