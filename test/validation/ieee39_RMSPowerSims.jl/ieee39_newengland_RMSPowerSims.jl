@@ -13,11 +13,13 @@ using CSV
 using LinearAlgebra
 using Test
 
-json = JSON.parsefile(joinpath(pkgdir(OpPoDyn), "docs", "examples", "data", "ieee39.json"),dicttype=OrderedDict)
+DATA = joinpath(pkgdir(OpPoDyn), "test", "validation", "ieee39_RMSPowerSims.jl", "data")
+
+json = JSON.parsefile(joinpath(DATA, "ieee39.json"),dicttype=OrderedDict)
 
 # define functions to load the "reference" timeseries from csv files
 function load_data(i)
-    CSV.read(joinpath(pkgdir(OpPoDyn), "docs", "examples", "data", "rmspowersims", "bus$i.csv"), DataFrame)
+    CSV.read(joinpath(DATA, "bus$i.csv"), DataFrame)
 end
 function load_ts(i, sym; f=x->x)
     df = load_data(i)
@@ -241,19 +243,19 @@ end
 ####
 #### solve dyn system
 ####
-function affect(integrator)
-    println("Change something at $(integrator.t)")
-    s = NWState(integrator) # get indexable parameter object
-    s.p.v[16, :load₊Pset] *= 1.2
-    auto_dt_reset!(integrator); save_parameters!(integrator)
+increase_load = ComponentAffect([], [:load₊Pset]) do u, p, ctx
+    println("Change load setpoint at $(ctx.t)")
+    p[:load₊Pset] *= 1.2
 end
-cb = PresetTimeCallback(1, affect)
+inc_cb = PresetTimeComponentCallback(1, increase_load)
+set_callback!(nw[VIndex(16)], inc_cb)
+
 s0 = NWState(nw)
-prob = ODEProblem(nw, copy(uflat(s0)), (0,15), copy(pflat(s0)); callback=cb)
+prob = ODEProblem(nw, copy(uflat(s0)), (0,15), copy(pflat(s0)); callback=get_callbacks(nw))
 sol = solve(prob, Rodas5P());
-break
 
 # plot he desired
+#=
 let
     fig = Figure()
     ax = Axis(fig[1,1]; title="Power demand at bus 16", xlabel="Time [s]", ylabel="P [pu]")
@@ -282,3 +284,33 @@ plot_gen_states("Mechanical Torque", :Tm, :ctrld_gen₊machine₊τ_m)
 plot_gen_states("Excitation voltage (contains ceiling)", :Efd, :ctrld_gen₊machine₊vf)
 plot_gen_states("Regulator voltage (limited)", :Vr, :ctrld_gen₊avr₊vr)
 plot_gen_states("Gov valve (limited)", :Pv, :ctrld_gen₊gov₊xg1)
+=#
+
+function states_deviation(i, rmssym, ndsym)
+    ref = load_ts(i, rmssym)
+    ref_t = first.(ref)
+    ref_v = last.(ref)
+    sim_v = sol(ref_t, idxs=VIndex(i, ndsym)).u
+    sum((sim_v - ref_v).^2)/length(ref_v)
+end
+
+@testset "generator state deviation" begin
+    for i in 30:39
+        @test states_deviation(i, :V, :busbar₊u_mag) < 1e-8
+    end
+    for i in 30:39
+        @test states_deviation(i, :ω, :ctrld_gen₊machine₊ω) < 1e-8
+    end
+    for i in 30:38 # not for 39, no controller
+        @test states_deviation(i, :Tm, :ctrld_gen₊machine₊τ_m) < 1e-8
+    end
+    for i in 30:38 # not for 39
+        @test states_deviation(i, :Efd, :ctrld_gen₊machine₊vf) < 1e-7
+    end
+    for i in 30:38 # not for 39
+        @test states_deviation(i, :Vr, :ctrld_gen₊avr₊vr) < 1e-7
+    end
+    for i in 30:38 # not for 39
+        @test states_deviation(i, :Pv, :ctrld_gen₊gov₊xg1) < 1e-7
+    end
+end
