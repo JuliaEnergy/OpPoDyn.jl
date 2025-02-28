@@ -366,7 +366,6 @@ affect1! = (integrator) -> begin
         error("Should not be reached.")
     end
 end
-cb_shortcircuit = PresetTimeCallback([0.0], affect1!)
 cb_shortcircuit = PresetTimeCallback([1.0], affect1!)
 
 affect2! = (integrator) -> begin
@@ -382,7 +381,7 @@ affect2! = (integrator) -> begin
 end
 cb_deactivate = PresetTimeCallback([1.05], affect2!)
 
-cb_set = CallbackSet(CallbackSet(cb_shortcircuit, cb_deactivate))
+cb_set = CallbackSet(cb_shortcircuit, cb_deactivate)
 prob = ODEProblem(nw, uflat(u0), (0,5), copy(pflat(u0)) ; callback=cb_set)
 sol = solve(prob, Rodas5P());
 nothing
