@@ -268,8 +268,8 @@ end
 function plot_gen_states(title, rmssym, ndsym)
     fig = Figure(size=(1000,800))
     row = 1; col = 1
-    for row in 1:3, col in 1:3
-        i = 30 + 3*(row-1) + col
+    for row in 1:1, col in 1:1
+        i = 32 #+ 3*(row-1) + col
         ax = Axis(fig[row, col], title=title*" at bus $i")
         try lines!(ax, load_ts(i, rmssym)); catch; end
         idxs = ndsym isa Symbol ? VIndex(i, ndsym) : ndsym(i)
