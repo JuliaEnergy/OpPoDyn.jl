@@ -175,7 +175,7 @@ end;
                     vr_min = p.Vrmin, vr_max = p.Vrmax,
                     E1 = p.E1, Se1 = p.Se1, E2 = p.E2, Se2 = p.Se2,
                 )
-                append!(controleqs, [connect(machine.v_mag_out, avr.vh), connect(avr.vf, machine.vf_in)])
+                append!(controleqs, [connect(machine.v_mag_out, avr.v_mag), connect(avr.vf, machine.vf_in)])
             else
                 @named avr = AVRFixed()
                 append!(controleqs, [connect(avr.vf, machine.vf_in)])
