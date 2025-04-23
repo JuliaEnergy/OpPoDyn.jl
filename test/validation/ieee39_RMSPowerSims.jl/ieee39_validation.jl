@@ -245,7 +245,7 @@ end
 ####
 increase_load = ComponentAffect([], [:load₊Pset]) do u, p, ctx
     println("Change load setpoint at $(ctx.t)")
-    p[:load₊Pset] *= 1.2
+    p[:load₊Pset] *= 1.20
 end
 inc_cb = PresetTimeComponentCallback(1, increase_load)
 set_callback!(nw[VIndex(16)], inc_cb)
@@ -285,6 +285,25 @@ function plot_gen_states_mag(title, rmssym, ndsym)
     fig
 end
 plot_gen_states_mag("Voltage magnitude", :V, :busbar₊u_mag)
+
+ref_pf = CSV.read("test/validation/ieee39_RMSPowerSims.jl/PFdata/Load16.csv", DataFrame; header=2, decimal=',', delim=';')
+function plot_gen_states_mag(title, rmssym, ndsym)
+    fig = Figure(size=(1000,800))
+    row = 1; col = 1
+    for row in 1:1, col in 1:1
+        i = 16
+        ax = Axis(fig[row, col], title=title*" at bus $i in 100 MW")
+        idxs = ndsym isa Symbol ? VIndex(i, ndsym) : ndsym(i)
+        try lines!(ax, sol; idxs, color=Cycled(2)); catch; end
+        try
+            t = ref_pf[:, "Zeitpunkt in s"]
+            vref = -ref_pf[:, "Wirkleistung in MW"]/100
+            lines!(ax, t, vref, color=:black, linestyle=:dash, label="ref")
+        catch; end
+    end
+    fig
+end
+plot_gen_states_mag("Active Power", :V, :load₊P)
 
 # plot of generator states
 function plot_gen_states(title, rmssym, ndsym)
