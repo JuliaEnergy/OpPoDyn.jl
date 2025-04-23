@@ -264,12 +264,34 @@ let
     fig
 end
 
+# plot of generator state compared with PF with Standard Model
+ref_pf = CSV.read("test/validation/ieee39_RMSPowerSims.jl/PFdata/voltmag_all.csv", DataFrame; header=2, decimal=',', delim=';')
+function plot_gen_states_mag(title, rmssym, ndsym)
+    fig = Figure(size=(1000,800))
+    row = 1; col = 1
+    for row in 1:1, col in 1:1
+        i = 15 + 3*(row-1) + col
+        ax = Axis(fig[row, col], title=title*" at bus $i")
+        try lines!(ax, load_ts(i, rmssym)); catch; end
+        idxs = ndsym isa Symbol ? VIndex(i, ndsym) : ndsym(i)
+        try lines!(ax, sol; idxs, color=Cycled(2)); catch; end
+        try
+            t = ref_pf[:, "Zeitpunkt in s"]
+            bus_col = Symbol("Bus "*lpad(string(i), 2, '0'))
+            vref = ref_pf[:, bus_col]
+            lines!(ax, t, vref, color=:black, linestyle=:dash, label="ref")
+        catch; end
+    end
+    fig
+end
+plot_gen_states_mag("Voltage magnitude", :V, :busbar₊u_mag)
+
 # plot of generator states
 function plot_gen_states(title, rmssym, ndsym)
     fig = Figure(size=(1000,800))
     row = 1; col = 1
-    for row in 1:1, col in 1:1
-        i = 32 #+ 3*(row-1) + col
+    for row in 1:3, col in 1:3
+        i = 30 + 3*(row-1) + col
         ax = Axis(fig[row, col], title=title*" at bus $i")
         try lines!(ax, load_ts(i, rmssym)); catch; end
         idxs = ndsym isa Symbol ? VIndex(i, ndsym) : ndsym(i)
