@@ -17,10 +17,10 @@
         dst = Terminal()
     end
     @parameters begin
-        RPu=0, [description="Resistance in pu (base SnRef)"]
-        XPu=0.022522, [description="Reactance in pu (base SnRef)"]
-        GPu=0, [description="Half-conductance in pu (base SnRef)"]
-        BPu=0, [description="Half-susceptance in pu (base SnRef)"]
+        R_pu=0, [description="Resistance in pu (base SnRef)"]
+        X_pu=0.022522, [description="Reactance in pu (base SnRef)"]
+        G_pu=0, [description="Half-conductance in pu (base SnRef)"]
+        B_pu=0, [description="Half-susceptance in pu (base SnRef)"]
     end
     @equations begin
         # (dst.i_r + BPu*dst.u_i - GPu*dst.u_r)*RPu - (dst.i_i - BPu*dst.u_r - GPu*dst.u_i)*XPu ~ dst.u_r - src.u_r

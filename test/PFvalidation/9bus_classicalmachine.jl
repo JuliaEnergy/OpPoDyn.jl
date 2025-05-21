@@ -71,12 +71,12 @@ function piline(; R, X, B)
 end
 
 function piline_shortcircuit(; R, X, B, pos, G_fault=0, B_fault=0)
-    #faultimp = if (G_fault + B_fault) == 0
+    #use_Zf = if (G_fault + B_fault) == 0
        # 0
     #else
         #1
     #end
-    @named pibranch = PiLine_fault(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0, G_fault, B_fault, pos)#, faultimp)
+    @named pibranch = PiLine_fault(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0, G_fault, B_fault, pos)#, use_Zf)
     MTKLine(pibranch)
 end
 
@@ -114,7 +114,7 @@ affect1! = (integrator) -> begin
     if integrator.t == 0.0
         @info "Short circuit on line 57 at t = $(integrator.t)"
         p = NWParameter(integrator)
-        p.e[6, :pibranch₊shortcircuit] = 1
+        p.e[6, :pibranch₊sc] = 1
     else
         error("Should not be reached.")
     end

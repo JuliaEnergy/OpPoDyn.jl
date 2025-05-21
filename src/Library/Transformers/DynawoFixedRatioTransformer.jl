@@ -13,10 +13,10 @@
 
 @mtkmodel DynawoTransformerParameters begin
     @parameters begin
-        RPu=0, [description="Resistance of the generator transformer in pu (base U2Nom, SnRef)"]
-        XPu=0.00675, [description="Reactance of the generator transformer in pu (base U2Nom, SnRef)"]
-        GPu=0, [description="Conductance of the generator transformer in pu (base U2Nom, SnRef)"]
-        BPu=0, [description="Susceptance of the generator transformer in pu (base U2Nom, SnRef)"]
+        R_pu=0, [description="Resistance of the generator transformer in pu (base U2Nom, SnRef)"]
+        X_pu=0.00675, [description="Reactance of the generator transformer in pu (base U2Nom, SnRef)"]
+        G_pu=0, [description="Conductance of the generator transformer in pu (base U2Nom, SnRef)"]
+        B_pu=0, [description="Susceptance of the generator transformer in pu (base U2Nom, SnRef)"]
     end
 end
 
@@ -27,7 +27,7 @@ end
         dst = Terminal()
     end
     @parameters begin
-        rTfoPu=1, [description="Transformation ratio in pu: Udst/Usrc in no load conditions"]
+        r_Tfo_pu=1, [description="Transformation ratio in pu: Udst/Usrc in no load conditions"]
     end
     @equations begin
         src.i_r ~ simplify(real(-rTfoPu*(rTfoPu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(RPu+im*XPu)))

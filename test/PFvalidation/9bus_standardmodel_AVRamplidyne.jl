@@ -118,8 +118,8 @@ function piline(; R, X, B)
     MTKLine(pibranch)
 end
 
-function piline_shortcircuit(; R, X, B, pos, G_fault=0, B_fault=0, faultimp=0)
-    @named pibranch = PiLine_fault(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0, G_fault, B_fault, pos, faultimp)
+function piline_shortcircuit(; R, X, B, pos, G_fault=0, B_fault=0, use_Zf=0)
+    @named pibranch = PiLine_fault(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0, G_fault, B_fault, pos, use_Zf)
     MTKLine(pibranch)
 end
 
@@ -329,7 +329,7 @@ l57_params = lineparams_pu(; l57_data...)
 @named t14 = Line(transformer(; R=0, X=0.0576), src=1, dst=4)
 @named t27 = Line(transformer(; R=0, X=0.0625), src=2, dst=7)
 @named t39 = Line(transformer(; R=0, X=0.0586), src=3, dst=9)
-@named l57 = Line(piline_shortcircuit(; R=l57_params.R, X=l57_params.X, B=l57_params.B, pos=0.99, faultimp=0), src=5, dst=7) #faultimp=1, G_fault=l57_params.G_f, B_fault=l57_params.B_f
+@named l57 = Line(piline_shortcircuit(; R=l57_params.R, X=l57_params.X, B=l57_params.B, pos=0.99, use_Zf=0), src=5, dst=7) #use_Zf=1, G_fault=l57_params.G_f, B_fault=l57_params.B_f
 @named t27 = Line(transformer(; R=t27_params.R, X=t27_params.X), src=2, dst=7)
 @named l45 = Line(piline(R=l45_params.R, X=l45_params.X, B=l45_params.B), src=4, dst=5)
 
@@ -351,7 +351,7 @@ affect1! = (integrator) -> begin
     if integrator.t == 1
         @info "Short circuit on line 57 at t = $(integrator.t)"
         p = NWParameter(integrator)
-        p.e[6, :pibranch₊shortcircuit] = 1
+        p.e[6, :pibranch₊sc] = 1
         auto_dt_reset!(integrator)
         save_parameters!(integrator)
     else
