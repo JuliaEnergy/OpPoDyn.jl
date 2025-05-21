@@ -80,12 +80,6 @@ include("Machines/ClassicalMachine.jl")
 export ClassicalMachine_powerfactory
 include("Machines/ClassicalMachine_powerfactory.jl")
 
-#export StandardModel_pf
-#include("Machines/StandardModel_pf.jl")
-
-#export StandardModel_pf_testneu
-#include("Machines/StandardModel_pf_testneu.jl")
-
 export StandardModel_pf
 include("Machines/StandardModel_pf.jl")
 

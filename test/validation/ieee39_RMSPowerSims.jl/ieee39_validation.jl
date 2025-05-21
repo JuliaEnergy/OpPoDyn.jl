@@ -141,8 +141,8 @@ end;
 
         if has_load(i)
             @named load = ZIPLoad(;
-                KpZ=p.Kpz,KpI=p.Kpi, KqZ=p.Kqz, KqI=p.Kqi,
-                Pset=-p.pd, Qset=-p.qd
+                K_pZ=p.Kpz,K_pI=p.Kpi, K_qZ=p.Kqz, K_qI=p.Kqi,
+                P_set=-p.pd, Q_set=-p.qd
             )
             push!(components, load)
             print(" Load")
@@ -226,8 +226,8 @@ nw = Network(copy.(busses), copy.(branches))
 OpPoDyn.solve_powerflow!(nw)
 
 # Buses 31 and 39 have a load attached, we need to manualy initialize the Vset for those
-set_default!(nw.im.vertexm[31], :load₊Vset, norm(get_initial_state.(Ref(nw.im.vertexm[31]), [:busbar₊u_r,:busbar₊u_i])))
-set_default!(nw.im.vertexm[39], :load₊Vset, norm(get_initial_state.(Ref(nw.im.vertexm[39]), [:busbar₊u_r,:busbar₊u_i])))
+set_default!(nw.im.vertexm[31], :load₊V_set, norm(get_initial_state.(Ref(nw.im.vertexm[31]), [:busbar₊u_r,:busbar₊u_i])))
+set_default!(nw.im.vertexm[39], :load₊V_set, norm(get_initial_state.(Ref(nw.im.vertexm[39]), [:busbar₊u_r,:busbar₊u_i])))
 OpPoDyn.initialize!(nw)
 
 @testset "Test initialization" begin
@@ -243,9 +243,9 @@ end
 ####
 #### solve dyn system
 ####
-increase_load = ComponentAffect([], [:load₊Pset]) do u, p, ctx
+increase_load = ComponentAffect([], [:load₊P_set]) do u, p, ctx
     println("Change load setpoint at $(ctx.t)")
-    p[:load₊Pset] *= 1.20
+    p[:load₊P_set] *= 1.20
 end
 inc_cb = PresetTimeComponentCallback(1, increase_load)
 set_callback!(nw[VIndex(16)], inc_cb)
