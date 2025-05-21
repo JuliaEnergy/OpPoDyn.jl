@@ -39,18 +39,18 @@ _clamp(u, u_min, u_max) = max(min(u, u_max), u_min)
        p_max, [description="Maximum turbine output [Machine PU]"]
        R, [description="Govenor droop [Machine PU]"]
        # TODO: check Tc servo Ts governor
-       Tc, [description="Servo time constant [s]"]
-       Ts, [description="Govenor time constant [s]"]
-       T3, [description="Transient time constant 3 [s]"]
-       T4, [description="Transient time constant 4 [s]"]
-       T5, [description="Transient time constant 5 [s]"]
+       T_c, [description="Servo time constant [s]"]
+       T_s, [description="Govenor time constant [s]"]
+       T_3, [description="Transient time constant 3 [s]"]
+       T_4, [description="Transient time constant 4 [s]"]
+       T_5, [description="Transient time constant 5 [s]"]
     end
     @variables begin
         p_droop(t), [description="P after droop (not limited)"]
         p_lim(t), [description="limited p"]
-        xg1(t)
-        xg2(t)
-        xg3(t)
+        x_g1(t)
+        x_g2(t)
+        x_g3(t)
     end
     begin
         _ω_ref = ω_ref_input ? ω_ref.u : ω_ref
@@ -59,10 +59,10 @@ _clamp(u, u_min, u_max) = max(min(u, u_max), u_min)
     @equations begin
         p_droop ~ p_ref + 1/R * (_ω_ref - ω_meas)
         p_lim ~ _clamp(p_droop, p_min, p_max)
-        Ts * Dt(xg1) ~ p_lim - xg1
-        Tc * Dt(xg2) ~ (1-T3/Tc)*xg1 - xg2
-        T5 * Dt(xg3) ~ (1-T4/T5)*(xg2 + T3/Tc*xg1) - xg3
-        Dt(τ_m.u) ~ xg3 + T4/T5*(xg2 + T3/Tc*xg1)
+        T_s * Dt(x_g1) ~ p_lim - x_g1
+        T_c * Dt(xg2) ~ (1-T_3/T_c)*x_g1 - x_g2
+        T_5 * Dt(xg3) ~ (1-T_4/T_5)*(x_g2 + T_3/T_c*x_g1) - x_g3
+        Dt(τ_m.u) ~ x_g3 + T_4/T_5*(x_g2 + T_3/T_c*x_g1)
     end
 end
 
@@ -92,16 +92,16 @@ end
        V_min, [description="Valve min position"]
        V_max, [description="Valve max position"]
        R, [description="Govenor droop [Machine PU]"]
-       T1, [description="Transient time constant 1 [s]"]
-       T2, [description="Transient time constant 2 [s]"]
-       T3, [description="Transient time constant 3 [s]"]
-       DT, [description="Turbine Damping"]
+       T_1, [description="Transient time constant 1 [s]"]
+       T_2, [description="Transient time constant 2 [s]"]
+       T_3, [description="Transient time constant 3 [s]"]
+       D, [description="Turbine Damping"]
     end
     @variables begin
         ref_sig(t), [description="Internal reference signal"]
-        xg1(t), [guess=1]
-        # xg1_sat(t)
-        xg2(t), [guess=0]
+        x_g1(t), [guess=1]
+        # x_g1_sat(t)
+        x_g2(t), [guess=0]
         Δω(t), [description="Speed deviation"]
     end
     begin
@@ -119,14 +119,14 @@ end
 
         ref_sig ~ 1/R*(_p_ref  - Δω)
 
-        T1 * Dt(xg1) ~ ifelse(
-            ((xg1 > V_max) & (ref_sig > xg1)) | ((xg1 < V_min) & (ref_sig < xg1)),
+        T_1 * Dt(x_g1) ~ ifelse(
+            ((x_g1 > V_max) & (ref_sig > x_g1)) | ((x_g1 < V_min) & (ref_sig < x_g1)),
             0,
-            ref_sig - xg1)
+            ref_sig - x_g1)
 
-        T3 * Dt(xg2) ~ xg1 + T2*Dt(xg1) - xg2
+        T_3 * Dt(x_g2) ~ x_g1 + T_2*Dt(x_g1) - x_g2
 
         # TODO: GOV: output power or torque?
-        τ_m.u*ω_meas.u ~ xg2  - DT*Δω
+        τ_m.u*ω_meas.u ~ x_g2  - D*Δω
     end
 end

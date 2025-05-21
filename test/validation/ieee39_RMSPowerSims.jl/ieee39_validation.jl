@@ -170,15 +170,15 @@ end;
                 @named avr = AVRTypeI(
                     ceiling_function=:quadratic,
                     # vref = p.Vref # let this free for initialization
-                    Ka = p.Ka, Ke = p.Ke, Kf = p.Kf,
-                    Ta = p.Ta, Tf = p.Tf, Te = p.Te, Tr = p.Tr,
-                    vr_min = p.Vrmin, vr_max = p.Vrmax,
-                    E1 = p.E1, Se1 = p.Se1, E2 = p.E2, Se2 = p.Se2,
+                    K_a = p.Ka, K_e = p.Ke, K_f = p.Kf,
+                    T_a = p.Ta, T_f = p.Tf, T_e = p.Te, T_r = p.Tr,
+                    v_rmin = p.Vrmin, v_rmax = p.Vrmax,
+                    E_1 = p.E1, S_e1 = p.Se1, E_2 = p.E2, S_e2 = p.Se2,
                 )
-                append!(controleqs, [connect(machine.v_mag_out, avr.v_mag), connect(avr.vf, machine.vf_in)])
+                append!(controleqs, [connect(machine.v_mag_out, avr.v_mag), connect(avr.v_f, machine.vf_in)])
             else
                 @named avr = AVRFixed()
-                append!(controleqs, [connect(avr.vf, machine.vf_in)])
+                append!(controleqs, [connect(avr.v_f, machine.vf_in)])
             end
 
             # add dynamic or fixed gove
@@ -186,8 +186,8 @@ end;
                 print(" Gov")
                 @named gov = TGOV1(;
                     # p_ref = p.P_set, # let this free for initialization
-                    V_min = p.Vmin, V_max = p.Vmax, DT = 0,
-                    R = p.Rd, T1 = p.T1, T2 = p.T2, T3 = p.T3,
+                    V_min = p.Vmin, V_max = p.Vmax, D = 0,
+                    R = p.Rd, T_1 = p.T1, T_2 = p.T2, T_3 = p.T3,
                 )
                 append!(controleqs, [connect(gov.τ_m, machine.τ_m_in), connect(machine.ωout, gov.ω_meas)])
             else
@@ -236,7 +236,7 @@ OpPoDyn.initialize!(nw)
     @test df."vm [pu]" ≈ bus_df.vm
     @test df."varg [deg]" ≈ rad2deg.(bus_df.va)
     # test initialized controller references Vref and P_set against reference
-    @test bus_df[30:38, :Vref] ≈ get_initial_state.(nw.im.vertexm[30:38], :ctrld_gen₊avr₊vref)
+    @test bus_df[30:38, :Vref] ≈ get_initial_state.(nw.im.vertexm[30:38], :ctrld_gen₊avr₊v_ref)
     @test bus_df[30:38, :P_set] ≈ get_initial_state.(nw.im.vertexm[30:38], :ctrld_gen₊gov₊p_ref)
 end
 
@@ -349,9 +349,9 @@ end
         @test states_deviation(i, :Efd, :ctrld_gen₊machine₊vf) < 1e-7
     end
     for i in 30:38 # not for 39
-        @test states_deviation(i, :Vr, :ctrld_gen₊avr₊vr) < 1e-7
+        @test states_deviation(i, :Vr, :ctrld_gen₊avr₊v_r) < 1e-7
     end
     for i in 30:38 # not for 39
-        @test states_deviation(i, :Pv, :ctrld_gen₊gov₊xg1) < 1e-7
+        @test states_deviation(i, :Pv, :ctrld_gen₊gov₊x_g1) < 1e-7
     end
 end

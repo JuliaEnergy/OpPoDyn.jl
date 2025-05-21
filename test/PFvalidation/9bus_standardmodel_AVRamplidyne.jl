@@ -99,16 +99,16 @@ end
         )
         busbar = BusBar()
         avr = AVRTypeI(
-            Ka, Ke, Kf,
-            Ta, Tf, Te, Tr,
-            vr_min, vr_max, anti_windup,
+            K_a, K_e, K_f,
+            T_a, T_f, T_e, T_r,
+            v_rmin, v_rmax, anti_windup,
             A, B
         )
     end
     @equations begin
         connect(machine.terminal, busbar.terminal)
         connect(machine.v_mag_out, avr.v_mag)
-        connect(avr.vf, machine.vf_in)
+        connect(avr.v_f, machine.vf_in)
     end
 end
 
@@ -216,15 +216,15 @@ primary_parameters_gen2 = Dict(
 avr_parameters_gen2 = Dict(
     Symbol("avr__", k) => v for (k, v) in
     (
-        :Ka => 25,
-        :Ke => -0.044,
-        :Kf => 0.0805,
-        :Ta => 0.2,
-        :Tf => 0.35,
-        :Te => 0.5,
-        :Tr => 0.06,
-        :vr_min => -1,
-        :vr_max => 1,
+        :K_a => 25,
+        :K_e => -0.044,
+        :K_f => 0.0805,
+        :T_a => 0.2,
+        :T_f => 0.35,
+        :T_e => 0.5,
+        :T_r => 0.06,
+        :v_rmin => -1,
+        :v_rmax => 1,
         :anti_windup => false,
         :A => 0.0016,
         :B => 1.465,
@@ -451,10 +451,10 @@ fig
 ref_avr = CSV.read("test/PFvalidation/PFdata/Gen2_standardModelPF_avrdata.csv", DataFrame; header=2, decimal=',', delim=';') #_faultimp
 #vr in OpPoDyn
 fig = Figure();
-ax = Axis(fig[1, 1]; title="vr")
+ax = Axis(fig[1, 1]; title="v_r")
 ts = range(sol.t[begin],sol.t[end],length=10000)
-vr = sol(ts; idxs=VIndex(2, :avr₊vr))
-vfout = sol(ts; idxs=VIndex(2, :avr₊vfout))
+vr = sol(ts; idxs=VIndex(2, :avr₊v_r))
+vfout = sol(ts; idxs=VIndex(2, :avr₊v_fout))
 lines!(ax, ts, vr.u; label="vr")
 lines!(ax, ref_avr."Zeitpunkt in s", ref_avr."o1", color=Cycled(1), linestyle=:dash, label="vr in PowerFactory")
 #lines!(ax, ts, vfout.u; label="vfout")
@@ -478,7 +478,7 @@ ref_avr.summe = ref_avr."upss" .+ ref_avr."voel" .+ ref_avr."vuel" .+ ref_avr."a
 fig = Figure();
 ax = Axis(fig[1, 1]; title="v_ref")
 ts = range(sol.t[begin],sol.t[end],length=10000)
-vref = sol(ts; idxs=VIndex(2, :avr₊vref)) ##möglich, da eig _vref, aber vref_input=false
+vref = sol(ts; idxs=VIndex(2, :avr₊v_ref)) ##möglich, da eig _vref, aber v_ref_input=false
 lines!(ax, ts, vref.u; label="v_ref in OpPoDyn")
 lines!(ax, ref_avr."Zeitpunkt in s", ref_avr.summe, color=Cycled(1), linestyle=:dash, label="v_ref aus PowerFactory")
 axislegend(ax; position=:rt)
@@ -488,10 +488,10 @@ fig
 #output
 ref_avr = CSV.read("test/PFvalidation/PFdata/Gen2_standardModelPF_avrdata.csv", DataFrame; header=2, decimal=',', delim=';') #_faultimp
 fig = Figure();
-ax = Axis(fig[1, 1]; title="vfout")
+ax = Axis(fig[1, 1]; title="v_fout")
 ts = range(sol.t[begin],sol.t[end],length=10000)
-vfout = sol(ts; idxs=VIndex(2, :avr₊vfout))
-lines!(ax, ts, vfout.u; label="vfout")
+vfout = sol(ts; idxs=VIndex(2, :avr₊v_fout))
+lines!(ax, ts, vfout.u; label="v_fout")
 lines!(ax, ref_avr."Zeitpunkt in s", ref_avr."uerrs", color=Cycled(1), linestyle=:dash, label="vfout in PowerFactory")
 axislegend(ax; position=:rt)
 xlims!(ax, 0.9, 10)
@@ -519,7 +519,7 @@ end
 
 @testset "generator state deviation" begin
     @test states_deviation(2, :vf, :avr₊v_fb) < 1e-5
-    @test states_deviation(2, :o1, :avr₊vr) < 1e-3
-    @test states_deviation(2, :uerrs, :avr₊vfout) < 1e-4
+    @test states_deviation(2, :o1, :avr₊v_r) < 1e-3
+    @test states_deviation(2, :uerrs, :avr₊v_fout) < 1e-4
     @test states_deviation(2, :u, :machine₊v_mag) < 1e-5
 end
