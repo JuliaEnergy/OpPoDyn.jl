@@ -15,7 +15,7 @@ using Test
 @mtkmodel LoadBus begin
     @components begin
         busbar = BusBar()
-        load = ConstantYLoad(Pset, Qset, Vset=nothing)
+        load = ConstantYLoad(P_set, Q_set, V_set=nothing)
     end
     @equations begin
         connect(load.terminal, busbar.terminal)
@@ -270,10 +270,10 @@ primary_parameters_gen3 = Dict(
 @named mtkbus2 = StandardBus_AVR(; primary_parameters_gen2..., avr_parameters_gen2...)
 @named mtkbus3 = StandardBus(; primary_parameters_gen3...)
 @named mtkbus4 = MTKBus()
-@named mtkbus5 = LoadBus(;load__Pset=-1.25, load__Qset=-0.5)
-@named mtkbus6 = LoadBus(;load__Pset=-0.90, load__Qset=-0.3)
+@named mtkbus5 = LoadBus(;load__P_set=-1.25, load__Q_set=-0.5)
+@named mtkbus6 = LoadBus(;load__P_set=-0.90, load__Q_set=-0.3)
 @named mtkbus7 = MTKBus()
-@named mtkbus8 = LoadBus(;load__Pset=-1.0, load__Qset=-0.35)
+@named mtkbus8 = LoadBus(;load__P_set=-1.0, load__Q_set=-0.35)
 @named mtkbus9 = MTKBus()
 
 # generate the dynamic component functions
