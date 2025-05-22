@@ -1,23 +1,23 @@
 @mtkmodel SauerPaiMachine begin
     @structural_parameters begin
-        vf_input = true
+        V_f_input = true
         τ_m_input = true
     end
     @components begin
         terminal=Terminal()
         # inputs
-        if vf_input
-            vf_in = RealInput(guess=1) # field voltage input [pu]
+        if V_f_input
+            V_f_in = RealInput(guess=1) # field voltage input [pu]
         end
         if τ_m_input
             τ_m_in = RealInput() # mechanical torque [pu]
         end
         # outputs
-        δout = RealOutput() # rotor angle
-        ωout = RealOutput() # rotor speed [pu]
-        v_mag_out = RealOutput() # terminal voltage [pu]
-        Pout = RealOutput() # active power [pu]
-        Qout = RealOutput() # reactive power [pu]
+        δ_out = RealOutput() # rotor angle
+        ω_out = RealOutput() # rotor speed [pu]
+        V_mag_out = RealOutput() # terminal voltage [pu]
+        P_out = RealOutput() # active power [pu]
+        Q_out = RealOutput() # reactive power [pu]
     end
     @parameters begin
         R_s, [description="stator resistance"]
@@ -38,11 +38,11 @@
         S_b, [description="System power basis in MVA"]
         V_b, [description="System voltage basis in kV"]
         ω_b, [description="System base frequency in rad/s"]
-        Sn=S_b, [description="Machine power rating in MVA"]
-        Vn=V_b, [description="Machine voltage rating in kV"]
+        S_n=S_b, [description="Machine power rating in MVA"]
+        V_n=V_b, [description="Machine voltage rating in kV"]
         # input/parameter switches
-        if !vf_input
-            vf_set, [guess=1, bounds=(0,Inf), description="field voltage"]
+        if !V_f_input
+            V_f_set, [guess=1, bounds=(0,Inf), description="field voltage"]
         end
         if !τ_m_input
             τ_m_set, [guess=1, bounds=(0,Inf), description="mechanical torque"]
@@ -57,18 +57,18 @@
         I_q(t), [guess=0, description="q-axis current"]
         V_d(t), [guess=0, description="d-axis voltage"]
         V_q(t), [guess=1, description="q-axis voltage"]
-        E′_d(t), [guess=1, description="transient voltage behind transient reactance in d-axis"]
-        E′_q(t), [guess=0, description="transient voltage behind transient reactance in q-axis"]
+        V′_d(t), [guess=1, description="transient voltage behind transient reactance in d-axis"]
+        V′_q(t), [guess=0, description="transient voltage behind transient reactance in q-axis"]
         δ(t), [guess=0, description="rotor angle"]
         ω(t), [guess=1, description="rotor speed"]
         τ_e(t), [bounds=(0,Inf) ,description="electrical torque"]
         # observables
-        v_mag(t), [description="terminal voltage [machine pu]"]
-        v_arg(t), [description="Generator terminal angle"]
+        V_mag(t), [description="terminal voltage [machine pu]"]
+        V_arg(t), [description="Generator terminal angle"]
         P(t), [description="active power [machine pu]"]
         Q(t), [description="reactive power [machine pu]"]
         # inputs/parameters
-        vf(t), [bounds=(0,Inf), description="field voltage"]
+        V_f(t), [bounds=(0,Inf), description="field voltage"]
         τ_m(t), [bounds=(0,Inf), description="mechanical torque"]
     end
     begin
@@ -84,8 +84,8 @@
     end
     @equations begin
         # Park's transformations
-        [terminal.u_r, terminal.u_i] .~ T_to_glob(δ)*[V_d, V_q] * Vn/V_b
-        [I_d, I_q] .~ T_to_loc(δ)*[terminal.i_r, terminal.i_i] * Ibase(S_b, V_b)/Ibase(Sn, Vn)
+        [terminal.u_r, terminal.u_i] .~ T_to_glob(δ)*[V_d, V_q] * V_n/V_b
+        [I_d, I_q] .~ T_to_loc(δ)*[terminal.i_r, terminal.i_i] * Ibase(S_b, V_b)/Ibase(S_n, V_n)
 
         τ_e ~ ψ_d*I_q - ψ_q*I_d
         # for static ψ, this becomes which makes sense!
@@ -104,35 +104,35 @@
         V_d ~ -R_s*I_d - ω * ψ_q
         V_q ~ -R_s*I_q + ω * ψ_d
 
-        T′_d0 * Dt(E′_q) ~ -E′_q - (X_d - X′_d)*(I_d - γ_d2*ψ″_d - (1-γ_d1)*I_d + γ_d2*E′_q) + vf
-        T′_q0 * Dt(E′_d) ~ -E′_d + (X_q - X′_q)*(I_q - γ_q2*ψ″_q - (1-γ_q1)*I_q - γ_q2*E′_d)
-        T″_d0 * Dt(ψ″_d) ~ -ψ″_d + E′_q - (X′_d - X_ls)*I_d
-        T″_q0 * Dt(ψ″_q) ~ -ψ″_q - E′_d - (X′_q - X_ls)*I_q
+        T′_d0 * Dt(V′_q) ~ -V′_q - (X_d - X′_d)*(I_d - γ_d2*ψ″_d - (1-γ_d1)*I_d + γ_d2*V′_q) + V_f
+        T′_q0 * Dt(V′_d) ~ -V′_d + (X_q - X′_q)*(I_q - γ_q2*ψ″_q - (1-γ_q1)*I_q - γ_q2*V′_d)
+        T″_d0 * Dt(ψ″_d) ~ -ψ″_d + V′_q - (X′_d - X_ls)*I_d
+        T″_q0 * Dt(ψ″_q) ~ -ψ″_q - V′_d - (X′_q - X_ls)*I_q
 
         # this constraint essentialy forces ψ_d and ψ_q
-        ψ_d ~ -X″_d*I_d + γ_d1*E′_q + (1-γ_d1)*ψ″_d
-        ψ_q ~ -X″_q*I_q - γ_q1*E′_d + (1-γ_q1)*ψ″_q
-        # I_d ~ (-ψ_d + γ_d1*E′_q + (1-γ_d1)*ψ″_d)/X″_d
-        # I_q ~ (-ψ_q - γ_q1*E′_d + (1-γ_q1)*ψ″_q)/X″_q
-        # 0 ~ -X″_d*I_d + γ_d1*E′_q + (1-γ_d1)*ψ″_d - ψ_d
-        # 0 ~ -X″_q*I_q - γ_q1*E′_d + (1-γ_q1)*ψ″_q - ψ_q
+        ψ_d ~ -X″_d*I_d + γ_d1*V′_q + (1-γ_d1)*ψ″_d
+        ψ_q ~ -X″_q*I_q - γ_q1*V′_d + (1-γ_q1)*ψ″_q
+        # I_d ~ (-ψ_d + γ_d1*V′_q + (1-γ_d1)*ψ″_d)/X″_d
+        # I_q ~ (-ψ_q - γ_q1*V′_d + (1-γ_q1)*ψ″_q)/X″_q
+        # 0 ~ -X″_d*I_d + γ_d1*V′_q + (1-γ_d1)*ψ″_d - ψ_d
+        # 0 ~ -X″_q*I_q - γ_q1*V′_d + (1-γ_q1)*ψ″_q - ψ_q
 
         # inputs
-        vf ~ vf_input ? vf_in.u : vf_set
+        V_f ~ V_f_input ? V_f_in.u : V_f_set
         τ_m ~ τ_m_input ? τ_m_in.u : τ_m_set
 
         # observables
-        v_mag ~ sqrt(V_d^2 + V_q^2)
-        v_arg ~ atan(V_q, V_d)
+        V_mag ~ sqrt(V_d^2 + V_q^2)
+        V_arg ~ atan(V_q, V_d)
         P ~ V_d*I_d + V_q*I_q
         Q ~ V_q*I_d - V_d*I_q
 
         #outputs
-        Pout.u ~ P
-        Qout.u ~ Q
-        v_mag_out.u ~ v_mag
-        δout.u ~ δ
-        ωout.u ~ ω
+        P_out.u ~ P
+        Q_out.u ~ Q
+        V_mag_out.u ~ V_mag
+        δ_out.u ~ δ
+        ω_out.u ~ ω
     end
 end
 

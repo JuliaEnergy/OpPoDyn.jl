@@ -159,8 +159,8 @@ end;
                 T′_d0 = p.Td_d, T′_q0 = p.Tq_d,
                 T″_d0 = p.Td_dd, T″_q0 = p.Tq_dd,
                 H = p.H,
-                S_b = json["baseMVA"], Sn = p.mbase,
-                V_b = p.base_kv, Vn = p.vbase,
+                S_b = json["baseMVA"], S_n = p.mbase,
+                V_b = p.base_kv, V_n = p.vbase,
                 ω_b = json["dynamic_model_parameters"]["f_nom"]*2π,
             )
 
@@ -172,13 +172,13 @@ end;
                     # vref = p.Vref # let this free for initialization
                     K_a = p.Ka, K_e = p.Ke, K_f = p.Kf,
                     T_a = p.Ta, T_f = p.Tf, T_e = p.Te, T_r = p.Tr,
-                    v_rmin = p.Vrmin, v_rmax = p.Vrmax,
+                    V_rmin = p.Vrmin, V_rmax = p.Vrmax,
                     E_1 = p.E1, S_e1 = p.Se1, E_2 = p.E2, S_e2 = p.Se2,
                 )
-                append!(controleqs, [connect(machine.v_mag_out, avr.v_mag), connect(avr.v_f, machine.vf_in)])
+                append!(controleqs, [connect(machine.V_mag_out, avr.V_mag), connect(avr.V_f, machine.V_f_in)])
             else
                 @named avr = AVRFixed()
-                append!(controleqs, [connect(avr.v_f, machine.vf_in)])
+                append!(controleqs, [connect(avr.V_f, machine.V_f_in)])
             end
 
             # add dynamic or fixed gove
@@ -189,7 +189,7 @@ end;
                     V_min = p.Vmin, V_max = p.Vmax, D = 0,
                     R = p.Rd, T_1 = p.T1, T_2 = p.T2, T_3 = p.T3,
                 )
-                append!(controleqs, [connect(gov.τ_m, machine.τ_m_in), connect(machine.ωout, gov.ω_meas)])
+                append!(controleqs, [connect(gov.τ_m, machine.τ_m_in), connect(machine.ω_out, gov.ω_meas)])
             else
                 @named gov = GovFixed()
                 append!(controleqs, [connect(gov.τ_m, machine.τ_m_in)])
@@ -236,8 +236,8 @@ OpPoDyn.initialize!(nw)
     @test df."vm [pu]" ≈ bus_df.vm
     @test df."varg [deg]" ≈ rad2deg.(bus_df.va)
     # test initialized controller references Vref and P_set against reference
-    @test bus_df[30:38, :Vref] ≈ get_initial_state.(nw.im.vertexm[30:38], :ctrld_gen₊avr₊v_ref)
-    @test bus_df[30:38, :P_set] ≈ get_initial_state.(nw.im.vertexm[30:38], :ctrld_gen₊gov₊p_ref)
+    @test bus_df[30:38, :Vref] ≈ get_initial_state.(nw.im.vertexm[30:38], :ctrld_gen₊avr₊V_ref)
+    @test bus_df[30:38, :P_set] ≈ get_initial_state.(nw.im.vertexm[30:38], :ctrld_gen₊gov₊P_ref)
 end
 
 ####
@@ -346,10 +346,10 @@ end
         @test states_deviation(i, :Tm, :ctrld_gen₊machine₊τ_m) < 1e-8
     end
     for i in 30:38 # not for 39
-        @test states_deviation(i, :Efd, :ctrld_gen₊machine₊vf) < 1e-7
+        @test states_deviation(i, :Efd, :ctrld_gen₊machine₊V_f) < 1e-7
     end
     for i in 30:38 # not for 39
-        @test states_deviation(i, :Vr, :ctrld_gen₊avr₊v_r) < 1e-7
+        @test states_deviation(i, :Vr, :ctrld_gen₊avr₊V_r) < 1e-7
     end
     for i in 30:38 # not for 39
         @test states_deviation(i, :Pv, :ctrld_gen₊gov₊x_g1) < 1e-7

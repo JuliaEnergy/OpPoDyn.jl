@@ -16,15 +16,15 @@ _clamp(u, u_min, u_max) = max(min(u, u_max), u_min)
 @mtkmodel TurbineGovTypeI begin
     @structural_parameters begin
         ω_ref_input=false
-        p_ref_input=false
+        P_ref_input=false
     end
     @components begin
         ω_meas = RealInput()
         if ω_ref_input
             ω_ref = RealInput()
         end
-        if p_ref_input
-            p_ref = RealInput()
+        if P_ref_input
+            P_ref = RealInput()
         end
         τ_m = RealOutput()
     end
@@ -32,11 +32,11 @@ _clamp(u, u_min, u_max) = max(min(u, u_max), u_min)
        if !ω_ref_input
             ω_ref=1, [description="Reference frequency"]
        end
-       if !p_ref_input
-            p_ref, [guess=1, description="Reference power [Machine PU]"]
+       if !P_ref_input
+            P_ref, [guess=1, description="Reference power [Machine PU]"]
        end
-       p_min, [description="Minimum turbine output [Machine PU]"]
-       p_max, [description="Maximum turbine output [Machine PU]"]
+       P_min, [description="Minimum turbine output [Machine PU]"]
+       P_max, [description="Maximum turbine output [Machine PU]"]
        R, [description="Govenor droop [Machine PU]"]
        # TODO: check Tc servo Ts governor
        T_c, [description="Servo time constant [s]"]
@@ -46,20 +46,20 @@ _clamp(u, u_min, u_max) = max(min(u, u_max), u_min)
        T_5, [description="Transient time constant 5 [s]"]
     end
     @variables begin
-        p_droop(t), [description="P after droop (not limited)"]
-        p_lim(t), [description="limited p"]
+        P_droop(t), [description="P after droop (not limited)"]
+        P_lim(t), [description="limited p"]
         x_g1(t)
         x_g2(t)
         x_g3(t)
     end
     begin
         _ω_ref = ω_ref_input ? ω_ref.u : ω_ref
-        _p_ref = p_ref_input ? p_ref.u : p_ref
+        _P_ref = P_ref_input ? P_ref.u : P_ref
     end
     @equations begin
-        p_droop ~ p_ref + 1/R * (_ω_ref - ω_meas)
-        p_lim ~ _clamp(p_droop, p_min, p_max)
-        T_s * Dt(x_g1) ~ p_lim - x_g1
+        P_droop ~ P_ref + 1/R * (_ω_ref - ω_meas)
+        P_lim ~ _clamp(P_droop, P_min, P_max)
+        T_s * Dt(x_g1) ~ P_lim - x_g1
         T_c * Dt(xg2) ~ (1-T_3/T_c)*x_g1 - x_g2
         T_5 * Dt(xg3) ~ (1-T_4/T_5)*(x_g2 + T_3/T_c*x_g1) - x_g3
         Dt(τ_m.u) ~ x_g3 + T_4/T_5*(x_g2 + T_3/T_c*x_g1)
@@ -70,15 +70,15 @@ end
 @mtkmodel TGOV1 begin
     @structural_parameters begin
         ω_ref_input=false
-        p_ref_input=false
+        P_ref_input=false
     end
     @components begin
         ω_meas = RealInput()
         if ω_ref_input
             ω_ref = RealInput()
         end
-        if p_ref_input
-            p_ref = RealInput()
+        if P_ref_input
+            P_ref = RealInput()
         end
         τ_m = RealOutput()
     end
@@ -86,8 +86,8 @@ end
        if !ω_ref_input
             ω_ref=1, [description="Reference frequency"]
        end
-       if !p_ref_input
-            p_ref, [guess=1, description="Reference power [Machine PU]"]
+       if !P_ref_input
+            P_ref, [guess=1, description="Reference power [Machine PU]"]
        end
        V_min, [description="Valve min position"]
        V_max, [description="Valve max position"]
@@ -106,7 +106,7 @@ end
     end
     begin
         _ω_ref = ω_ref_input ? ω_ref.u : ω_ref
-        _p_ref = p_ref_input ? p_ref.u : p_ref
+        _P_ref = P_ref_input ? P_ref.u : P_ref
     end
     @equations begin
         # implementation after blockdiagram
@@ -117,7 +117,7 @@ end
         # Δω ~ ω_meas.u - _ω_ref
         Δω ~ ω_meas.u / _ω_ref - 1
 
-        ref_sig ~ 1/R*(_p_ref  - Δω)
+        ref_sig ~ 1/R*(_P_ref  - Δω)
 
         T_1 * Dt(x_g1) ~ ifelse(
             ((x_g1 > V_max) & (ref_sig > x_g1)) | ((x_g1 < V_min) & (ref_sig < x_g1)),

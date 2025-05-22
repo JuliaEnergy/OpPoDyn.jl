@@ -1,28 +1,28 @@
 @mtkmodel AVRFixed begin
     @components begin
-        v_f = RealOutput()
+        V_f = RealOutput()
     end
     @parameters begin
-        v_f_fixed, [guess=1, description="Fixed field voltage"]
+        V_f_fixed, [guess=1, description="Fixed field voltage"]
     end
     @equations begin
-        v_f.u ~ v_f_fixed
+        V_f.u ~ V_f_fixed
     end
 end
 
 @mtkmodel AVRTypeI begin
     @structural_parameters begin
-       v_ref_input=false
+       V_ref_input=false
        t_meas_lag=true
        anti_windup = true
        ceiling_function=:exponential
     end
     @components begin
-        v_mag = RealInput() # generator terminal voltage
-        if v_ref_input
-            v_ref = RealInput() # reference voltage
+        V_mag = RealInput() # generator terminal voltage
+        if V_ref_input
+            V_ref = RealInput() # reference voltage
         end
-        v_f = RealOutput(guess=1) # field voltage
+        V_f = RealOutput(guess=1) # field voltage
     end
     @parameters begin
         K_a, [description="amplifier gain"]
@@ -34,8 +34,8 @@ end
         if t_meas_lag
             T_r, [description="measurement time constant"]
         end
-        v_rmin, [description="minimum regulator voltage"]
-        v_rmax, [description="maximum regulator voltage"]
+        V_rmin, [description="minimum regulator voltage"]
+        V_rmax, [description="maximum regulator voltage"]
         E_1, [description="1st ceiling voltage"]
         E_2, [description="2nd ceiling voltage"]
         S_e1, [description="1st ceiling saturation"]
@@ -44,56 +44,56 @@ end
             A=_solve_Ae(E1=>Se1, E2=>Se2), [description="1st ceiling coeff"]
             B=_solve_Be(E1=>Se1, E2=>Se2), [description="1st ceiling coeff"]
         end
-        if !v_ref_input
-            v_ref, [guess=1, description="Terminal voltag reference [Machine PU]"]
+        if !V_ref_input
+            V_ref, [guess=1, description="Terminal voltag reference [Machine PU]"]
         end
     end
     begin
-        _v_ref = v_ref_input ? v_ref.u : v_ref
+        _V_ref = V_ref_input ? V_ref.u : V_ref
         if ceiling_function ∉ (:exponential, :quadratic)
             error("Unknown ceiling function: $ceiling_function")
         end
     end
     @variables begin
         # we add an explicit state for vfout to set bounds
-        v_fout(t), [guess=1, bounds=(0,Inf), description="field voltage output"]
-        v_r(t), [guess=0, description="regulator voltage"]
-        v_m(t), [guess=1, description="terminal voltage measurement (lagged)"]
-        v_fceil(t), [description="ceiled field voltage"]
+        V_fout(t), [guess=1, bounds=(0,Inf), description="field voltage output"]
+        V_r(t), [guess=0, description="regulator voltage"]
+        V_m(t), [guess=1, description="terminal voltage measurement (lagged)"]
+        V_fceil(t), [description="ceiled field voltage"]
         amp_in(t), [description="amplifier input"]
-        v_r1(t), [guess=0, description="regulator voltage before Limiter"]
-        v_fb(t), [guess=0, description="feedback voltage"]
+        V_r1(t), [guess=0, description="regulator voltage before Limiter"]
+        V_fb(t), [guess=0, description="feedback voltage"]
     end
     @equations begin
         # implementation after block diagram in milano
         if ceiling_function == :exponential
-            v_fceil ~ v_fout * A * exp(B * abs(v_fout))
+            V_fceil ~ V_fout * A * exp(B * abs(V_fout))
         elseif ceiling_function == :quadratic
-            v_fceil ~ quadratic_ceiling(abs(v_fout), E_1, E_2, S_e1, S_e2)
+            V_fceil ~ quadratic_ceiling(abs(V_fout), E_1, E_2, S_e1, S_e2)
         end
         if t_meas_lag
-            T_r * Dt(v_m) ~ v_mag.u - v_m
+            T_r * Dt(V_m) ~ V_mag.u - V_m
         else
-            v_m ~ v_mag.u
+            V_m ~ V_mag.u
         end
 
-        T_f*Dt(v_fb) ~ K_f*Dt(v_fout) - v_fb
+        T_f*Dt(V_fb) ~ K_f*Dt(V_fout) - V_fb
 
         if anti_windup
-            amp_in ~ K_a*(_v_ref - v_m - v_fb)
-            T_a*Dt(v_r) ~ ifelse(
-                ((v_r > v_rmax) & (amp_in > v_r)) | ((v_r < v_rmin) & (amp_in < v_r)),
+            amp_in ~ K_a*(_V_ref - V_m - V_fb)
+            T_a*Dt(V_r) ~ ifelse(
+                ((V_r > V_rmax) & (amp_in > V_r)) | ((V_r < V_rmin) & (amp_in < V_r)),
                 0,
-                amp_in - v_r)
+                amp_in - V_r)
         else
-            T_a*Dt(v_r1) ~ K_a*(_v_ref - v_m - v_fb) - v_r1
-            v_r ~ max(v_rmin, min(v_rmax, v_r1))
+            T_a*Dt(V_r1) ~ K_a*(_V_ref - V_m - V_fb) - V_r1
+            V_r ~ max(V_rmin, min(V_rmax, V_r1))
         end
 
-        T_e*Dt(v_fout) ~ v_r - v_fceil - K_e*v_fout
+        T_e*Dt(V_fout) ~ V_r - V_fceil - K_e*V_fout
 
         # output
-        v_f.u ~ v_fout
+        V_f.u ~ V_fout
     end
 end
 

@@ -23,16 +23,16 @@ end
 @mtkmodel ClassicBus begin
     @components begin
         machine = Library.ClassicalMachine_powerfactory(;
-            p_m_input=false,
+            P_m_input=false,
             S_b=100,
             V_b=18,
             ω_b=2π*60,
             X′_d,
             R_s=0.0026,
-            vf_set=nothing,
-            p_m_set=nothing,
+            V_f_set=nothing,
+            P_m_set=nothing,
             H,
-             D=0
+            D=0
         )
         busbar = BusBar()
     end
