@@ -37,7 +37,7 @@
         M*Dt(ω) ~ _P_m - D*(ω - _ω_ref) - P_e
 
         P_e ~ terminal.u_r*terminal.i_r + terminal.u_i*terminal.i_i
-        terminal.u_r ~ V*cos(θ)
-        terminal.u_i ~ V*sin(θ)
+        terminal.u_r ~ V_mag*cos(θ)
+        terminal.u_i ~ V_mag*sin(θ)
     end
 end

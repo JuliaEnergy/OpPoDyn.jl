@@ -14,14 +14,14 @@ isinteractive() && using GLMakie
 using Test
 
 @testset "DynawoPiLine" begin
-    @named branchA = DynawoPiLine(XPu=0.022522)
-    @named branchB = DynawoPiLine(XPu=0.04189)
+    @named branchA = DynawoPiLine(X_pu=0.022522)
+    @named branchB = DynawoPiLine(X_pu=0.04189)
     line = Line(MTKLine(branchA, branchB));
     toi = line_between_slacks(line)
     # isinteractive() && plottoi(toi)
     @reftest "DynawoPiLine_1" toi
 
-    @named branchA = DynawoPiLine(XPu=0.022522, RPu=0.01)
+    @named branchA = DynawoPiLine(X_pu=0.022522, R_pu=0.01)
     line = Line(MTKLine(branchA));
     toi = line_between_slacks(line)
     # isinteractive() && plottoi(toi)
@@ -33,7 +33,7 @@ end
     R = 0.2
     G = 0.3
     B = 0.4
-    @named refbranch = DynawoPiLine(XPu=X, RPu=R, GPu=G, BPu=B)
+    @named refbranch = DynawoPiLine(X_pu=X, R_pu=R, G_pu=G, B_pu=B)
     @named branch = PiLine(X=X, R=R, G_src=G, G_dst=G, B_src=B, B_dst=B)
 
     line1 = Line(MTKLine(refbranch))
@@ -54,20 +54,20 @@ end
 end
 
 @testset "Swing bus" begin
-    @named swing = Swing(Pm=1, D=0.1, M=0.005, θ=0, ω=1, V=1)
+    @named swing = Swing(P_m=1, D=0.1, M=0.005, θ=0, ω=1, V_mag=1)
     bus = Bus(MTKBus(swing));
     toi = bus_on_slack(bus)
     # isinteractive() && plottoi(toi)
     @reftest "SwingBus_1" toi
 
     # swing bus with load
-    @named swing = Swing(Pm=1, D=0.1, M=0.005, θ=0, ω=1, V=1)
-    @named pqload = PQLoad(Pset=-0.5, Qset=-0.2)
+    @named swing = Swing(P_m=1, D=0.1, M=0.005, θ=0, ω=1, V_mag=1)
+    @named pqload = PQLoad(P_set=-0.5, Q_set=-0.2)
     bm = MTKBus(swing, pqload)
     @test length(full_equations(simplify_mtkbus(bm))) == 2
     bus = Bus(bm)
     toi = bus_on_slack(bus)
-    toi["active power"]["electric power of swing"] = VIndex(2,:swing₊Pel)
+    toi["active power"]["electric power of swing"] = VIndex(2,:swing₊P_e)
     toi["active power"]["electric power of load"] = VIndex(2,:pqload₊P)
     toi["reactive power"]["electric power of load"] = VIndex(2,:pqload₊Q)
     # isinteractive() && plottoi(toi)
@@ -76,8 +76,8 @@ end
 
 @testset "Dynawo Machine test" begin
     # line model
-    @named branchA = DynawoPiLine(XPu=0.022522)
-    @named branchB = DynawoPiLine(XPu=0.04189)
+    @named branchA = DynawoPiLine(X_pu=0.022522)
+    @named branchB = DynawoPiLine(X_pu=0.04189)
     linem = MTKLine(branchA, branchB)
     linef = Line(linem);
 
@@ -162,31 +162,31 @@ end
     @mtkmodel GenBus begin
         @components begin
             machine = OpPoDyn.Library.IPSLPSATOrder4(;
-                Sn=100,
-                Vn=18,
+                S_n=100,
+                V_n=18,
                 V_b=18,
-                ra=0,
-                xd=0.8958,
-                xq=0.8645,
-                x1d=0.1198,
-                x1q=0.1969,
-                T1d0=6,
-                T1q0=0.5350,
+                R_a=0,
+                X_d=0.8958,
+                X_q=0.8645,
+                X′_d=0.1198,
+                X′_q=0.1969,
+                T′_d0=6,
+                T′_q0=0.5350,
                 M=12.8,
                 D=0,
                 ω_b=2π*50,
                 S_b=100)
             avr = AVRTypeI(
-                vref_input=true,
-                vr_min=-5,
-                vr_max=5,
-                Ka=20,
-                Ta=0.2,
-                Kf=0.063,
-                Tf=0.35,
-                Ke=1,
-                Te=0.314,
-                Tr=0.001,
+                V_ref_input=true,
+                V_rmin=-5,
+                V_rmax=5,
+                K_a=20,
+                T_a=0.2,
+                K_f=0.063,
+                T_f=0.35,
+                K_e=1,
+                T_e=0.314,
+                T_r=0.001,
                 A=0.0039,
                 B=1.555)
             pmech = Blocks.Constant(k=1.63)
@@ -194,10 +194,10 @@ end
             busbar = BusBar()
         end
         @equations begin
-            connect(vref.output, avr.vref)
-            connect(avr.vf, machine.vf)
-            connect(machine.v_mag_out, avr.v_mag)
-            connect(pmech.output, machine.pm)
+            connect(vref.output, avr.V_ref)
+            connect(avr.V_f, machine.V_f)
+            connect(machine.V_mag_out, avr.V_mag)
+            connect(pmech.output, machine.P_m)
             connect(machine.terminal, busbar.terminal)
         end
     end
@@ -220,7 +220,7 @@ end
     @mtkmodel GenBus begin
         @components begin
             machine = OpPoDyn.Library.SauerPaiMachine(;
-                vf_input=false,
+                V_f_input=false,
                 τ_m_input=false,
                 S_b=100,
                 V_b=18,
@@ -258,7 +258,7 @@ end
     @mtkmodel GenBus begin
         @components begin
             machine = OpPoDyn.Library.SauerPaiMachine(;
-                vf_input=true,
+                V_f_input=true,
                 τ_m_input=true,
                 S_b=100,
                 V_b=18,
@@ -274,32 +274,32 @@ end
                 H=23.64,
             )
             avr = AVRTypeI(
-                vr_min=-5,
-                vr_max=5,
-                Ka=20,
-                Ta=0.2,
-                Kf=0.063,
-                Tf=0.35,
-                Ke=1,
-                Te=0.314,
+                V_rmin=-5,
+                V_rmax=5,
+                K_a=20,
+                T_a=0.2,
+                K_f=0.063,
+                T_f=0.35,
+                K_e=1,
+                T_e=0.314,
                 A, B,
-                tmeas_lag=false)
+                t_meas_lag=false)
             gov = TGOV1(
                 R=0.05,
-                T1=0.05,
-                T2=2.1,
-                T3=7.0,
-                DT=0,
+                T_1=0.05,
+                T_2=2.1,
+                T_3=7.0,
+                D=0,
                 V_max=5,
                 V_min=-5)
             busbar = BusBar()
         end
         @equations begin
             connect(machine.terminal, busbar.terminal)
-            connect(machine.v_mag_out, avr.v_mag)
-            connect(avr.vf, machine.vf_in)
+            connect(machine.V_mag_out, avr.V_mag)
+            connect(avr.V_f, machine.V_f_in)
             connect(gov.τ_m, machine.τ_m_in)
-            connect(machine.ωout, gov.ω_meas)
+            connect(machine.ω_out, gov.ω_meas)
         end
     end
     @named mtkbus = GenBus()
@@ -314,17 +314,17 @@ end
 end
 
 @testset "test loads" begin
-    @named load = PQLoad(Pset=-0.5, Qset=-0.5)
+    @named load = PQLoad(P_set=-0.5, Q_set=-0.5)
     bus = Bus(MTKBus(load));
     toi = bus_on_slack(bus)
     isinteractive() && plottoi(toi)
 
-    @named load = VoltageDependentLoad(Pset=-0.5, Qset=-0.5, Vn=1, αP=1, αQ=1)
+    @named load = VoltageDependentLoad(P_set=-0.5, Q_set=-0.5, V_n=1, α_P=1, α_Q=1)
     bus = Bus(MTKBus(load));
     toi = bus_on_slack(bus)
     isinteractive() && plottoi(toi)
 
-    @named load = ConstantYLoad(Pset=-0.5, Qset=-0.5, Vset=1)
+    @named load = ConstantYLoad(P_set=-0.5, Q_set=-0.5, V_set=1)
     bus = Bus(MTKBus(load));
     toi = bus_on_slack(bus)
     isinteractive() && plottoi(toi)
@@ -332,17 +332,17 @@ end
 
 @testset "test zip load" begin
     # constant power
-    @named load = ZIPLoad(Pset=-1, Qset=-1, Vset=1,
-                          KpZ=0, KpI=0, KpC=1,
-                          KqZ=0, KqI=0, KqC=1)
+    @named load = ZIPLoad(P_set=-1, Q_set=-1, V_set=1,
+                          K_pZ=0, K_pI=0, K_pC=1,
+                          K_qZ=0, K_qI=0, K_qC=1)
     bus = Bus(MTKBus(load))
     toi = bus_on_slack(bus)
     isinteractive() && plottoi(toi)
 
     # constant current
-    @named load = ZIPLoad(Pset=-1, Qset=-1, Vset=1,
-                          KpZ=0, KpI=1, KpC=0,
-                          KqZ=0, KqI=1, KqC=0)
+    @named load = ZIPLoad(P_set=-1, Q_set=-1, V_set=1,
+                          K_pZ=0, K_pI=1, K_pC=0,
+                          K_qZ=0, K_qI=1, K_qC=0)
     bus = Bus(MTKBus(load))
     toi = bus_on_slack(bus)
     toi["current"] = OrderedDict(
@@ -353,9 +353,9 @@ end
     isinteractive() && plottoi(toi)
 
     # constant Z
-    @named load = ZIPLoad(Pset=-1, Qset=-1, Vset=1,
-                          KpZ=1, KpI=0, KpC=0,
-                          KqZ=1, KqI=0, KqC=0)
+    @named load = ZIPLoad(P_set=-1, Q_set=-1, V_set=1,
+                          K_pZ=1, K_pI=0, K_pC=0,
+                          K_qZ=1, K_qI=0, K_qC=0)
     bus = Bus(MTKBus(load))
     toi = bus_on_slack(bus)
     toi["current"] = OrderedDict(
@@ -400,13 +400,13 @@ end
 end
 
 @testset "AVR model" begin
-    E1 = 3.5461
-    E2 = 4.7281
-    Se1 = 0.08
-    Se2 = 0.26
-    se_quad = x -> Library.quadratic_ceiling(x, E1, E2, Se1, Se2)
-    Ae, Be = Library.solve_ceilf(E1=>Se1, E2=>Se2)
-    se_exp  = x -> Ae* exp(Be*x)
+    E_1 = 3.5461
+    E_2 = 4.7281
+    S_e1 = 0.08
+    S_e2 = 0.26
+    se_quad = x -> Library.quadratic_ceiling(x, E_1, E_2, S_e1, S_e2)
+    A, B = Library.solve_ceilf(E_1=>S_e1, E_2=>S_e2)
+    se_exp  = x -> A* exp(B*x)
 
     if isinteractive()
         let fig = Figure()
@@ -415,7 +415,7 @@ end
             lines!(ax, xs, se_quad.(xs); label="quad")
             lines!(ax, xs, se_exp.(xs); label="exp")
             axislegend(ax)
-            scatter!(ax, [(E1, Se1), (E2, Se2)])
+            scatter!(ax, [(E_1, S_e1), (E_2, S_e2)])
             fig
         end
     end

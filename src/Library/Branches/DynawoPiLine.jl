@@ -31,10 +31,10 @@
         # (src.i_r + im*src.i_i) ~ ((src.u_r + im*src.u_i) - (dst.u_r + im*dst.u_i))/(RPu+im*XPu) + (GPu+im*BPu) * (src.u_r + im*src.u_i)
         # (dst.i_r + im*dst.i_i) ~ ((dst.u_r + im*dst.u_i) - (src.u_r + im*src.u_i))/(RPu+im*XPu) + (GPu+im*BPu) * (dst.u_r + im*dst.u_i)
 
-        simplify(-src.i_r ~ real(((src.u_r + im*src.u_i) - (dst.u_r + im*dst.u_i))/(RPu+im*XPu) + (GPu+im*BPu) * (src.u_r + im*src.u_i)))
-        simplify(-src.i_i ~ imag(((src.u_r + im*src.u_i) - (dst.u_r + im*dst.u_i))/(RPu+im*XPu) + (GPu+im*BPu) * (src.u_r + im*src.u_i)))
-        simplify(-dst.i_r ~ real(((dst.u_r + im*dst.u_i) - (src.u_r + im*src.u_i))/(RPu+im*XPu) + (GPu+im*BPu) * (dst.u_r + im*dst.u_i)))
-        simplify(-dst.i_i ~ imag(((dst.u_r + im*dst.u_i) - (src.u_r + im*src.u_i))/(RPu+im*XPu) + (GPu+im*BPu) * (dst.u_r + im*dst.u_i)))
+        simplify(-src.i_r ~ real(((src.u_r + im*src.u_i) - (dst.u_r + im*dst.u_i))/(R_pu+im*X_pu) + (G_pu+im*B_pu) * (src.u_r + im*src.u_i)))
+        simplify(-src.i_i ~ imag(((src.u_r + im*src.u_i) - (dst.u_r + im*dst.u_i))/(R_pu+im*X_pu) + (G_pu+im*B_pu) * (src.u_r + im*src.u_i)))
+        simplify(-dst.i_r ~ real(((dst.u_r + im*dst.u_i) - (src.u_r + im*src.u_i))/(R_pu+im*X_pu) + (G_pu+im*B_pu) * (dst.u_r + im*dst.u_i)))
+        simplify(-dst.i_i ~ imag(((dst.u_r + im*dst.u_i) - (src.u_r + im*src.u_i))/(R_pu+im*X_pu) + (G_pu+im*B_pu) * (dst.u_r + im*dst.u_i)))
     end
 end
 

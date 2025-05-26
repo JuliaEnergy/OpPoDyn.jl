@@ -30,10 +30,10 @@ end
         r_Tfo_pu=1, [description="Transformation ratio in pu: Udst/Usrc in no load conditions"]
     end
     @equations begin
-        src.i_r ~ simplify(real(-rTfoPu*(rTfoPu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(RPu+im*XPu)))
-        src.i_i ~ simplify(imag(-rTfoPu*(rTfoPu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(RPu+im*XPu)))
-        dst.i_r ~ simplify(real((rTfoPu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(RPu+im*XPu) - (GPu+im*BPu) * (dst.u_r + im*dst.u_i)))
-        dst.i_i ~ simplify(imag((rTfoPu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(RPu+im*XPu) - (GPu+im*BPu) * (dst.u_r + im*dst.u_i)))
+        src.i_r ~ simplify(real(-r_Tfo_pu*(r_Tfo_pu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(R_pu+im*X_pu)))
+        src.i_i ~ simplify(imag(-r_Tfo_pu*(r_Tfo_pu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(R_pu+im*X_pu)))
+        dst.i_r ~ simplify(real((r_Tfo_pu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(R_pu+im*X_pu) - (G_pu+im*B_pu) * (dst.u_r + im*dst.u_i)))
+        dst.i_i ~ simplify(imag((r_Tfo_pu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(R_pu+im*X_pu) - (G_pu+im*B_pu) * (dst.u_r + im*dst.u_i)))
     end
 end
 

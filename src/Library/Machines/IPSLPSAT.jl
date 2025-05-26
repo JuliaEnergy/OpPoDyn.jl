@@ -77,7 +77,7 @@
         Dt(ω) ~ (P_m.u/S_b*S_n - P_e - D*(ω - 1))/M
 
         # internal transients
-        Dt(V_′q) ~ ((-V′_q) - (X_d - X′_d)*I_d + V_f.u*V_b/V_n)/T′_d0;
+        Dt(V′_q) ~ ((-V′_q) - (X_d - X′_d)*I_d + V_f.u*V_b/V_n)/T′_d0;
         Dt(V′_d) ~ ifelse(abs(X_d - X′_q) < 1e-16,
                          ((-V′_d) + (X_q - X′_q)*I_q)/T′_q0,
                          (-V′_d)/T′_q0)
