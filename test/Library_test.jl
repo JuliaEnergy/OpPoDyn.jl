@@ -53,6 +53,27 @@ end
     @test out_dst_1 ≈ out_dst_2
 end
 
+@testset "PiLine_shortcircuit" begin
+    R = 0.3
+    X = 0.16
+    B = 0.3
+    @named branch = PiLine_fault(R=R, X=X, B_src=B/2, B_dst=B/2)
+    line = Line(MTKLine(branch));
+    toi = line_between_slacks(line)
+    # isinteractive() && plottoi(toi)
+    @reftest "PiLine_faultTestA" toi
+
+    @named branch = PiLine_fault(R=R, X=X, B_src=B/2, B_dst=B/2, sc=1)
+    line = Line(MTKLine(branch));
+    toi = line_between_slacks(line)
+    @reftest "PiLine_faultTestB" toi
+
+    @named branch = PiLine_fault(R=R, X=X, B_src=B/2, B_dst=B/2, sc=1, active=0)
+    line = Line(MTKLine(branch));
+    toi = line_between_slacks(line)
+    @reftest "PiLine_faultTestC" toi
+end
+
 @testset "Swing bus" begin
     @named swing = Swing(P_m=1, D=0.1, M=0.005, θ=0, ω=1, V_mag=1)
     bus = Bus(MTKBus(swing));
@@ -212,7 +233,8 @@ end
     initialize_component!(bus)
 
     toi = bus_on_slack(bus; tmax=600, toilength=10_000)
-    isinteractive() && plottoi(toi)
+    #isinteractive() && plottoi(toi)
+    @reftest "IPSLPSAT" toi
 end
 
 
@@ -249,7 +271,8 @@ end
     initialize_component!(bus)
 
     toi = bus_on_slack(bus; tmax=600, toilength=10_000)
-    isinteractive() && plottoi(toi)
+    #isinteractive() && plottoi(toi)
+    @reftest "SauerPai" toi
 end
 
 @testset "SauerPai Generator with AVR and GOV" begin
@@ -310,24 +333,28 @@ end
     initialize_component!(bus)
 
     toi = bus_on_slack(bus; tmax=600, toilength=10_000)
-    isinteractive() && plottoi(toi)
+    #isinteractive() && plottoi(toi)
+    @reftest "SauerPai_AVRGOV" toi
 end
 
 @testset "test loads" begin
     @named load = PQLoad(P_set=-0.5, Q_set=-0.5)
     bus = Bus(MTKBus(load));
     toi = bus_on_slack(bus)
-    isinteractive() && plottoi(toi)
+    #isinteractive() && plottoi(toi)
+    @reftest "PQLoad" toi
 
     @named load = VoltageDependentLoad(P_set=-0.5, Q_set=-0.5, V_n=1, α_P=1, α_Q=1)
     bus = Bus(MTKBus(load));
     toi = bus_on_slack(bus)
-    isinteractive() && plottoi(toi)
+    #isinteractive() && plottoi(toi)
+    @reftest "VolatageDependentLoad" toi
 
     @named load = ConstantYLoad(P_set=-0.5, Q_set=-0.5, V_set=1)
     bus = Bus(MTKBus(load));
     toi = bus_on_slack(bus)
-    isinteractive() && plottoi(toi)
+    #isinteractive() && plottoi(toi)
+    @reftest "ConstantYLoad" toi
 end
 
 @testset "test zip load" begin
@@ -337,7 +364,8 @@ end
                           K_qZ=0, K_qI=0, K_qC=1)
     bus = Bus(MTKBus(load))
     toi = bus_on_slack(bus)
-    isinteractive() && plottoi(toi)
+    #isinteractive() && plottoi(toi)
+    @reftest "ZIPLoad_powerconst" toi
 
     # constant current
     @named load = ZIPLoad(P_set=-1, Q_set=-1, V_set=1,
@@ -350,7 +378,8 @@ end
         "real current" => VIndex(2,:load₊terminal₊i_r),
         "imaginary current" => VIndex(2,:load₊terminal₊i_i),
     )
-    isinteractive() && plottoi(toi)
+    #isinteractive() && plottoi(toi)
+    @reftest "ZIPLoad_currentconst" toi
 
     # constant Z
     @named load = ZIPLoad(P_set=-1, Q_set=-1, V_set=1,
@@ -363,7 +392,8 @@ end
         "real current" => VIndex(2,:load₊terminal₊i_r),
         "imaginary current" => VIndex(2,:load₊terminal₊i_i),
     )
-    isinteractive() && plottoi(toi) # neither i nor p is constant
+    #isinteractive() && plottoi(toi) # neither i nor p is constant
+    @reftest "ZIPLoad_Zconst" toi
 end
 
 @testset "Classical machine" begin
@@ -396,7 +426,148 @@ end
     initialize_component!(bus)
 
     toi = bus_on_slack(bus; tmax=600, toilength=10_000)
-    isinteractive() && plottoi(toi)
+    #isinteractive() && plottoi(toi)
+    @reftest "ClassicalMachine" toi
+end
+
+@testset "Classical machine PowerFactory" begin
+    @mtkmodel GenBus begin
+        @components begin
+            machine = Library.ClassicalMachine_powerfactory(;
+                P_m_input=false,
+                S_b=100,
+                V_b=18,
+                ω_b=2π*60,
+                X′_d=0.0608,
+                R_s=0.000124,
+                H=23.64,
+            )
+            busbar = BusBar()
+        end
+        @equations begin
+            connect(machine.terminal, busbar.terminal)
+        end
+    end
+    @named mtkbus = GenBus()
+
+    simp = simplify_mtkbus(mtkbus)
+    full_equations(simp)
+    observed(simp)
+
+    bus = Bus(mtkbus)
+    set_voltage!(bus; mag=1.017, arg=0.0295)
+    set_current!(bus; P=0.716, Q=0.3025)
+    initialize_component!(bus)
+
+    toi = bus_on_slack(bus; tmax=600, toilength=10_000)
+    #isinteractive() && plottoi(toi)
+    @reftest "ClassicalMachine_PowerFactory" toi
+end
+
+@testset "PF Standard Model machine - salient pole" begin
+    @mtkmodel GenBus begin
+        @components begin
+            machine = Library.StandardModel_pf(;
+                τ_m_input=false,
+                 V_f_input = false,
+                S_b=100,
+                S_n=100,
+                V_b=18,
+                V_n=18,
+                ω_b=2π*60,
+                salientpole=1,
+                H=9,
+                D=0,
+                R_s=0,
+                X_rld=0,
+                X_rlq=0,
+                X_d=0.36,
+                X_q=0.24,
+                X′_d=0.15,
+                X″_d=0.1,
+                X″_q=0.1,
+                X_ls=0.08,
+                T′_d0=9,
+                T″_d0=0.07,
+                T″_q0=0.15,
+                dpe=0,
+                dkd=0,
+                cosn=1,
+            )
+            busbar = BusBar()
+        end
+        @equations begin
+            connect(machine.terminal, busbar.terminal)
+        end
+    end
+    @named mtkbus = GenBus()
+
+    simp = simplify_mtkbus(mtkbus)
+    full_equations(simp)
+    observed(simp)
+
+    bus = Bus(mtkbus)
+    set_voltage!(bus; mag=1.017, arg=0.0295)
+    set_current!(bus; P=0.716, Q=0.3025)
+    initialize_component!(bus)
+
+    toi = bus_on_slack(bus; tmax=600, toilength=10_000)
+    #isinteractive() && plottoi(toi)
+    @reftest "PFStandardModel_salientpole" toi
+end
+
+@testset "PF Standard Model machine - cylindrical rotor" begin
+    @mtkmodel GenBus begin
+        @components begin
+            machine = Library.StandardModel_pf(;
+                τ_m_input=false,
+                 V_f_input = false,
+                S_b=100,
+                S_n=100,
+                V_b=18,
+                V_n=18,
+                ω_b=2π*60,
+                salientpole=0,
+                H=9,
+                D=0,
+                R_s=0,
+                X_rld=0,
+                X_rlq=0,
+                X_d=0.36,
+                X_q=0.24,
+                X′_q=0.4,
+                X′_d=0.15,
+                X″_d=0.1,
+                X″_q=0.1,
+                X_ls=0.08,
+                T′_d0=9,
+                T′_q0=0.5,
+                T″_d0=0.07,
+                T″_q0=0.15,
+                dpe=0,
+                dkd=0,
+                cosn=1,
+            )
+            busbar = BusBar()
+        end
+        @equations begin
+            connect(machine.terminal, busbar.terminal)
+        end
+    end
+    @named mtkbus = GenBus()
+
+    simp = simplify_mtkbus(mtkbus)
+    full_equations(simp)
+    observed(simp)
+
+    bus = Bus(mtkbus)
+    set_voltage!(bus; mag=1.017, arg=0.0295)
+    set_current!(bus; P=0.716, Q=0.3025)
+    initialize_component!(bus)
+
+    toi = bus_on_slack(bus; tmax=600, toilength=10_000)
+    #isinteractive() && plottoi(toi)
+    @reftest "PFStandardModel_nonsalientpole" toi
 end
 
 @testset "AVR model" begin
@@ -420,3 +591,4 @@ end
         end
     end
 end
+

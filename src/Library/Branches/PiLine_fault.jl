@@ -2,9 +2,9 @@
     @parameters begin
         R, [description="Resistance of branch in pu"]
         X, [description="Reactance of branch in pu"]
-        G_src, [description="Conductance of src shunt"]
+        G_src=0, [description="Conductance of src shunt"]
         B_src, [description="Susceptance of src shunt"]
-        G_dst, [description="Conductance of dst shunt"]
+        G_dst=0, [description="Conductance of dst shunt"]
         B_dst, [description="Susceptance of dst shunt"]
         r_src=1, [description="Src end transformation ratio"]
         r_dst=1, [description="Dst end transformation ratio"]
