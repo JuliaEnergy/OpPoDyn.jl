@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>IEEE 9Bus Example · OpPoDyn.jl</title><meta name="title" content="IEEE 9Bus Example · OpPoDyn.jl"/><meta property="og:title" content="IEEE 9Bus Example · OpPoDyn.jl"/><meta property="twitter:title" content="IEEE 9Bus Example · OpPoDyn.jl"/><meta name="description" content="Documentation for OpPoDyn.jl."/><meta property="og:description" content="Documentation for OpPoDyn.jl."/><meta property="twitter:description" content="Documentation for OpPoDyn.jl."/><meta property="og:url" content="https://juliaenergy.github.io/OpPoDyn.jl/generated/ieee9bus/"/><meta property="twitter:url" content="https://juliaenergy.github.io/OpPoDyn.jl/generated/ieee9bus/"/><link rel="canonical" href="https://juliaenergy.github.io/OpPoDyn.jl/generated/ieee9bus/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">OpPoDyn.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../ModelingConcepts/">Modeling Concepts</a></li><li><span class="tocitem">Examples</span><ul><li class="is-active"><a class="tocitem" href>IEEE 9Bus Example</a><ul class="internal"><li><a class="tocitem" href="#Generator-Busses"><span>Generator Busses</span></a></li><li><a class="tocitem" href="#Load-Busses"><span>Load Busses</span></a></li><li><a class="tocitem" href="#Generate-Dynamical-models"><span>Generate Dynamical models</span></a></li><li><a class="tocitem" href="#Branches"><span>Branches</span></a></li><li><a class="tocitem" href="#Build-Network"><span>Build Network</span></a></li><li><a class="tocitem" href="#Powerflow"><span>Powerflow</span></a></li><li><a class="tocitem" href="#Component-initialization"><span>Component initialization</span></a></li><li><a class="tocitem" href="#Disturbance"><span>Disturbance</span></a></li><li><a class="tocitem" href="#Build-Network-2"><span>Build Network</span></a></li><li><a class="tocitem" href="#Plotting-the-Solution"><span>Plotting the Solution</span></a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>IEEE 9Bus Example</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>IEEE 9Bus Example</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaEnergy/OpPoDyn.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaEnergy/OpPoDyn.jl/blob/main/docs/examples/ieee9bus.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="IEEE-9Bus-Example"><a class="docs-heading-anchor" href="#IEEE-9Bus-Example">IEEE 9Bus Example</a><a id="IEEE-9Bus-Example-1"></a><a class="docs-heading-anchor-permalink" href="#IEEE-9Bus-Example" title="Permalink"></a></h1><p>In this example, we&#39;re going to model the IEEE 9 bus system.</p><p>The parameters are mainly adopted from the RTDS data.</p><pre><code class="language-julia hljs">using OpPoDyn
+using OpPoDyn.Library
+using ModelingToolkit
+using NetworkDynamics
+using Graphs
+using OrdinaryDiffEqRosenbrock
+using OrdinaryDiffEqNonlinearSolve
+using CairoMakie</code></pre><h2 id="Generator-Busses"><a class="docs-heading-anchor" href="#Generator-Busses">Generator Busses</a><a id="Generator-Busses-1"></a><a class="docs-heading-anchor-permalink" href="#Generator-Busses" title="Permalink"></a></h2><p>The 3 generator buses are modeld using a SauerPai 6th order machine model with variable field voltage and mechanical torque input. The field voltage is provided by an <code>AVRTypeI</code>, the torque is provide by a <code>TGOV1</code> model.</p><pre><code class="language-julia hljs">@mtkmodel GenBus begin
+    @components begin
+        machine = SauerPaiMachine(;
+            vf_input=true,
+            τ_m_input=true,
+            S_b=100,
+            V_b=1,
+            ω_b=2π*60,
+            R_s=0.000125,
+            T″_d0=0.01,
+            T″_q0=0.01,
+            X_d, X′_d, X″_d, X_q, X′_q, X″_q, X_ls, T′_d0, T′_q0, H # free per machine parameter
+        )
+        avr = AVRTypeI(vr_min=-5, vr_max=5,
+            Ka=20, Ta=0.2,
+            Kf=0.063, Tf=0.35,
+            Ke=1, Te=0.314,
+            E1=3.3, Se1=0.6602, E2=4.5, Se2=4.2662,
+            tmeas_lag=false)
+        gov = TGOV1(R=0.05, T1=0.05, T2=2.1, T3=7.0, DT=0, V_max=5, V_min=-5)
+        busbar = BusBar()
+    end
+    @equations begin
+        connect(machine.terminal, busbar.terminal)
+        connect(machine.v_mag_out, avr.v_mag)
+        connect(avr.vf, machine.vf_in)
+        connect(gov.τ_m, machine.τ_m_in)
+        connect(machine.ωout, gov.ω_meas)
+    end
+end</code></pre><h2 id="Load-Busses"><a class="docs-heading-anchor" href="#Load-Busses">Load Busses</a><a id="Load-Busses-1"></a><a class="docs-heading-anchor-permalink" href="#Load-Busses" title="Permalink"></a></h2><p>The dynamic loads are modeld as static Y-loads. Those have 3 parameters: <code>Pset</code>, <code>Qset</code> and <code>Vset</code>. The <code>Vset</code> parameter is left free for now. Later on it is automaticially determined to match the behavior of the static power flow load model.</p><pre><code class="language-julia hljs">@mtkmodel LoadBus begin
+    @components begin
+        busbar = BusBar()
+        load = ConstantYLoad(Pset, Qset)
+    end
+    @equations begin
+        connect(load.terminal, busbar.terminal)
+    end
+end</code></pre><h2 id="Generate-Dynamical-models"><a class="docs-heading-anchor" href="#Generate-Dynamical-models">Generate Dynamical models</a><a id="Generate-Dynamical-models-1"></a><a class="docs-heading-anchor-permalink" href="#Generate-Dynamical-models" title="Permalink"></a></h2><p>The parameters of the machines are obtaind from the data table from the RTDS datasheet.</p><pre><code class="language-julia hljs">gen1p = (;machine__X_ls=0.01460, machine__X_d=0.1460, machine__X′_d=0.0608, machine__X″_d=0.06, machine__X_q=0.1000, machine__X′_q=0.0969, machine__X″_q=0.06, machine__T′_d0=8.96, machine__T′_q0=0.310, machine__H=23.64)
+gen2p = (;machine__X_ls=0.08958, machine__X_d=0.8958, machine__X′_d=0.1198, machine__X″_d=0.11, machine__X_q=0.8645, machine__X′_q=0.1969, machine__X″_q=0.11, machine__T′_d0=6.00, machine__T′_q0=0.535, machine__H= 6.40)
+gen3p = (;machine__X_ls=0.13125, machine__X_d=1.3125, machine__X′_d=0.1813, machine__X″_d=0.18, machine__X_q=1.2578, machine__X′_q=0.2500, machine__X″_q=0.18, machine__T′_d0=5.89, machine__T′_q0=0.600, machine__H= 3.01)</code></pre><p>We instantiate all models as modeling toolkit models.</p><pre><code class="language-julia hljs">@named mtkbus1 = GenBus(; gen1p...)
+@named mtkbus2 = GenBus(; gen2p...)
+@named mtkbus3 = GenBus(; gen3p...)
+@named mtkbus4 = MTKBus()
+@named mtkbus5 = LoadBus(;load__Pset=-1.25, load__Qset=-0.5)
+@named mtkbus6 = LoadBus(;load__Pset=-0.90, load__Qset=-0.3)
+@named mtkbus7 = MTKBus()
+@named mtkbus8 = LoadBus(;load__Pset=-1.0, load__Qset=-0.35)
+@named mtkbus9 = MTKBus()</code></pre><p>After this, we can build the <code>NetworkDynamics</code> components using the <code>Bus</code>-constructor.</p><p>The <code>Bus</code> constructor is essentially a thin wrapper around the <code>VertexModel</code> constructor which, per default, adds some metadata. For example the <code>vidx</code> property which later on allows for &quot;graph free&quot; network dynamics instantiation.</p><p>We use the <code>pf</code> keyword to specify the models which should be used in the powerflow calculation. Here, generator 1 is modeld as a slack bus while the other two generators are modeled as a PV bus. The loads are modeled as PQ buses.</p><pre><code class="language-julia hljs">@named bus1 = Bus(mtkbus1; vidx=1, pf=pfSlack(V=1.04))
+@named bus2 = Bus(mtkbus2; vidx=2, pf=pfPV(V=1.025, P=1.63))
+@named bus3 = Bus(mtkbus3; vidx=3, pf=pfPV(V=1.025, P=0.85))
+@named bus4 = Bus(mtkbus4; vidx=4)
+@named bus5 = Bus(mtkbus5; vidx=5, pf=pfPQ(P=-1.25, Q=-0.5))
+@named bus6 = Bus(mtkbus6; vidx=6, pf=pfPQ(P=-0.9, Q=-0.3))
+@named bus7 = Bus(mtkbus7; vidx=7)
+@named bus8 = Bus(mtkbus8; vidx=8, pf=pfPQ(P=-1.0, Q=-0.35))
+@named bus9 = Bus(mtkbus9; vidx=9)</code></pre><h2 id="Branches"><a class="docs-heading-anchor" href="#Branches">Branches</a><a id="Branches-1"></a><a class="docs-heading-anchor-permalink" href="#Branches" title="Permalink"></a></h2><p>Branches and Transformers are build from the same <code>PILine</code> model with optional transformer on both ends. However, the data is provided in a way that the actual transformer values are 1.0. Apparently, the transforming action has been absorbed into the line parameters according to the base voltage on both ends.</p><p>For the lines we again make use of the <code>src</code> and <code>dst</code> metadata of the <code>EdgeModel</code> objects for automatic graph construction.</p><pre><code class="language-julia hljs">function piline(; R, X, B)
+    @named pibranch = PiLine(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0)
+    MTKLine(pibranch)
+end
+function transformer(; R, X)
+    @named transformer = PiLine(;R, X, B_src=0, B_dst=0, G_src=0, G_dst=0)
+    MTKLine(transformer)
+end
+
+@named l45 = Line(piline(; R=0.0100, X=0.0850, B=0.1760), src=4, dst=5)
+@named l46 = Line(piline(; R=0.0170, X=0.0920, B=0.1580), src=4, dst=6)
+@named l57 = Line(piline(; R=0.0320, X=0.1610, B=0.3060), src=5, dst=7)
+@named l69 = Line(piline(; R=0.0390, X=0.1700, B=0.3580), src=6, dst=9)
+@named l78 = Line(piline(; R=0.0085, X=0.0720, B=0.1490), src=7, dst=8)
+@named l89 = Line(piline(; R=0.0119, X=0.1008, B=0.2090), src=8, dst=9)
+@named t14 = Line(transformer(; R=0, X=0.0576), src=1, dst=4)
+@named t27 = Line(transformer(; R=0, X=0.0625), src=2, dst=7)
+@named t39 = Line(transformer(; R=0, X=0.0586), src=3, dst=9)</code></pre><h2 id="Build-Network"><a class="docs-heading-anchor" href="#Build-Network">Build Network</a><a id="Build-Network-1"></a><a class="docs-heading-anchor-permalink" href="#Build-Network" title="Permalink"></a></h2><p>Finally, we can build the network by providing the vertices and edges.</p><pre><code class="language-julia hljs">vertexfs = [bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9];
+edgefs = [l45, l46, l57, l69, l78, l89, t14, t27, t39];
+nw = Network(vertexfs, edgefs)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Network with 54 states and 219 parameters
+ ├─ 9 vertices (3 unique types)
+ └─ 9 edges (2 unique types)
+Edge-Aggregation using SequentialAggregator(+)</code></pre><h2 id="Powerflow"><a class="docs-heading-anchor" href="#Powerflow">Powerflow</a><a id="Powerflow-1"></a><a class="docs-heading-anchor-permalink" href="#Powerflow" title="Permalink"></a></h2><p>To initialize the system, we first solve the static powerflow problem. Internally, <code>OpPoDyn.jl</code> builds an equivalent network but replaces each dynamic model with the given static power flow model. The static powerflow problem is solved, after which the power flow solution (bus voltages and currents) are stored as <code>default</code> values in the vertex models.</p><pre><code class="language-julia hljs">solve_powerflow!(nw)</code></pre><h2 id="Component-initialization"><a class="docs-heading-anchor" href="#Component-initialization">Component initialization</a><a id="Component-initialization-1"></a><a class="docs-heading-anchor-permalink" href="#Component-initialization" title="Permalink"></a></h2><p>The power flow solution provided all the &quot;interface states&quot; (i.e. voltages and currents). With that information, we can initialize the free states and parameters of the dynamic models, such that the dynamic steady state matches the static power flow solution.</p><p>When calling <code>initialize!</code>,  <code>OpPoDyn.jl</code> will loop through all the dynamic models in the system, automaticially creating and solving a nonlinear initialization problem for each of them.</p><p>Concretly, here were solving for the following things:</p><ul><li>unknown <code>Vset</code> for load busses,</li><li>unknown internal machine and controller states as well as the free govenor and avr references (parameters) of the generator busses.</li></ul><pre><code class="language-julia hljs">OpPoDyn.initialize!(nw)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr32">bus1 successful! (12/2 free states/p; residual=1.8930559495150788e-14)</span>
+<span class="sgr32">bus2 successful! (12/2 free states/p; residual=2.3543960541018542e-14)</span>
+<span class="sgr32">bus3 successful! (12/2 free states/p; residual=1.0419944301060743e-13)</span>
+<span class="sgr32">bus4 successful! (0/0 free states/p; residual=1.9298110615968595e-15)</span>
+<span class="sgr32">bus5 successful! (0/1 free states/p; residual=3.205623593959785e-14)</span>
+<span class="sgr32">bus6 successful! (0/1 free states/p; residual=3.0197380663588776e-14)</span>
+<span class="sgr32">bus7 successful! (0/0 free states/p; residual=1.8457457784393227e-15)</span>
+<span class="sgr32">bus8 successful! (0/1 free states/p; residual=9.764683184748077e-14)</span>
+<span class="sgr32">bus9 successful! (0/0 free states/p; residual=8.345155887641791e-16)</span></code></pre><h2 id="Disturbance"><a class="docs-heading-anchor" href="#Disturbance">Disturbance</a><a id="Disturbance-1"></a><a class="docs-heading-anchor-permalink" href="#Disturbance" title="Permalink"></a></h2><p>To see some dynamics, we need to introduce some disturbance. For that we use a <a href="https://juliadynamics.github.io/NetworkDynamics.jl/stable/API/#NetworkDynamics.PresetTimeComponentCallback"><code>PresetTimeComponentCallback</code></a> to deactivate a line at a certain time.</p><pre><code class="language-julia hljs">deactivate_line = ComponentAffect([], [:pibranch₊active]) do u, p, ctx
+    @info &quot;Deactivate line $(ctx.src)=&gt;$(ctx.dst) at t=$(ctx.t)&quot;
+    p[:pibranch₊active] = 0
+end
+cb = PresetTimeComponentCallback([1.0], deactivate_line)
+set_callback!(l46, cb)</code></pre><h2 id="Build-Network-2"><a class="docs-heading-anchor" href="#Build-Network-2">Build Network</a><a class="docs-heading-anchor-permalink" href="#Build-Network-2" title="Permalink"></a></h2><p>Finally, we can build the network by providing the vertices and edges.</p><pre><code class="language-julia hljs">u0 = NWState(nw)
+prob = ODEProblem(nw, uflat(u0), (0,15), pflat(u0); callback=get_callbacks(nw))
+sol = solve(prob, Rodas5P())
+nothing</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr36"><span class="sgr1">[ Info: </span></span>Deactivate line 4=&gt;6 at t=1.0</code></pre><h2 id="Plotting-the-Solution"><a class="docs-heading-anchor" href="#Plotting-the-Solution">Plotting the Solution</a><a id="Plotting-the-Solution-1"></a><a class="docs-heading-anchor-permalink" href="#Plotting-the-Solution" title="Permalink"></a></h2><pre><code class="language-julia hljs">fig = Figure(size=(600,800));
+ax = Axis(fig[1, 1]; title=&quot;Active power&quot;)
+for i in [1,2,3,5,6,8]
+    lines!(ax, sol; idxs=VIndex(i,:busbar₊P), label=&quot;Bus $i&quot;, color=Cycled(i))
+end
+axislegend(ax)
+ax = Axis(fig[2, 1]; title=&quot;Voltage magnitude&quot;)
+for i in 1:9
+    lines!(ax, sol; idxs=VIndex(i,:busbar₊u_mag), label=&quot;Bus $i&quot;, color=Cycled(i))
+end
+axislegend(ax)
+ax = Axis(fig[3, 1]; title=&quot;Frequency&quot;)
+for i in 1:3
+    lines!(ax, sol; idxs=VIndex(i,:machine₊ω), label=&quot;Bus $i&quot;, color=Cycled(i))
+end
+axislegend(ax)</code></pre><img src="2eb027e2.png" alt="Example block output"/><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../ModelingConcepts/">« Modeling Concepts</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.11.4 on <span class="colophon-date" title="Friday 30 May 2025 01:19">Friday 30 May 2025</span>. Using Julia version 1.12.0-beta3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
