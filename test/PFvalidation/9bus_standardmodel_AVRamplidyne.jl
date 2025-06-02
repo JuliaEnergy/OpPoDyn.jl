@@ -15,7 +15,7 @@ using Test
 @mtkmodel LoadBus begin
     @components begin
         busbar = BusBar()
-        load = ConstantYLoad(Pset, Qset, Vset=nothing)
+        load = ConstantYLoad(P_set, Q_set, V_set=nothing)
     end
     @equations begin
         connect(load.terminal, busbar.terminal)
@@ -26,13 +26,13 @@ end
     @components begin
         machine = Library.StandardModel_pf(;
             S_b,
-            Sn,
+            S_n,
             V_b,
-            Vn,
+            V_n,
             ω_b=2π*60,
             H,
             D,
-            vf_input=false,
+            V_f_input=false,
             τ_m_input=false,
             R_s,
             X_rld,
@@ -67,13 +67,13 @@ end
     @components begin
         machine = Library.StandardModel_pf(;
             S_b,
-            Sn,
+            S_n,
             V_b,
-            Vn,
+            V_n,
             ω_b=2π*60,
             H,
             D,
-            vf_input=true,
+            V_f_input=true,
             τ_m_input=false,
             R_s,
             X_rld,
@@ -99,16 +99,16 @@ end
         )
         busbar = BusBar()
         avr = AVRTypeI(
-            Ka, Ke, Kf,
-            Ta, Tf, Te, Tr,
-            vr_min, vr_max, anti_windup,
+            K_a, K_e, K_f,
+            T_a, T_f, T_e, T_r,
+            V_rmin, V_rmax, anti_windup,
             A, B
         )
     end
     @equations begin
         connect(machine.terminal, busbar.terminal)
-        connect(machine.v_mag_out, avr.v_mag)
-        connect(avr.vf, machine.vf_in)
+        connect(machine.V_mag_out, avr.V_mag)
+        connect(avr.V_f, machine.V_f_in)
     end
 end
 
@@ -118,8 +118,8 @@ function piline(; R, X, B)
     MTKLine(pibranch)
 end
 
-function piline_shortcircuit(; R, X, B, pos, G_fault=0, B_fault=0, faultimp=0)
-    @named pibranch = PiLine_fault(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0, G_fault, B_fault, pos, faultimp)
+function piline_shortcircuit(; R, X, B, pos, G_fault=0, B_fault=0, use_Zf=0)
+    @named pibranch = PiLine_fault(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0, G_fault, B_fault, pos, use_Zf)
     MTKLine(pibranch)
 end
 
@@ -150,9 +150,9 @@ primary_parameters_gen1 = Dict(
     Symbol("machine__", k) => v for (k, v) in
     (
         :S_b => 100e6,
-        :Sn => 247.5e6,
+        :S_n => 247.5e6,
         :V_b => 16.5,
-        :Vn => 16.5,
+        :V_n => 16.5,
         :ω_b => 2π*60,
         :H => 9.551516,
         :D => 0,
@@ -184,9 +184,9 @@ primary_parameters_gen2 = Dict(
     Symbol("machine__", k) => v for (k, v) in
     (
         :S_b => 100e6,
-        :Sn => 192e6,
+        :S_n => 192e6,
         :V_b => 18,
-        :Vn => 18,
+        :V_n => 18,
         :ω_b => 2π*60,
         :H => 3.921568,
         :D => 0,
@@ -216,15 +216,15 @@ primary_parameters_gen2 = Dict(
 avr_parameters_gen2 = Dict(
     Symbol("avr__", k) => v for (k, v) in
     (
-        :Ka => 25,
-        :Ke => -0.044,
-        :Kf => 0.0805,
-        :Ta => 0.2,
-        :Tf => 0.35,
-        :Te => 0.5,
-        :Tr => 0.06,
-        :vr_min => -1,
-        :vr_max => 1,
+        :K_a => 25,
+        :K_e => -0.044,
+        :K_f => 0.0805,
+        :T_a => 0.2,
+        :T_f => 0.35,
+        :T_e => 0.5,
+        :T_r => 0.06,
+        :V_rmin => -1,
+        :V_rmax => 1,
         :anti_windup => false,
         :A => 0.0016,
         :B => 1.465,
@@ -235,9 +235,9 @@ primary_parameters_gen3 = Dict(
     Symbol("machine__", k) => v for (k, v) in
     (
         :S_b => 100e6,
-        :Sn => 128e6,
+        :S_n => 128e6,
         :V_b => 13.8,
-        :Vn => 13.8,
+        :V_n => 13.8,
         :ω_b => 2π*60,
         :H => 2.766544,
         :D => 0,
@@ -270,10 +270,10 @@ primary_parameters_gen3 = Dict(
 @named mtkbus2 = StandardBus_AVR(; primary_parameters_gen2..., avr_parameters_gen2...)
 @named mtkbus3 = StandardBus(; primary_parameters_gen3...)
 @named mtkbus4 = MTKBus()
-@named mtkbus5 = LoadBus(;load__Pset=-1.25, load__Qset=-0.5)
-@named mtkbus6 = LoadBus(;load__Pset=-0.90, load__Qset=-0.3)
+@named mtkbus5 = LoadBus(;load__P_set=-1.25, load__Q_set=-0.5)
+@named mtkbus6 = LoadBus(;load__P_set=-0.90, load__Q_set=-0.3)
 @named mtkbus7 = MTKBus()
-@named mtkbus8 = LoadBus(;load__Pset=-1.0, load__Qset=-0.35)
+@named mtkbus8 = LoadBus(;load__P_set=-1.0, load__Q_set=-0.35)
 @named mtkbus9 = MTKBus()
 
 # generate the dynamic component functions
@@ -329,7 +329,7 @@ l57_params = lineparams_pu(; l57_data...)
 @named t14 = Line(transformer(; R=0, X=0.0576), src=1, dst=4)
 @named t27 = Line(transformer(; R=0, X=0.0625), src=2, dst=7)
 @named t39 = Line(transformer(; R=0, X=0.0586), src=3, dst=9)
-@named l57 = Line(piline_shortcircuit(; R=l57_params.R, X=l57_params.X, B=l57_params.B, pos=0.99, faultimp=0), src=5, dst=7) #faultimp=1, G_fault=l57_params.G_f, B_fault=l57_params.B_f
+@named l57 = Line(piline_shortcircuit(; R=l57_params.R, X=l57_params.X, B=l57_params.B, pos=0.99, use_Zf=0), src=5, dst=7) #use_Zf=1, G_fault=l57_params.G_f, B_fault=l57_params.B_f
 @named t27 = Line(transformer(; R=t27_params.R, X=t27_params.X), src=2, dst=7)
 @named l45 = Line(piline(R=l45_params.R, X=l45_params.X, B=l45_params.B), src=4, dst=5)
 
@@ -351,7 +351,7 @@ affect1! = (integrator) -> begin
     if integrator.t == 1
         @info "Short circuit on line 57 at t = $(integrator.t)"
         p = NWParameter(integrator)
-        p.e[6, :pibranch₊shortcircuit] = 1
+        p.e[6, :pibranch₊sc] = 1
         auto_dt_reset!(integrator)
         save_parameters!(integrator)
     else
@@ -451,10 +451,10 @@ fig
 ref_avr = CSV.read("test/PFvalidation/PFdata/Gen2_standardModelPF_avrdata.csv", DataFrame; header=2, decimal=',', delim=';') #_faultimp
 #vr in OpPoDyn
 fig = Figure();
-ax = Axis(fig[1, 1]; title="vr")
+ax = Axis(fig[1, 1]; title="v_r")
 ts = range(sol.t[begin],sol.t[end],length=10000)
-vr = sol(ts; idxs=VIndex(2, :avr₊vr))
-vfout = sol(ts; idxs=VIndex(2, :avr₊vfout))
+vr = sol(ts; idxs=VIndex(2, :avr₊V_r))
+vfout = sol(ts; idxs=VIndex(2, :avr₊V_fout))
 lines!(ax, ts, vr.u; label="vr")
 lines!(ax, ref_avr."Zeitpunkt in s", ref_avr."o1", color=Cycled(1), linestyle=:dash, label="vr in PowerFactory")
 #lines!(ax, ts, vfout.u; label="vfout")
@@ -464,10 +464,10 @@ fig
 
 #v_mag.u
 fig = Figure();
-ax = Axis(fig[1, 1]; title="v_mag.u")
+ax = Axis(fig[1, 1]; title="V_mag.u")
 ts = range(sol.t[begin],sol.t[end],length=10000)
-v_mag = sol(ts; idxs=VIndex(2, :machine₊v_mag))
-lines!(ax, ts, v_mag.u; label="v_mag.u in OpPoDyn")
+v_mag = sol(ts; idxs=VIndex(2, :machine₊V_mag))
+lines!(ax, ts, v_mag.u; label="V_mag.u in OpPoDyn")
 lines!(ax, ref_avr."Zeitpunkt in s", ref_avr."u", color=Cycled(1), linestyle=:dash, label="u in PowerFactory")
 axislegend(ax; position=:rb)
 xlims!(ax, 0.9, 5)
@@ -476,10 +476,10 @@ fig
 #vref passt
 ref_avr.summe = ref_avr."upss" .+ ref_avr."voel" .+ ref_avr."vuel" .+ ref_avr."avrref"
 fig = Figure();
-ax = Axis(fig[1, 1]; title="v_ref")
+ax = Axis(fig[1, 1]; title="V_ref")
 ts = range(sol.t[begin],sol.t[end],length=10000)
-vref = sol(ts; idxs=VIndex(2, :avr₊vref)) ##möglich, da eig _vref, aber vref_input=false
-lines!(ax, ts, vref.u; label="v_ref in OpPoDyn")
+vref = sol(ts; idxs=VIndex(2, :avr₊V_ref)) ##möglich, da eig _vref, aber v_ref_input=false
+lines!(ax, ts, vref.u; label="V_ref in OpPoDyn")
 lines!(ax, ref_avr."Zeitpunkt in s", ref_avr.summe, color=Cycled(1), linestyle=:dash, label="v_ref aus PowerFactory")
 axislegend(ax; position=:rt)
 xlims!(ax, 0, 5)
@@ -488,10 +488,10 @@ fig
 #output
 ref_avr = CSV.read("test/PFvalidation/PFdata/Gen2_standardModelPF_avrdata.csv", DataFrame; header=2, decimal=',', delim=';') #_faultimp
 fig = Figure();
-ax = Axis(fig[1, 1]; title="vfout")
+ax = Axis(fig[1, 1]; title="V_fout")
 ts = range(sol.t[begin],sol.t[end],length=10000)
-vfout = sol(ts; idxs=VIndex(2, :avr₊vfout))
-lines!(ax, ts, vfout.u; label="vfout")
+vfout = sol(ts; idxs=VIndex(2, :avr₊V_fout))
+lines!(ax, ts, vfout.u; label="V_fout")
 lines!(ax, ref_avr."Zeitpunkt in s", ref_avr."uerrs", color=Cycled(1), linestyle=:dash, label="vfout in PowerFactory")
 axislegend(ax; position=:rt)
 xlims!(ax, 0.9, 10)
@@ -499,10 +499,10 @@ fig
 
 #v_fb
 fig = Figure();
-ax = Axis(fig[1, 1]; title="v_fb")
+ax = Axis(fig[1, 1]; title="V_fb")
 ts = range(sol.t[begin],sol.t[end],length=10000)
-vfout = sol(ts; idxs=VIndex(2, :avr₊v_fb))
-lines!(ax, ts, vfout.u; label="v_fb")
+vfout = sol(ts; idxs=VIndex(2, :avr₊V_fb))
+lines!(ax, ts, vfout.u; label="V_fb")
 lines!(ax, ref_avr."Zeitpunkt in s", ref_avr."vf", color=Cycled(1), linestyle=:dash, label="vf in PowerFactory")
 axislegend(ax; position=:rt)
 xlims!(ax, 0.9, 5)
@@ -518,8 +518,8 @@ function states_deviation(i, rmssym, ndsym)
 end
 
 @testset "generator state deviation" begin
-    @test states_deviation(2, :vf, :avr₊v_fb) < 1e-5
-    @test states_deviation(2, :o1, :avr₊vr) < 1e-3
-    @test states_deviation(2, :uerrs, :avr₊vfout) < 1e-4
-    @test states_deviation(2, :u, :machine₊v_mag) < 1e-5
+    @test states_deviation(2, :vf, :avr₊V_fb) < 1e-5
+    @test states_deviation(2, :o1, :avr₊V_r) < 1e-3
+    @test states_deviation(2, :uerrs, :avr₊V_fout) < 1e-4
+    @test states_deviation(2, :u, :machine₊V_mag) < 1e-5
 end

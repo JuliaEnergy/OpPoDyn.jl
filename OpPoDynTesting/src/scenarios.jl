@@ -58,7 +58,7 @@ end
 
 function bus_on_slack(busf; tmax=6, toilength=1000, argscale=1, magscale=1)
     slack = Bus(SlackDifferential(name=:slack_src))
-    @named branch = DynawoPiLine(XPu=0.04189)
+    @named branch = DynawoPiLine(X_pu=0.04189)
     edgef = Line(MTKLine(branch))
     g = path_graph(2)
 

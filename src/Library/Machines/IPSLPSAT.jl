@@ -1,87 +1,87 @@
 """
-  - Inputs vf and output v_mag_out in system base not machien base
+  - Inputs V_f and output V_mag_out in system base not machien base
 """
 @mtkmodel IPSLPSATOrder4 begin
     @components begin
         terminal = Terminal()
         # inputs
-        pm = RealInput() # mechanical power [pu]
-        vf = RealInput(guess=1) # field voltage input [pu]
+        P_m = RealInput() # mechanical power [pu]
+        V_f = RealInput(guess=1) # field voltage input [pu]
         # outputs
-        δout = RealOutput() # rotor angle
-        ωout = RealOutput() # rotor speed [pu]
-        v_mag_out = RealOutput() # terminal voltage [pu]
-        Pout = RealOutput() # active power [pu]
-        Qout = RealOutput() # reactive power [pu]
+        δ_out = RealOutput() # rotor angle
+        ω_out = RealOutput() # rotor speed [pu]
+        V_mag_out = RealOutput() # terminal voltage [pu]
+        P_out = RealOutput() # active power [pu]
+        Q_out = RealOutput() # reactive power [pu]
     end
     @parameters begin
         # base P
-        ra, [description="Armature resistance"]
-        x1d, [description="d-axis transient reactance"]
+        R_a, [description="Armature resistance"]
+        X′_d, [description="d-axis transient reactance"]
         M, [description="Mechanical starting time, 2H [Ws/VA]"]
         D, [description="Damping coefficient"]
         S_b, [description="System power basis in MVA"]
         V_b, [description="System voltage basis in kV"]
         ω_b, [description="System base frequency in rad/s"]
-        Sn, [description="Machine power rating in MVA"]
-        Vn, [description="Machine voltage rating in kV"]
+        S_n, [description="Machine power rating in MVA"]
+        V_n, [description="Machine voltage rating in kV"]
         # 4th order params
-        xd=1.9, [description="d-axis synchronous reactance"]
-        xq=1.7, [description="q-axis synchronous reactance"]
-        x1q=0.5, [description="q-axis transient reactance"]
-        T1d0=8, [description="d-axis open circuit transient time constant"]
-        T1q0=0.8, [description="q-axis open circuit transient time constant"]
+        X_d=1.9, [description="d-axis synchronous reactance"]
+        X_q=1.7, [description="q-axis synchronous reactance"]
+        X′_q=0.5, [description="q-axis transient reactance"]
+        T′_d0=8, [description="d-axis open circuit transient time constant"]
+        T′_q0=0.8, [description="q-axis open circuit transient time constant"]
     end
     @variables begin
         # base vars
-        v_arg(t), [description="Generator terminal angle"]
-        vd(t), [description="d-axis voltage"]
-        vq(t), [description="q-axis voltage"]
-        id(t), [guess=0, description="d-axis current"]
-        iq(t), [guess=0, description="q-axis current"]
-        pe(t), [description="Electrical power transmitted through air gap"]
+        V_arg(t), [description="Generator terminal angle"]
+        V_d(t), [description="d-axis voltage"]
+        V_q(t), [description="q-axis voltage"]
+        I_d(t), [guess=0, description="d-axis current"]
+        I_q(t), [guess=0, description="q-axis current"]
+        P_e(t), [description="Electrical power transmitted through air gap"]
 
         δ(t), [guess=0, description="rotor angle"]
         ω(t), [guess=1, description="rotor speed [pu]"]
-        v_mag(t), [description="terminal voltage [pu]"]
+        V_mag(t), [description="terminal voltage [pu]"]
         P(t), [description="active power [pu]"]
         Q(t), [description="reactive power [pu]"]
 
         # 4th order vars
-        e1d(t), [guess=0, description="d-axis transient voltage"]
-        e1q(t), [guess=1, description="q-axis transient voltage"]
+        V′_d(t), [guess=0, description="d-axis transient voltage"]
+        V′_q(t), [guess=1, description="q-axis transient voltage"]
     end
     @equations begin
         # Park's transformations
-        terminal.u_r ~ ( sin(δ) * vd + cos(δ) * vq) * V_b/Vn
-        terminal.u_i ~ (-cos(δ) * vd + sin(δ) * vq) * V_b/Vn
-        -terminal.i_r ~ (-sin(δ) * id - cos(δ) * iq) * Ibase(S_b, V_b)/Ibase(Sn, Vn)
-        -terminal.i_i ~ ( cos(δ) * id - sin(δ) * iq) * Ibase(S_b, V_b)/Ibase(Sn, Vn)
+        terminal.u_r ~ ( sin(δ) * V_d + cos(δ) *V_q) * V_b/V_n
+        terminal.u_i ~ (-cos(δ) * V_d + sin(δ) * V_q) * V_b/V_n
+        -terminal.i_r ~ (-sin(δ) * I_d - cos(δ) * I_q) * Ibase(S_b, V_b)/Ibase(S_n, V_n)
+        -terminal.i_i ~ ( cos(δ) * I_d - sin(δ) * I_q) * Ibase(S_b, V_b)/Ibase(S_n, V_n)
 
         # observables
-        v_mag ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
-        v_arg ~ atan(terminal.u_i, terminal.u_r)
+        V_mag ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
+        V_arg ~ atan(terminal.u_i, terminal.u_r)
         P ~ terminal.u_r*terminal.i_r + terminal.u_i*terminal.i_i
         Q ~ terminal.u_i*terminal.i_r - terminal.u_r*terminal.i_i
 
         #outputs
-        Pout.u ~ P
-        Qout.u ~ Q
-        v_mag_out.u ~ v_mag
-        δout.u ~ δ
-        ωout.u ~ ω
+        P_out.u ~ P
+        Q_out.u ~ Q
+        V_mag_out.u ~ V_mag
+        δ_out.u ~ δ
+        ω_out.u ~ ω
 
         # swing equation
-        pe ~ (vq + ra*iq)*iq + (vd + ra*id)*id
+        P_e ~ (V_q + R_a*I_q)*I_q + (V_d + R_a*I_d)*I_d
         Dt(δ) ~ ω_b*(ω - 1)
-        Dt(ω) ~ (pm.u/S_b*Sn - pe - D*(ω - 1))/M
+        Dt(ω) ~ (P_m.u/S_b*S_n - P_e - D*(ω - 1))/M
 
         # internal transients
-        Dt(e1q) ~ ((-e1q) - (xd - x1d)*id + vf.u*V_b/Vn)/T1d0;
-        Dt(e1d) ~ ifelse(abs(xd - x1q) < 1e-16,
-                         ((-e1d) + (xq - x1q)*iq)/T1q0,
-                         (-e1d)/T1q0)
-        e1q ~ vq + ra*iq + x1d*id
-        e1d ~ vd + ra*id - x1q*iq
+        Dt(V′_q) ~ ((-V′_q) - (X_d - X′_d)*I_d + V_f.u*V_b/V_n)/T′_d0;
+        Dt(V′_d) ~ ifelse(abs(X_d - X′_q) < 1e-16,
+                         ((-V′_d) + (X_q - X′_q)*I_q)/T′_q0,
+                         (-V′_d)/T′_q0)
+        V′_q ~ V_q + R_a*I_q + X′_d*I_d
+        V′_d ~ V_d + R_a*I_d - X′_q*I_q
     end
 end

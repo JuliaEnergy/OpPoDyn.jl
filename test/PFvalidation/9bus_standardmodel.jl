@@ -13,7 +13,7 @@ using DataFrames
 @mtkmodel LoadBus begin
     @components begin
         busbar = BusBar()
-        load = ConstantYLoad(Pset, Qset, Vset=nothing)
+        load = ConstantYLoad(P_set, Q_set, V_set=nothing)
     end
     @equations begin
         connect(load.terminal, busbar.terminal)
@@ -150,13 +150,13 @@ end
     @components begin
         machine = Library.StandardModel_pf(;
             S_b,
-            Sn,
+            S_n,
             V_b,
-            Vn,
+            V_n,
             ω_b=2π*60,
             H,
             D,
-            vf_input=false,
+            V_f_input=false,
             τ_m_input=false,
             R_s,
             X_rld,
@@ -189,17 +189,17 @@ end
 
 # Branches
 function piline(; R, X, B)
-    @named pibranch = PiLine(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0)
+    @named pibranch = PiLine(; R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0)
     MTKLine(pibranch)
 end
 
 function piline_shortcircuit(; R, X, B, pos, G_fault=0, B_fault=0)
-    #faultimp = if (G_fault + B_fault) == 0
+    #use_Zf = if (G_fault + B_fault) == 0
        # 0
     #else
         #1
     #end
-    @named pibranch = PiLine_fault(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0, G_fault, B_fault, pos)#, faultimp)
+    @named pibranch = PiLine_fault(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0, G_fault, B_fault, pos)#, use_Zf)
     MTKLine(pibranch)
 end
 
@@ -267,9 +267,9 @@ primary_parameters_gen1 = Dict(
     Symbol("machine__", k) => v for (k, v) in
     (
         :S_b => 100e6,
-        :Sn => 247.5e6,
+        :S_n => 247.5e6,
         :V_b => 16.5,
-        :Vn => 16.5,
+        :V_n => 16.5,
         :ω_b => 2π*60,
         :H => 9.551516,
         :D => 0,
@@ -301,9 +301,9 @@ primary_parameters_gen2 = Dict(
     Symbol("machine__", k) => v for (k, v) in
     (
         :S_b => 100e6,
-        :Sn => 192e6,
+        :S_n => 192e6,
         :V_b => 18,
-        :Vn => 18,
+        :V_n => 18,
         :ω_b => 2π*60,
         :H => 3.921568,
         :D => 0,
@@ -335,9 +335,9 @@ primary_parameters_gen3 = Dict(
     Symbol("machine__", k) => v for (k, v) in
     (
         :S_b => 100e6,
-        :Sn => 128e6,
+        :S_n => 128e6,
         :V_b => 13.8,
-        :Vn => 13.8,
+        :V_n => 13.8,
         :ω_b => 2π*60,
         :H => 2.766544,
         :D => 0,
@@ -369,10 +369,10 @@ primary_parameters_gen3 = Dict(
 @named mtkbus2 = StandardBus(; primary_parameters_gen2...)
 @named mtkbus3 = StandardBus(; primary_parameters_gen3...)
 @named mtkbus4 = MTKBus()
-@named mtkbus5 = LoadBus(;load__Pset=-1.25, load__Qset=-0.5)
-@named mtkbus6 = LoadBus(;load__Pset=-0.90, load__Qset=-0.3)
+@named mtkbus5 = LoadBus(;load__P_set=-1.25, load__Q_set=-0.5)
+@named mtkbus6 = LoadBus(;load__P_set=-0.90, load__Q_set=-0.3)
 @named mtkbus7 = MTKBus()
-@named mtkbus8 = LoadBus(;load__Pset=-1.0, load__Qset=-0.35)
+@named mtkbus8 = LoadBus(;load__P_set=-1.0, load__Q_set=-0.35)
 @named mtkbus9 = MTKBus()
 
 
@@ -440,7 +440,7 @@ affect1! = (integrator) -> begin
     if integrator.t == 1.0
         @info "Short circuit on line 57 at t = $(integrator.t)"
         p = NWParameter(integrator)
-        p.e[6, :pibranch₊shortcircuit] = 1
+        p.e[6, :pibranch₊sc] = 1
         auto_dt_reset!(integrator)
         save_parameters!(integrator)
     else
@@ -504,7 +504,7 @@ ref_freq1 = CSV.read("test/PFvalidation/PFdata/frequency_bus1_standardModelPF.cs
 fig = Figure();
 ax = Axis(fig[1, 1]; title="Frequency at bus 1")
 ts = range(sol.t[begin],sol.t[end],length=1000)
-f_oppodyn = round.(sol(ts; idxs=VIndex(1, :machine₊n)).*60, digits=8)
+f_oppodyn = round.(sol(ts; idxs=VIndex(1, :machine₊ω)).*60, digits=8)
 lines!(ax, ts, f_oppodyn.u; label="OpPoDyn")
 lines!(ax, ref_freq1."Zeitpunkt in s", ref_freq1."Elektrische Frequenz in Hz", color=Cycled(1), linestyle=:dash, label="Power Factory")
 axislegend(ax; position=:rb)
@@ -579,7 +579,7 @@ ref_vgen2 = CSV.read("test/PFvalidation/PFdata/Gen2_standardModelPF_ohneAVR_mits
 fig = Figure();
 ax = Axis(fig[1, 1]; title="amount output voltage")
 ts = range(sol.t[begin],sol.t[end],length=10000)
-vh = sol(ts; idxs=VIndex(2, :machine₊v_mag))
+vh = sol(ts; idxs=VIndex(2, :machine₊V_mag))
 lines!(ax, ts, vh.u; label="OpPoDyn")
 lines!(ax, ref_vgen2."Zeitpunkt in s", ref_vgen2."Mitsystem-Spannung, Betrag in p.u.", color=Cycled(1), linestyle=:dash, label="amount voltage at Gen 2/Bus in PowerFactory")
 axislegend(ax; position=:rt)

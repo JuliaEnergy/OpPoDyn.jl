@@ -1,8 +1,8 @@
 @mtkmodel RXGroundFault begin
     @parameters begin
-        R, [description="Resistance to ground during fault [pu]"]
-        X, [description="Reactance to ground during fault [pu]"]
-        enable=0, [description="Enable fault"]
+        R_fault, [description="Resistance to ground during fault [pu]"]
+        X_fault, [description="Reactance to ground during fault [pu]"]
+        active=0, [description="Enable fault"]
     end
     @components begin
         terminal = Terminal()

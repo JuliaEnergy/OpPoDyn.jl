@@ -13,7 +13,7 @@ using DataFrames
 @mtkmodel LoadBus begin
     @components begin
         busbar = BusBar()
-        load = ConstantYLoad(Pset, Qset, Vset=nothing)
+        load = ConstantYLoad(P_set, Q_set, V_set=nothing)
     end
     @equations begin
         connect(load.terminal, busbar.terminal)
@@ -23,16 +23,16 @@ end
 @mtkmodel ClassicBus begin
     @components begin
         machine = Library.ClassicalMachine_powerfactory(;
-            p_m_input=false,
+            P_m_input=false,
             S_b=100,
             V_b=18,
             ω_b=2π*60,
             X′_d,
             R_s=0.0026,
-            vf_set=nothing,
-            p_m_set=nothing,
+            V_f_set=nothing,
+            P_m_set=nothing,
             H,
-             D=0
+            D=0
         )
         busbar = BusBar()
     end
@@ -46,10 +46,10 @@ end
 @named mtkbus2 = ClassicBus(; machine__H= 6.40, machine__X′_d=0.1198)
 @named mtkbus3 = ClassicBus(; machine__H= 3.01, machine__X′_d=0.1813)
 @named mtkbus4 = MTKBus()
-@named mtkbus5 = LoadBus(;load__Pset=-1.25, load__Qset=-0.5)
-@named mtkbus6 = LoadBus(;load__Pset=-0.90, load__Qset=-0.3)
+@named mtkbus5 = LoadBus(;load__P_set=-1.25, load__Q_set=-0.5)
+@named mtkbus6 = LoadBus(;load__P_set=-0.90, load__Q_set=-0.3)
 @named mtkbus7 = MTKBus()
-@named mtkbus8 = LoadBus(;load__Pset=-1.0, load__Qset=-0.35)
+@named mtkbus8 = LoadBus(;load__P_set=-1.0, load__Q_set=-0.35)
 @named mtkbus9 = MTKBus()
 
 
@@ -71,12 +71,12 @@ function piline(; R, X, B)
 end
 
 function piline_shortcircuit(; R, X, B, pos, G_fault=0, B_fault=0)
-    #faultimp = if (G_fault + B_fault) == 0
+    #use_Zf = if (G_fault + B_fault) == 0
        # 0
     #else
         #1
     #end
-    @named pibranch = PiLine_fault(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0, G_fault, B_fault, pos)#, faultimp)
+    @named pibranch = PiLine_fault(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0, G_fault, B_fault, pos)#, use_Zf)
     MTKLine(pibranch)
 end
 
@@ -114,7 +114,7 @@ affect1! = (integrator) -> begin
     if integrator.t == 0.0
         @info "Short circuit on line 57 at t = $(integrator.t)"
         p = NWParameter(integrator)
-        p.e[6, :pibranch₊shortcircuit] = 1
+        p.e[6, :pibranch₊sc] = 1
     else
         error("Should not be reached.")
     end

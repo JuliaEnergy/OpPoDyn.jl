@@ -1,7 +1,7 @@
 @mtkmodel PQLoad begin
     @parameters begin
-        Pset, [description="Active Power demand"]
-        Qset, [description="Reactive Power demand"]
+        P_set, [description="Active Power demand"]
+        Q_set, [description="Reactive Power demand"]
     end
     @components begin
         terminal = Terminal()
@@ -14,18 +14,18 @@
         P ~ terminal.u_r*terminal.i_r + terminal.u_i*terminal.i_i
         Q ~ terminal.u_i*terminal.i_r - terminal.u_r*terminal.i_i
         # makes it easier for the solver then P ~ Pset and Q ~ Qset
-        terminal.i_r ~  simplify(real((Pset + im*Qset)/(terminal.u_r + im*terminal.u_i)))
-        terminal.i_i ~ -simplify(imag((Pset + im*Qset)/(terminal.u_r + im*terminal.u_i)))
+        terminal.i_r ~  simplify(real((P_set + im*Q_set)/(terminal.u_r + im*terminal.u_i)))
+        terminal.i_i ~ -simplify(imag((P_set + im*Q_set)/(terminal.u_r + im*terminal.u_i)))
     end
 end
 
 @mtkmodel VoltageDependentLoad begin
     @parameters begin
-        Pset, [description="Active Power demand"]
-        Qset, [description="Reactive Power demand"]
-        αP, [description="Active Power exponent"]
-        αQ, [description="Reactive Power exponent"]
-        Vn, [description="Nominal voltage (where real power equals set power)"]
+        P_set, [description="Active Power demand"]
+        Q_set, [description="Reactive Power demand"]
+        α_P, [description="Active Power exponent"]
+        α_Q, [description="Reactive Power exponent"]
+        V_n, [description="Nominal voltage (where real power equals set power)"]
     end
     @components begin
         terminal = Terminal()
@@ -36,8 +36,8 @@ end
     end
     begin
         v = sqrt(terminal.u_r^2 + terminal.u_i^2)
-        Pload = Pset * (v/Vn)^αP
-        Qload = Qset * (v/Vn)^αQ
+        Pload = P_set * (v/V_n)^α_P
+        Qload = Q_set * (v/V_n)^α_Q
         Sload = Pload + im*Qload
         vcomplex = terminal.u_r + im*terminal.u_i
         iout = conj(Sload/vcomplex)
@@ -58,18 +58,18 @@ end
         terminal = Terminal()
     end
     @parameters begin
-        Pset, [description="Active Power demand [pu]"]
-        Qset, [description="Reactive Power demand [pu]"]
-        Vset, [guess=1,description="Nominal voltage [pu]"]
+        P_set, [description="Active Power demand [pu]"]
+        Q_set, [description="Reactive Power demand [pu]"]
+        V_set, [guess=1,description="Nominal voltage [pu]"]
     end
     @variables begin
         P(t), [description="Active Power [pu]"]
         Q(t), [description="Reactive Power [pu]"]
     end
     begin
-        S = Pset + im*Qset #TODO: currently not working with Q=0
+        S = P_set + im*Q_set #TODO: currently not working with Q=0
         #S = Pset
-        Y = conj(S)/Vset^2
+        Y = conj(S)/V_set^2
         iload = Y * (terminal.u_r + im*terminal.u_i)
     end
     @equations begin
@@ -85,28 +85,28 @@ end
 # TODO: S_b for loads?
 @mtkmodel ZIPLoad begin
     @parameters begin
-        Pset, [description="Active Power at operation point [pu]"]
-        Qset, [description="Reactive Power at operation point [pu]"]
-        Vset, [guess=1,description="Voltage at operation point [pu]"]
-        KpZ, [description="Active power constant impedance fraction"]
-        KqZ, [description="Reactive power constant impedance fraction"]
-        KpI, [description="Active power constant current fraction"]
-        KqI, [description="Reactive power constant current fraction"]
-        KpC=1-KpZ-KpI, [description="Active power constant power fraction"]
-        KqC=1-KqZ-KqI, [description="Reactive power constant power fraction"]
+        P_set, [description="Active Power at operation point [pu]"]
+        Q_set, [description="Reactive Power at operation point [pu]"]
+        V_set, [guess=1,description="Voltage at operation point [pu]"]
+        K_pZ, [description="Active power constant impedance fraction"]
+        K_qZ, [description="Reactive power constant impedance fraction"]
+        K_pI, [description="Active power constant current fraction"]
+        K_qI, [description="Reactive power constant current fraction"]
+        K_pC=1-K_pZ-K_pI, [description="Active power constant power fraction"]
+        K_qC=1-K_qZ-K_qI, [description="Reactive power constant power fraction"]
     end
     @components begin
         terminal = Terminal()
     end
     @variables begin
-        Vrel(t), [description="Relative voltage magnitude"]
+        V_rel(t), [description="Relative voltage magnitude"]
         P(t), [description="Active Power"]
         Q(t), [description="Reactive Power"]
     end
     @equations begin
-        Vrel ~ sqrt(terminal.u_r^2 + terminal.u_i^2)/Vset
-        P ~ Pset*(KpZ*Vrel^2 + KpI*Vrel + KpC)
-        Q ~ Qset*(KqZ*Vrel^2 + KqI*Vrel + KqC)
+        V_rel ~ sqrt(terminal.u_r^2 + terminal.u_i^2)/V_set
+        P ~ P_set*(K_pZ*V_rel^2 + K_pI*V_rel + K_pC)
+        Q ~ Q_set*(K_qZ*V_rel^2 + K_qI*V_rel + K_qC)
         # formulate equations for i_r and i_i instead
         terminal.i_r ~  simplify(real((P + im*Q)/(terminal.u_r + im*terminal.u_i)))
         terminal.i_i ~ -simplify(imag((P + im*Q)/(terminal.u_r + im*terminal.u_i)))

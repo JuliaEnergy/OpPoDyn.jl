@@ -13,10 +13,10 @@
 
 @mtkmodel DynawoTransformerParameters begin
     @parameters begin
-        RPu=0, [description="Resistance of the generator transformer in pu (base U2Nom, SnRef)"]
-        XPu=0.00675, [description="Reactance of the generator transformer in pu (base U2Nom, SnRef)"]
-        GPu=0, [description="Conductance of the generator transformer in pu (base U2Nom, SnRef)"]
-        BPu=0, [description="Susceptance of the generator transformer in pu (base U2Nom, SnRef)"]
+        R_pu=0, [description="Resistance of the generator transformer in pu (base U2Nom, SnRef)"]
+        X_pu=0.00675, [description="Reactance of the generator transformer in pu (base U2Nom, SnRef)"]
+        G_pu=0, [description="Conductance of the generator transformer in pu (base U2Nom, SnRef)"]
+        B_pu=0, [description="Susceptance of the generator transformer in pu (base U2Nom, SnRef)"]
     end
 end
 
@@ -27,13 +27,13 @@ end
         dst = Terminal()
     end
     @parameters begin
-        rTfoPu=1, [description="Transformation ratio in pu: Udst/Usrc in no load conditions"]
+        r_Tfo_pu=1, [description="Transformation ratio in pu: Udst/Usrc in no load conditions"]
     end
     @equations begin
-        src.i_r ~ simplify(real(-rTfoPu*(rTfoPu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(RPu+im*XPu)))
-        src.i_i ~ simplify(imag(-rTfoPu*(rTfoPu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(RPu+im*XPu)))
-        dst.i_r ~ simplify(real((rTfoPu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(RPu+im*XPu) - (GPu+im*BPu) * (dst.u_r + im*dst.u_i)))
-        dst.i_i ~ simplify(imag((rTfoPu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(RPu+im*XPu) - (GPu+im*BPu) * (dst.u_r + im*dst.u_i)))
+        src.i_r ~ simplify(real(-r_Tfo_pu*(r_Tfo_pu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(R_pu+im*X_pu)))
+        src.i_i ~ simplify(imag(-r_Tfo_pu*(r_Tfo_pu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(R_pu+im*X_pu)))
+        dst.i_r ~ simplify(real((r_Tfo_pu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(R_pu+im*X_pu) - (G_pu+im*B_pu) * (dst.u_r + im*dst.u_i)))
+        dst.i_i ~ simplify(imag((r_Tfo_pu*(src.u_r + im*src.u_i) - (dst.u_r +im*dst.u_i))/(R_pu+im*X_pu) - (G_pu+im*B_pu) * (dst.u_r + im*dst.u_i)))
     end
 end
 

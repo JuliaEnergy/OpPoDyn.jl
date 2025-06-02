@@ -1,14 +1,14 @@
 @mtkmodel PiLine begin
     @parameters begin
-        R, [description="Resistance of branch in pu (base unclear?)"]
-        X, [description="Reactance of branch in pu (base unclear?)"]
-        G_src, [description="Conductance of src shunt (base unclear?)"]
-        B_src, [description="Susceptance of src shunt (base unclear?)"]
-        G_dst, [description="Conductance of dst shunt (base unclear?)"]
-        B_dst, [description="Susceptance of dst shunt (base unclear?)"]
+        R, [description="Resistance of branch in pu"]
+        X, [description="Reactance of branch in pu"]
+        G_src, [description="Conductance of src shunt"]
+        B_src, [description="Susceptance of src shunt"]
+        G_dst, [description="Conductance of dst shunt"]
+        B_dst, [description="Susceptance of dst shunt"]
         r_src=1, [description="src end transformation ratio"]
         r_dst=1, [description="dst end transformation ratio"]
-        active=1, [description="Line active or at fault"]
+        active=1, [description="Line active or switched off"]
     end
     @components begin
         src = Terminal()
