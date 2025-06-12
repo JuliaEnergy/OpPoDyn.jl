@@ -18,15 +18,18 @@ OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
-[sources]
-NetworkDynamics = {rev = "main", url = "https://github.com/JuliaDynamics/NetworkDynamics.jl"}
-OpPoDyn = {path = ".."}
+[sources.NetworkDynamics]
+rev = "main"
+url = "https://github.com/JuliaDynamics/NetworkDynamics.jl"
+
+[sources.OpPoDyn]
+path = ".."
 
 [compat]
 DiffEqCallbacks = "≥0.0.1"
 Graphs = "≥0.0.1"
 JLD2 = "0.5.2"
-Makie = "0.21.9, 0.22"
+Makie = "0.21.9, 0.22, 0.23"
 ModelingToolkit = "≥0.0.1"
 NetworkDynamics = "≥0.0.1"
 OpPoDyn = "≥0.0.1"
