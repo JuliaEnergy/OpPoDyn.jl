@@ -216,6 +216,13 @@ end;
         end
 
         bus = Bus(MTKBus(components...); vidx=i, pf=pfmodel, name=Symbol("bus$i"))
+
+        # to thelp the init of loads, we can add a init formula
+        if has_load(i)
+            load_vset = @initformula :load₊Vset = sqrt(:busbar₊u_r^2 + :busbar₊u_i^2)
+            set_initformula!(bus, load_vset)
+        end
+
         push!(busses, bus)
         println()
     end
@@ -223,15 +230,6 @@ end;
 end;
 
 nw = Network(copy.(busses), copy.(branches))
-
-# Define constraint once: load₊Vset should equal voltage magnitude
-load_vset_constraint = @initconstraint begin
-    :load₊Vset - sqrt(:busbar₊u_r^2 + :busbar₊u_i^2)
-end
-
-# Apply to both buses with loads
-set_initconstraint!(nw.im.vertexm[31], load_vset_constraint)
-set_initconstraint!(nw.im.vertexm[39], load_vset_constraint)
 
 # Initialize using the new interface with constraints
 state = OpPoDyn.initialize_from_pf!(nw)
