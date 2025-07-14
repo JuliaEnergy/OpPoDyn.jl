@@ -14,6 +14,8 @@ using LinearAlgebra
 using Test
 using SparseConnectivityTracer
 
+@info "Start ieee39bus validation test"
+
 DATA = joinpath(pkgdir(OpPoDyn), "test", "validation", "ieee39_RMSPowerSims.jl", "data")
 
 json = JSON.parsefile(joinpath(DATA, "ieee39.json"),dicttype=OrderedDict)
