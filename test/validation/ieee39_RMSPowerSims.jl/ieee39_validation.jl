@@ -12,6 +12,9 @@ using DiffEqCallbacks
 using CSV
 using LinearAlgebra
 using Test
+using SparseConnectivityTracer
+
+@info "Start ieee39bus validation test"
 
 DATA = joinpath(pkgdir(OpPoDyn), "test", "validation", "ieee39_RMSPowerSims.jl", "data")
 
@@ -216,6 +219,13 @@ end;
         end
 
         bus = Bus(MTKBus(components...); vidx=i, pf=pfmodel, name=Symbol("bus$i"))
+
+        # to thelp the init of loads, we can add a init formula
+        if has_load(i)
+            load_vset = @initformula :load₊Vset = sqrt(:busbar₊u_r^2 + :busbar₊u_i^2)
+            set_initformula!(bus, load_vset)
+        end
+
         push!(busses, bus)
         println()
     end
@@ -223,12 +233,9 @@ end;
 end;
 
 nw = Network(copy.(busses), copy.(branches))
-OpPoDyn.solve_powerflow!(nw)
 
-# Buses 31 and 39 have a load attached, we need to manualy initialize the Vset for those
-set_default!(nw.im.vertexm[31], :load₊Vset, norm(get_initial_state.(Ref(nw.im.vertexm[31]), [:busbar₊u_r,:busbar₊u_i])))
-set_default!(nw.im.vertexm[39], :load₊Vset, norm(get_initial_state.(Ref(nw.im.vertexm[39]), [:busbar₊u_r,:busbar₊u_i])))
-OpPoDyn.initialize!(nw)
+# Initialize using the new interface with constraints
+state = OpPoDyn.initialize_from_pf!(nw)
 
 @testset "Test initialization" begin
     # test powerflow results agains reference
@@ -244,8 +251,8 @@ end
 #### solve dyn system
 ####
 increase_load = ComponentAffect([], [:load₊Pset]) do u, p, ctx
-    println("Change load setpoint at $(ctx.t)")
-    p[:load₊Pset] *= 1.20
+    # println("Change load setpoint at $(ctx.t)")
+    p[:load₊Pset] = -1.20 * 3.29
 end
 inc_cb = PresetTimeComponentCallback(1, increase_load)
 set_callback!(nw[VIndex(16)], inc_cb)
@@ -253,6 +260,25 @@ set_callback!(nw[VIndex(16)], inc_cb)
 s0 = NWState(nw)
 prob = ODEProblem(nw, copy(uflat(s0)), (0,15), copy(pflat(s0)); callback=get_callbacks(nw))
 sol = solve(prob, Rodas5P());
+
+@testset "test sparsity pattern construction" begin
+    j1 = get_jac_prototype(nw; remove_conditions=true)
+    @test j1 == get_jac_prototype(nw; remove_conditions=[VIndex(i) for i in 30:38])
+    j2 = get_jac_prototype(nw; dense=[VIndex(i) for i in 30:38])
+    j3 = get_jac_prototype(nw; dense=true)
+    for idx in eachindex(j1)
+        if j1[idx] != 0
+            @test j1[idx] == j2[idx] == j3[idx]
+        elseif j2[idx] != 0
+            @test j2[idx] == j3[idx]
+        end
+    end
+
+    jac_prototype = get_jac_prototype(nw; remove_conditions=true)
+    prob_jac = ODEProblem(ODEFunction(nw; jac_prototype), copy(uflat(s0)), (0,15), copy(pflat(s0)); callback=get_callbacks(nw))
+    s1 = @time solve(prob, Rodas5P());
+    s2 = @time solve(prob_jac, Rodas5P());
+end
 
 # plot he desired
 #=
