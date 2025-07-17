@@ -24,9 +24,11 @@ SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 SparseConnectivityTracer = "9f842d2f-2579-4b1d-911e-f412cf18a3f5"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
-[sources]
-OpPoDyn = {path = ".."}
-OpPoDynTesting = {path = "../OpPoDynTesting"}
+[sources.OpPoDyn]
+path = ".."
+
+[sources.OpPoDynTesting]
+path = "../OpPoDynTesting"
 
 [compat]
 Aqua = "0.8.12"
@@ -49,4 +51,5 @@ OrdinaryDiffEqNonlinearSolve = "1.9.0"
 OrdinaryDiffEqRosenbrock = "1.10.0"
 OrdinaryDiffEqTsit5 = "1.1.0"
 SafeTestsets = "0.1.0"
+SparseConnectivityTracer = "1"
 Test = "1.10.0"
