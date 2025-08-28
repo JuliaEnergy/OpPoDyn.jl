@@ -30,6 +30,7 @@
         V(t), [description="V_t after filter"]
         I_lvpl(t), [description="current resulting from low voltage power logic"]
         L_vplsw_adjust(t), [description="switch low voltage power logic off if V > breakpoint"]
+        I_p_target(t), [description="target I_p after LVPL limiting"]
     end
     @equations begin
         #q-phase current
@@ -40,8 +41,9 @@
         T_g * Dt(I_pz) ~ Ipcmd_in.u -  I_pz
         I_lvpl ~ LVPLogic(V, Zerox, Brkpt, L_vpl1)
         L_vplsw_adjust ~ ifelse(V>Brkpt, 0, L_vplsw)
-        L_vplsw_adjust * I_p ~ L_vplsw_adjust * uplimit(I_pz, I_lvpl)
-        Dt(I_p) ~ uplimit(Dt(I_pz), rrpwr)
+        # Apply LVPL limiting and rate limiting in one step
+        I_p_target ~ ifelse(L_vplsw_adjust > 0.5, uplimit(I_pz, I_lvpl), I_pz)
+        Dt(I_p) ~ limiter(I_p_target - I_p, -rrpwr, rrpwr)
         #outputs
         Iqout.u ~ I_q
         Ipout.u ~ I_p
