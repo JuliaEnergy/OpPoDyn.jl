@@ -98,7 +98,9 @@
         electrical_control.Vt_in.u ~ V_t
         #connect(converter_interface.Vt_in, V_t)
         #connect(electrical_control.Vt_in, V_t)
-        connect(converter_interface.terminal, terminal)
+        # Current injection from converter to terminal (negative for generation)
+        terminal.i_r ~ -converter_interface.Ipout.u
+        terminal.i_i ~ -converter_interface.Iqout.u
         connect(plant_control.freq, f.output)
         connect(plant_control.V_ref, Vref.output)
         connect(plant_control.Q_ref, Qref.output)

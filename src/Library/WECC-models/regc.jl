@@ -2,7 +2,6 @@
 
 @mtkmodel regc_a begin
     @components begin
-        terminal=Terminal()
         # inputs
         Vt_in = RealInput(guess=1)
         Iqcmd_in = RealInput(guess=1)
@@ -46,9 +45,6 @@
         #outputs
         Iqout.u ~ I_q
         Ipout.u ~ I_p
-        # terminal connections - current injection into the grid
-        terminal.i_r ~ I_p  # active current (real part)
-        terminal.i_i ~ I_q  # reactive current (imaginary part)
     end
 end
 
