@@ -2,10 +2,10 @@ module Library
 
 using ArgCheck: @argcheck
 using ..OpPoDyn: Terminal, BusBase, Ibase
-using ModelingToolkit: ModelingToolkit, @named, @mtkmodel, @variables, @parameters, simplify,
+using ModelingToolkit: ModelingToolkit, @named, @mtkmodel, @variables, @parameters, simplify, connect,
                        t_nounits as t, D_nounits as Dt
 using ModelingToolkit: @unpack, Equation, Num, System # needed for @mtkmodel?
-using ModelingToolkitStandardLibrary.Blocks: RealInput, RealOutput
+using ModelingToolkitStandardLibrary.Blocks #: RealInput, RealOutput
 using NonlinearSolve: NonlinearProblem
 using SciMLBase: SciMLBase, solve
 
@@ -90,6 +90,25 @@ include("Controls/AVRs.jl")
 
 export GovFixed, TurbineGovTypeI, TGOV1
 include("Controls/Govs.jl")
+
+
+####
+#### WECC modules
+####
+export limiter, lowlimit, uplimit, deadband, LVPLogic
+include("WECC-models/functions.jl")
+
+export regc_a
+include("WECC-models/regc.jl")
+
+export reec_b
+include("WECC-models/reec.jl")
+
+export repc_a
+include("WECC-models/repc.jl")
+
+export WECC_large_PV
+include("WECC-models/plantmodels.jl")
 
 ####
 #### Load Models
