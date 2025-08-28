@@ -77,17 +77,17 @@
             P_plantref = 1.0, #from powerflow
             freq_ref   = 1.0,
             freqFlag   = 0)
-            f = Blocks.Constant(k=1.0)
-            Vref = Blocks.Constant(k=1.0)
-            Qref = Blocks.Constant(k=1.0)
-            Qbranch = Blocks.Constant(k=1.0)
-            Pbranch = Blocks.Constant(k=1.0)
-            Vreg = Blocks.Constant(k=1.0)
-            Ibranch = Blocks.Constant(k=1.0)
-            Pe = Blocks.Constant(k=1.0)
-            Pfaref = Blocks.Constant(k=1.0)
-            Qgen = Blocks.Constant(k=1.0)
-            Qgen0 = Blocks.Constant(k=1.0)
+        f = Blocks.Constant(k=1.0)
+        Vref = Blocks.Constant(k=1.0)
+        Qref = Blocks.Constant(k=1.0)
+        Qbranch = Blocks.Constant(k=1.0)
+        Pbranch = Blocks.Constant(k=1.0)
+        Vreg = Blocks.Constant(k=1.0)
+        Ibranch = Blocks.Constant(k=1.0)
+        Pe = Blocks.Constant(k=1.0)
+        Pfaref = Blocks.Constant(k=1.0)
+        Qgen = Blocks.Constant(k=1.0)
+        Qgen0 = Blocks.Constant(k=1.0)
     end
     @variables begin
          V_t(t), [description="Raw terminal voltage"]
@@ -98,6 +98,7 @@
         electrical_control.Vt_in.u ~ V_t
         #connect(converter_interface.Vt_in, V_t)
         #connect(electrical_control.Vt_in, V_t)
+        connect(converter_interface.terminal, terminal)
         connect(plant_control.freq, f.output)
         connect(plant_control.V_ref, Vref.output)
         connect(plant_control.Q_ref, Qref.output)
