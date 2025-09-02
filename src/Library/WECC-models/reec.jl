@@ -253,8 +253,8 @@ end
         #p-phase current
         T_pord * P_refout ~ s_P
         Dt(s_P) ~ (1-Voltage_dip) * (Pref_in.u - P_refout)
-        P_lim ~ limiter(P_refout, P_min, P_max)
-        Dt(P_lim) ~ limiter(Dt(P_refout), dP_min, dP_max)
+        # P_lim with rate limiting - only define the derivative
+        Dt(P_lim) ~ limiter(limiter(P_refout, P_min, P_max) - P_lim, dP_min, dP_max)
         I_pref ~ P_lim/V_tfiltlim
         I_pcmd ~ limiter(I_pref, I_pmin, I_pmax)
         #current limiter logic

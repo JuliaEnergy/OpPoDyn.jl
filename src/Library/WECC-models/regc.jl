@@ -2,7 +2,6 @@
 
 @mtkmodel regc_a begin
     @components begin
-        #terminal=Terminal()
         # inputs
         Vt_in = RealInput(guess=1)
         Iqcmd_in = RealInput(guess=1)
