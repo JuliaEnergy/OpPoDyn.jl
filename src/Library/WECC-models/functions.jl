@@ -15,5 +15,5 @@ function uplimit(x, lim_high)
 end
 
 function LVPLogic(in, zero, Brkpt, gain)
-    ifelse(in<=Brkpt, ifelse(in>=zero, gain * (in-zero)/(Brkpt-zero), 0), 0)
+    ifelse(in<=Brkpt, ifelse(in>=zero, gain * (in-zero)/(Brkpt-zero), 0), gain)
 end

@@ -73,7 +73,6 @@ end
         connect(busbar.terminal, machine.terminal)
     end
 end
-#@named mtkbus2 = PVBus()
 
 # Branches
 function piline(; R, X, B)

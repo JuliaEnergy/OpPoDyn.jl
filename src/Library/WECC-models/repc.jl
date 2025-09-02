@@ -103,7 +103,7 @@
         T_fv * Dt(Q_ext) ~ T_ft* Dt(Q_lim) + Q_lim - Q_ext
         #active power control
         Δf_deadband ~ deadband(freq_ref-freq.u, fdbd1, fdbd2)
-        Δf_corr ~ min(0, Δf_deadband*D_dn) + max(0, Δf_deadband*D_up)
+        Δf_corr ~ lowlimit(Δf_deadband * D_up, 0) + uplimit(Δf_deadband * D_dn, 0) #min(0, Δf_deadband*D_dn) + max(0, Δf_deadband*D_up)
         T_p * Dt(P_branchp) ~ P_branch.u - P_branchp
         f_e ~ limiter(P_plantref-P_branchp+Δf_corr, femin, femax)
         Dt(P_e) ~ Dt(f_e) * K_pg + K_ig * f_e

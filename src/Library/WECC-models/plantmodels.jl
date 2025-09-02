@@ -95,7 +95,7 @@
     @equations begin
         V_t ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
         converter_interface.Vt_in.u ~ V_t
-        electrical_control.Vt_in.u ~ V_t
+        electrical_control.Vt_in.u ~ V_t  
         #connect(converter_interface.Vt_in, V_t)
         #connect(electrical_control.Vt_in, V_t)
         connect(plant_control.freq, f.output)
@@ -113,5 +113,7 @@
         connect(plant_control.Qext_out, electrical_control.Qext_in)
         connect(electrical_control.Iqcmd_out, converter_interface.Iqcmd_in)
         connect(electrical_control.Ipcmd_out, converter_interface.Ipcmd_in)
+        #terminal.i_r ~ -converter_interface.Ipout.u
+        #terminal.i_i ~ -converter_interface.Iqout.u
     end
 end

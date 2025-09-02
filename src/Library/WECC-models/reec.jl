@@ -78,6 +78,8 @@
         P_refout(t), [description="Active power after inverter power order"]
         s_P(t), [description="frozen state after inverter power order"]
         P_lim(t), [description="Limited active power after inverter power order"]
+        ΔP(t), [description="Active power difference between P_ref and P_refout"]
+        ΔP_lim(t), [description="Ramp-limited active power difference"]
         I_pref(t), [description="Current from P_lim/V_tfiltlim"]
         I_pcmd(t), [description="p-Phase output current"]
         I_qmin(t), [description="Minumum q-Phase current limit (pu)"]
@@ -100,7 +102,8 @@
         V_in ~ K_qp * ΔQ + s_Q
         Dt(s_Q) ~ (1-Voltage_dip) * K_qi * ΔQ
         V_lima ~ limiter(V_in, V_min, V_max)
-        V_con ~ Vflag * V_lima + (1-Vflag) * Q_con
+        #V_con ~ Vflag * V_lima + (1-Vflag) * Q_con
+        V_con ~ Vflag * V_lima + (1-Vflag) * V_ref0
         V_limb ~ limiter(V_con, V_min, V_max)
         ΔV ~ V_limb - V_tfilt
         I_in ~ K_vp * ΔV + s_V
@@ -113,10 +116,14 @@
         I_sum ~ I_qcon + I_qinj
         I_qcmd ~ limiter(I_sum, I_qmin, I_qmax)
         #p-phase current
-        T_pord * P_refout ~ s_P
-        Dt(s_P) ~ (1-Voltage_dip) * (Pref_in.u - P_refout)
+        #T_pord * P_refout ~ s_P
+        #Dt(s_P) ~ (1-Voltage_dip) * (Pref_in.u - P_refout)
+        #P_lim ~ limiter(P_refout, P_min, P_max) #zwei Gleichungen für P_lim
+        #Dt(P_lim) ~ limiter(Dt(P_refout), dP_min, dP_max)
+        ΔP ~ Pref_in.u - P_refout
+        ΔP_lim ~ limiter(ΔP, dP_min, dP_max)
+        T_pord * Dt(P_refout) ~ ΔP_lim
         P_lim ~ limiter(P_refout, P_min, P_max)
-        Dt(P_lim) ~ limiter(Dt(P_refout), dP_min, dP_max)
         I_pref ~ P_lim/V_tfiltlim
         I_pcmd ~ limiter(I_pref, I_pmin, I_pmax)
         #current limiter logic
