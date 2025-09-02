@@ -95,11 +95,11 @@
     @equations begin
         V_t ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
         converter_interface.Vt_in.u ~ V_t
-        electrical_control.Vt_in.u ~ V_t  
+        electrical_control.Vt_in.u ~ V_t
         #connect(converter_interface.Vt_in, V_t)
         #connect(electrical_control.Vt_in, V_t)
-        # Current injection from converter to terminal (negative for generation)
-        terminal.i_r ~ -converter_interface.Ipout.u
+        #Current injection from converter to terminal (negative for generation)
+        terminal.i_r ~ converter_interface.Ipout.u
         terminal.i_i ~ -converter_interface.Iqout.u
         connect(plant_control.freq, f.output)
         connect(plant_control.V_ref, Vref.output)
@@ -114,9 +114,11 @@
         connect(converter_interface.Q_gen0, Qgen0.output)
         connect(plant_control.Pref_out, electrical_control.Pref_in)
         connect(plant_control.Qext_out, electrical_control.Qext_in)
+        #electrical_control.Pref_in ~ 1
+        #electrical_control.Qext_in ~ 1
         connect(electrical_control.Iqcmd_out, converter_interface.Iqcmd_in)
         connect(electrical_control.Ipcmd_out, converter_interface.Ipcmd_in)
-        #terminal.i_r ~ -converter_interface.Ipout.u
-        #terminal.i_i ~ -converter_interface.Iqout.u
+        #converter_interface.Iqcmd_in ~ 1
+        #converter_interface.Ipcmd_in ~ 1
     end
 end
