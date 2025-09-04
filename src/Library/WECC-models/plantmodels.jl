@@ -14,7 +14,7 @@
             L_vpl1  = 1.1,
             L_vplsw = 0,
             rrpwr   = 10)
-        electrical_control = Library.reec_b(
+        #=electrical_control = Library.reec_b(
             V_dip   = 0.0,
             V_up    = 1.1,
             T_rv    = 0.01,
@@ -76,7 +76,7 @@
             D_up       = 0.0,
             P_plantref = 1.0, #from powerflow
             freq_ref   = 1.0,
-            freqFlag   = 0)
+            freqFlag   = 0)=#
         f = Blocks.Constant(k=1.0)
         Vref = Blocks.Constant(k=1.0)
         Qref = Blocks.Constant(k=1.0)
@@ -90,35 +90,35 @@
         Qgen0 = Blocks.Constant(k=1.0)
     end
     @variables begin
-         V_t(t), [description="Raw terminal voltage"]
+        V_t(t), [description="Raw terminal voltage"]
     end
     @equations begin
         V_t ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
         converter_interface.Vt_in.u ~ V_t
-        electrical_control.Vt_in.u ~ V_t
+        #electrical_control.Vt_in.u ~ V_t
         #connect(converter_interface.Vt_in, V_t)
         #connect(electrical_control.Vt_in, V_t)
         #Current injection from converter to terminal (negative for generation)
-        terminal.i_r ~ converter_interface.Ipout.u
-        terminal.i_i ~ -converter_interface.Iqout.u
-        connect(plant_control.freq, f.output)
-        connect(plant_control.V_ref, Vref.output)
-        connect(plant_control.Q_ref, Qref.output)
-        connect(plant_control.Q_branch, Qbranch.output)
-        connect(plant_control.P_branch, Pbranch.output)
-        connect(plant_control.V_reg, Vreg.output)
-        connect(plant_control.I_branch, Ibranch.output)
-        connect(electrical_control.P_e, Pe.output)
-        connect(electrical_control.P_faref, Pfaref.output)
-        connect(electrical_control.Q_gen, Qgen.output)
+        #terminal.i_r ~ converter_interface.Ipout.u
+        #terminal.i_i ~ -converter_interface.Iqout.u
+        #connect(plant_control.freq, f.output)
+        #connect(plant_control.V_ref, Vref.output)
+        #connect(plant_control.Q_ref, Qref.output)
+        #connect(plant_control.Q_branch, Qbranch.output)
+        #connect(plant_control.P_branch, Pbranch.output)
+        #connect(plant_control.V_reg, Vreg.output)
+        #connect(plant_control.I_branch, Ibranch.output)
+        #connect(electrical_control.P_e, Pe.output)
+        #connect(electrical_control.P_faref, Pfaref.output)
+        #connect(electrical_control.Q_gen, Qgen.output)
         connect(converter_interface.Q_gen0, Qgen0.output)
-        connect(plant_control.Pref_out, electrical_control.Pref_in)
-        connect(plant_control.Qext_out, electrical_control.Qext_in)
+        #connect(plant_control.Pref_out, electrical_control.Pref_in)
+        #connect(plant_control.Qext_out, electrical_control.Qext_in)
         #electrical_control.Pref_in ~ 1
         #electrical_control.Qext_in ~ 1
-        connect(electrical_control.Iqcmd_out, converter_interface.Iqcmd_in)
-        connect(electrical_control.Ipcmd_out, converter_interface.Ipcmd_in)
-        #converter_interface.Iqcmd_in ~ 1
-        #converter_interface.Ipcmd_in ~ 1
+        #connect(electrical_control.Iqcmd_out, converter_interface.Iqcmd_in)
+        #connect(electrical_control.Ipcmd_out, converter_interface.Ipcmd_in)
+        converter_interface.Iqcmd_in.u ~ 1
+        converter_interface.Ipcmd_in.u ~ 1
     end
 end

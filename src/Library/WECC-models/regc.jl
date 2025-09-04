@@ -29,13 +29,13 @@
     end
     @variables begin
         #I_qz(t), [description="I_q after inverter current regulator"]
-        I_q(t), [description="I_q after inverter current regulator with rate limits"]
         I_qrsum(t), [description=""]
         I_qrlim(t), [description=""]
         I_qr(t), [description=""]
         ΔV(t), [description=""]
         I_hv(t), [description=""]
-        I_hvlim(t), [description=""]
+        #=I_hvlim(t), [description=""]
+        I_q(t), [description="I_q after inverter current regulator with rate limits"]
         ΔI_q(t), [description=""]
         ΔI_pr(t), [description=""]
         I_pr(t), [description=""]
@@ -46,7 +46,7 @@
         I_p(t), [description="I_p after inverter current regulator with limits"]
         V(t), [description="V_t after filter"]
         I_lvpl(t), [description="current resulting from low voltage power logic"]
-        #L_vplsw_adjust(t), [description="switch low voltage power logic off if V > breakpoint"]
+        #L_vplsw_adjust(t), [description="switch low voltage power logic off if V > breakpoint"]=#
     end
     @equations begin
         #q-phase current
@@ -57,7 +57,7 @@
         T_g * Dt(I_qr) ~ I_qrlim
         ΔV ~ Vt_in.u - V_0lim
         I_hv ~ K_hv * ΔV
-        I_hvlim ~ lowlimit(I_hv, 0)
+        #=I_hvlim ~ lowlimit(I_hv, 0)
         ΔI_q ~ I_qr - I_hvlim
         I_q ~ lowlimit(ΔI_q, I_0lim)
         #p-phase current
@@ -77,7 +77,9 @@
         I_p ~ y * I_pr
         #outputs
         Iqout.u ~ I_q
-        Ipout.u ~ I_p
+        Ipout.u ~ I_p=#
+        Iqout.u ~ Iqcmd_in.u
+        Ipout.u ~ Ipcmd_in.u
     end
 end
 

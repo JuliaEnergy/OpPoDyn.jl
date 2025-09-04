@@ -421,3 +421,38 @@ end
         end
     end
 end
+
+
+@testset "WECC PV Plant" begin
+@mtkmodel PV_plant begin
+    @components begin
+        machine = OpPoDyn.Library.WECC_large_PV()
+        vreg = Blocks.Constant(k=1.120103884682511)
+        I_bus = Blocks.Constant(k=1)
+        Q_bus = Blocks.Constant(k=1)
+        P_bus = Blocks.Constant(k=1)
+        f = Blocks.Constant(k=1)
+        busbar = BusBar()
+    end
+    @equations begin
+        connect(vreg.output, machine.V_reg) #oder kommt das von busbar? woher bekomme ich das?
+        connect(I_bus.output, machine.I_branch)
+        connect(Q_bus.output, machine.Q_branch)
+        connect(P_bus.output, machine.P_branch)
+        connect(f.output, machine.freq) #oder kommt das von busbar? woher bekomme ich das?
+        connect(machine.terminal, busbar.terminal)
+    end
+end
+@named mtkbus = PV_plant()
+bus = Bus(mtkbus);
+
+# obtained from steadystate for now
+set_default!(bus, :busbar₊u_r, 1.0189261518036425)
+set_default!(bus, :busbar₊u_i, 0.06828069999522467)
+set_default!(bus, :busbar₊i_r, -1.6299999998860033)
+set_default!(bus, :busbar₊i_i, 0.4518059633240033)
+initialize_component!(bus)
+
+toi = bus_on_slack(bus; tmax=600, toilength=10_000)
+isinteractive() && plottoi(toi)
+end
