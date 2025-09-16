@@ -41,6 +41,7 @@ kwargs = (;
         "Examples" => [
             "generated/ieee9bus.md",]
     ],
+    draft=haskey(ENV, "DOCUMENTER_DRAFT"),
     warnonly=[:missing_docs],
 )
 kwargs_warnonly = (; kwargs..., warnonly=true)
