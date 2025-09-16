@@ -1,8 +1,10 @@
 using OpPoDyn
 using OpPoDyn.Library
 using PowerDynamics.Library
-using PowerDynamicsTesting
+PowerDynamics.load_pdtesting()
+using Main.PowerDynamicsTesting
 PowerDynamicsTesting.set_reference_dir(OpPoDyn)
+
 using ModelingToolkit
 using NetworkDynamics
 using Graphs
