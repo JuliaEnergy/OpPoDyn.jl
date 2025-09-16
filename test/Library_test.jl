@@ -22,13 +22,13 @@ using Test
 @testset "DynawoPiLine" begin
     @named branchA = DynawoPiLine(XPu=0.022522)
     @named branchB = DynawoPiLine(XPu=0.04189)
-    line = Line(MTKLine(branchA, branchB));
+    line = compile_line(MTKLine(branchA, branchB));
     toi = line_between_slacks(line)
     # isinteractive() && plottoi(toi)
     @reftest "DynawoPiLine_1" toi
 
     @named branchA = DynawoPiLine(XPu=0.022522, RPu=0.01)
-    line = Line(MTKLine(branchA));
+    line = compile_line(MTKLine(branchA));
     toi = line_between_slacks(line)
     # isinteractive() && plottoi(toi)
     @reftest "DynawoPiLine_2" toi
@@ -39,7 +39,7 @@ end
     @named branchA = DynawoPiLine(XPu=0.022522)
     @named branchB = DynawoPiLine(XPu=0.04189)
     linem = MTKLine(branchA, branchB)
-    linef = Line(linem);
+    linef = compile_line(linem);
 
     # genbus model
     @mtkmodel GenBus begin
@@ -62,10 +62,10 @@ end
         end
     end
     @named genbus = GenBus()
-    genf = Bus(genbus; verbose=false)
+    genf = compile_bus(genbus; verbose=false)
 
     @named slack = SlackDifferential(u_init_r=0.90081)
-    slackf = Bus(slack)
+    slackf = compile_bus(slack)
 
     g = path_graph(2)
     nw = Network(g, [slackf, genf], linef)
@@ -166,7 +166,7 @@ end
         end
     end
     @named mtkbus = GenBus()
-    bus = Bus(mtkbus);
+    bus = compile_bus(mtkbus);
 
     # obtained from steadystate for now
     set_default!(bus, :busbar₊u_r, 1.0189261518036425)
