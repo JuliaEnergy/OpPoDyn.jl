@@ -102,7 +102,7 @@ edgefs = [l45, l46, l69, l78, l89, t14, t27, t39, l57];
 nw = Network(vertexfs, edgefs)
 
 # solve powerflow and initialize
-OpPoDyn.solve_powerflow!(nw)
+OpPoDyn.solve_powerflow(nw)
 OpPoDyn.initialize!(nw)
 
 # get state for actual calculation

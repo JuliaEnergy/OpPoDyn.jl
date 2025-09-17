@@ -3,7 +3,7 @@ module OpPoDyn
 using Reexport: Reexport, @reexport
 @reexport using NetworkDynamics
 using NetworkDynamics: SymbolicView
-
+#using PowerDynamics
 using SciMLBase: SciMLBase, solve
 using NonlinearSolve: NonlinearSolve, NonlinearProblem
 using ForwardDiff: ForwardDiff

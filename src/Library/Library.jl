@@ -8,6 +8,7 @@ using ModelingToolkit: @unpack, Equation, Num, System # needed for @mtkmodel?
 using ModelingToolkitStandardLibrary.Blocks #: RealInput, RealOutput
 using NonlinearSolve: NonlinearProblem
 using SciMLBase: SciMLBase, solve
+#using PowerDynamics
 
 @mtkmodel SystemBase begin
     @parameters begin

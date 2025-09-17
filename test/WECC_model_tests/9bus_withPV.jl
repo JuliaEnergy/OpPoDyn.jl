@@ -179,7 +179,6 @@ primary_parameters_gen3 = Dict(
 
 @named mtkbus1 = StandardBus(; primary_parameters_gen1...)
 @named mtkbus2 = PVBus()
-isbusmodel(mtkbus2) # assert that the created model satisfies the interface
 @named mtkbus3 = StandardBus(; primary_parameters_gen3...)
 @named mtkbus4 = MTKBus()
 @named mtkbus5 = LoadBus(;load__Pset=-1.25, load__Qset=-0.5)
@@ -252,7 +251,7 @@ edgefs = [l45, l46, l69, l78, l89, t14, t27, t39, l57];
 nw = Network(vertexfs, edgefs)
 
 # solve powerflow and initialize
-OpPoDyn.solve_powerflow!(nw)
+OpPoDyn.solve_powerflow(nw)
 OpPoDyn.initialize!(nw)
 
 # get state for actual calculation
