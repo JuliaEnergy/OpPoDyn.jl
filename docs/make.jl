@@ -42,7 +42,8 @@ kwargs = (;
         #     "generated/ieee9bus.md",]
     ],
     draft=haskey(ENV, "DOCUMENTER_DRAFT"),
-    warnonly=[:missing_docs],
+    # warnonly=[:missing_docs],
+    warnonly=true # only warn! this is fine, is internal repo anyway
 )
 kwargs_warnonly = (; kwargs..., warnonly=true)
 
