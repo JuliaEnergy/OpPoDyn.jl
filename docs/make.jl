@@ -16,9 +16,11 @@ outdir = joinpath(@__DIR__, "src", "generated")
 isdir(outdir) && rm(outdir, recursive=true)
 mkpath(outdir)
 
-for example in filter(contains(r".jl$"), readdir(example_dir, join=true))
-    Literate.markdown(example, outdir)
-    Literate.script(example, outdir; keep_comments=true)
+if isdir(example_dir)
+    for example in filter(contains(r".jl$"), readdir(example_dir, join=true))
+        Literate.markdown(example, outdir)
+        Literate.script(example, outdir; keep_comments=true)
+    end
 end
 
 kwargs = (;
