@@ -19,7 +19,7 @@
         PNomTurb=2220, [description="Nominal active (turbine) power in MW"]
         PNomAlt=2200, [description="Nominal active (alternator) power in MW"]
         QNomAlt=sqrt(SNom * SNom - PNomAlt * PNomAlt), [description="Nominal reactive (alternator) power in Mvar"]
-        ExcitationPu, [description="Choice of excitation base voltage"]
+        # ExcitationPu, [description="Choice of excitation base voltage"]
         H=3.5, [description="Kinetic constant = kinetic energy / rated power"]
         DPu=0, [description="Damping coefficient of the swing equation in pu"]
 
@@ -79,8 +79,8 @@ end
         RQ2′Pu=0.02821, [description="Quadrature axis 2nd damper resistance in pu"]
         MsalPu=0.05, [description="Constant difference between direct and quadrature axis saturated mutual inductances in pu"]
         # pu factor for excitation voltage
-        Md′PuEfd, [description="Direct axis mutual inductance used to determine the excitation voltage in pu"]
-        Md′PuEfdNom, [description="Direct axis mutual inductance used to determine the excitation voltage in nominal conditions in pu"]
+        # Md′PuEfd, [description="Direct axis mutual inductance used to determine the excitation voltage in pu"]
+        # Md′PuEfdNom, [description="Direct axis mutual inductance used to determine the excitation voltage in nominal conditions in pu"]
     end
     @variables begin
         # # Input variables
