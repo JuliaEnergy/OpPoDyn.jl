@@ -16,7 +16,7 @@ using Test
 @mtkmodel LoadBus begin
     @components begin
         busbar = BusBar()
-        load = ConstantYLoad(Pset, Qset, Vset=nothing)
+        load = PowerDynamics.Library.ConstantYLoad()#Pset, Qset, Vset=nothing)
     end
     @equations begin
         connect(load.terminal, busbar.terminal)
@@ -25,7 +25,7 @@ end
 
 @mtkmodel StandardBus begin
     @components begin
-        machine = Library.StandardModel_pf(;
+        machine = OpPoDyn.Library.StandardModel_pf(;
             S_b,
             Sn,
             V_b,
@@ -67,7 +67,7 @@ end
 @mtkmodel PVBus begin
     @components begin
         busbar = BusBar()
-        machine = Library.WECC_large_PV()
+        machine = WECC_large_PV()
     end
     @equations begin
         connect(busbar.terminal, machine.terminal)
@@ -76,17 +76,17 @@ end
 
 # Branches
 function piline(; R, X, B)
-    @named pibranch = PiLine(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0)
+    @named pibranch = PowerDynamics.Library.PiLine(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0)
     MTKLine(pibranch)
 end
 
 function piline_shortcircuit(; R, X, B, pos, G_fault=0, B_fault=0, faultimp=0)
-    @named pibranch = PiLine_fault(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0, G_fault, B_fault, pos, faultimp)
+    @named pibranch = PowerDynamics.Library.PiLine_fault(;R, X, B_src=B/2, B_dst=B/2, G_src=0, G_dst=0, G_fault, B_fault, pos, faultimp)
     MTKLine(pibranch)
 end
 
 function transformer(; R, X)
-    @named transformer = PiLine(;R, X, B_src=0, B_dst=0, G_src=0, G_dst=0)
+    @named transformer = PowerDynamics.Library.PiLine(;R, X, B_src=0, B_dst=0, G_src=0, G_dst=0)
     MTKLine(transformer)
 end
 
@@ -181,22 +181,22 @@ primary_parameters_gen3 = Dict(
 @named mtkbus2 = PVBus()
 @named mtkbus3 = StandardBus(; primary_parameters_gen3...)
 @named mtkbus4 = MTKBus()
-@named mtkbus5 = LoadBus(;load__Pset=-1.25, load__Qset=-0.5)
-@named mtkbus6 = LoadBus(;load__Pset=-0.90, load__Qset=-0.3)
+@named mtkbus5 = LoadBus()#;load__Pset=-1.25, load__Qset=-0.5)
+@named mtkbus6 = LoadBus()#;load__Pset=-0.90, load__Qset=-0.3)
 @named mtkbus7 = MTKBus()
-@named mtkbus8 = LoadBus(;load__Pset=-1.0, load__Qset=-0.35)
+@named mtkbus8 = LoadBus()#;load__Pset=-1.0, load__Qset=-0.35)
 @named mtkbus9 = MTKBus()
 
 # generate the dynamic component functions
-@named bus1 = Bus(mtkbus1; vidx=1, pf=pfSlack(V=1.04))
-@named bus2 = Bus(mtkbus2; vidx=2, pf=pfPV(V=1.025, P=1.63))
-@named bus3 = Bus(mtkbus3; vidx=3, pf=pfPV(V=1.025, P=0.85))
-@named bus4 = Bus(mtkbus4; vidx=4)
-@named bus5 = Bus(mtkbus5; vidx=5, pf=pfPQ(P=-1.25, Q=-0.5))
-@named bus6 = Bus(mtkbus6; vidx=6, pf=pfPQ(P=-0.9, Q=-0.3))
-@named bus7 = Bus(mtkbus7; vidx=7)
-@named bus8 = Bus(mtkbus8; vidx=8, pf=pfPQ(P=-1.0, Q=-0.35))
-@named bus9 = Bus(mtkbus9; vidx=9)
+@named bus1 = compile_bus(mtkbus1; vidx=1, pf=pfSlack(V=1.04))
+@named bus2 = compile_bus(mtkbus2; vidx=2, pf=pfPV(V=1.025, P=1.63))
+@named bus3 = compile_bus(mtkbus3; vidx=3, pf=pfPV(V=1.025, P=0.85))
+@named bus4 = compile_bus(mtkbus4; vidx=4)
+@named bus5 = compile_bus(mtkbus5; vidx=5, pf=pfPQ(P=-1.25, Q=-0.5))
+@named bus6 = compile_bus(mtkbus6; vidx=6, pf=pfPQ(P=-0.9, Q=-0.3))
+@named bus7 = compile_bus(mtkbus7; vidx=7)
+@named bus8 = compile_bus(mtkbus8; vidx=8, pf=pfPQ(P=-1.0, Q=-0.35))
+@named bus9 = compile_bus(mtkbus9; vidx=9)
 
 #generate lines
 t27_data = (;
@@ -233,16 +233,16 @@ l57_data = (;
 )
 l57_params = lineparams_pu(; l57_data...)
 
-@named l46 = Line(piline(; R=0.0170, X=0.0920, B=0.1580), src=4, dst=6) #here in pu
-@named l69 = Line(piline(; R=0.0390, X=0.1700, B=0.3580), src=6, dst=9)
-@named l78 = Line(piline(; R=0.0085, X=0.0720, B=0.1490), src=7, dst=8)
-@named l89 = Line(piline(; R=0.0119, X=0.1008, B=0.2090), src=8, dst=9)
-@named t14 = Line(transformer(; R=0, X=0.0576), src=1, dst=4)
-@named t27 = Line(transformer(; R=0, X=0.0625), src=2, dst=7)
-@named t39 = Line(transformer(; R=0, X=0.0586), src=3, dst=9)
-@named l57 = Line(piline_shortcircuit(; R=l57_params.R, X=l57_params.X, B=l57_params.B, pos=0.99, faultimp=0), src=5, dst=7) #faultimp=1, G_fault=l57_params.G_f, B_fault=l57_params.B_f
-@named t27 = Line(transformer(; R=t27_params.R, X=t27_params.X), src=2, dst=7)
-@named l45 = Line(piline(R=l45_params.R, X=l45_params.X, B=l45_params.B), src=4, dst=5)
+@named l46 = compile_line(piline(; R=0.0170, X=0.0920, B=0.1580), src=4, dst=6) #here in pu
+@named l69 = compile_line(piline(; R=0.0390, X=0.1700, B=0.3580), src=6, dst=9)
+@named l78 = compile_line(piline(; R=0.0085, X=0.0720, B=0.1490), src=7, dst=8)
+@named l89 = compile_line(piline(; R=0.0119, X=0.1008, B=0.2090), src=8, dst=9)
+@named t14 = compile_line(transformer(; R=0, X=0.0576), src=1, dst=4)
+@named t27 = compile_line(transformer(; R=0, X=0.0625), src=2, dst=7)
+@named t39 = compile_line(transformer(; R=0, X=0.0586), src=3, dst=9)
+@named l57 = compile_line(piline_shortcircuit(; R=l57_params.R, X=l57_params.X, B=l57_params.B, pos=0.99, faultimp=0), src=5, dst=7) #faultimp=1, G_fault=l57_params.G_f, B_fault=l57_params.B_f
+@named t27 = compile_line(transformer(; R=t27_params.R, X=t27_params.X), src=2, dst=7)
+@named l45 = compile_line(piline(R=l45_params.R, X=l45_params.X, B=l45_params.B), src=4, dst=5)
 
 
 # build network
@@ -250,12 +250,7 @@ vertexfs = [bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9];
 edgefs = [l45, l46, l69, l78, l89, t14, t27, t39, l57];
 nw = Network(vertexfs, edgefs)
 
-# solve powerflow and initialize
-OpPoDyn.solve_powerflow(nw)
-OpPoDyn.initialize!(nw)
-
-# get state for actual calculation
-u0 = NWState(nw)
+u0 = initialize_from_pf!(nw)
 
 # create faults
 affect1! = (integrator) -> begin

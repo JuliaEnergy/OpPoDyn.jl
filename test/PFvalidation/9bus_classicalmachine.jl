@@ -1,5 +1,6 @@
 using OpPoDyn
 using OpPoDyn.Library
+using PowerDynamics.Library
 using ModelingToolkit
 using NetworkDynamics
 using Graphs
@@ -13,7 +14,7 @@ using DataFrames
 @mtkmodel LoadBus begin
     @components begin
         busbar = BusBar()
-        load = ConstantYLoad(Pset, Qset, Vset=nothing)
+        load = ConstantYLoad()#Pset, Qset, Vset=nothing)
     end
     @equations begin
         connect(load.terminal, busbar.terminal)
@@ -22,7 +23,7 @@ end
 
 @mtkmodel ClassicBus begin
     @components begin
-        machine = Library.ClassicalMachine_powerfactory(;
+        machine = OpPoDyn.Library.ClassicalMachine_powerfactory(;
             p_m_input=false,
             S_b=100,
             V_b=18,
@@ -32,7 +33,7 @@ end
             vf_set=nothing,
             p_m_set=nothing,
             H,
-             D=0
+            D=0
         )
         busbar = BusBar()
     end
@@ -46,23 +47,23 @@ end
 @named mtkbus2 = ClassicBus(; machine__H= 6.40, machine__X′_d=0.1198)
 @named mtkbus3 = ClassicBus(; machine__H= 3.01, machine__X′_d=0.1813)
 @named mtkbus4 = MTKBus()
-@named mtkbus5 = LoadBus(;load__Pset=-1.25, load__Qset=-0.5)
-@named mtkbus6 = LoadBus(;load__Pset=-0.90, load__Qset=-0.3)
+@named mtkbus5 = LoadBus()#;load__Pset=-1.25, load__Qset=-0.5)
+@named mtkbus6 = LoadBus()#;load__Pset=-0.90, load__Qset=-0.3)
 @named mtkbus7 = MTKBus()
-@named mtkbus8 = LoadBus(;load__Pset=-1.0, load__Qset=-0.35)
+@named mtkbus8 = LoadBus()#;load__Pset=-1.0, load__Qset=-0.35)
 @named mtkbus9 = MTKBus()
 
 
 # generate the dynamic component functions
-@named bus1 = Bus(mtkbus1; vidx=1, pf=pfSlack(V=1.04))
-@named bus2 = Bus(mtkbus2; vidx=2, pf=pfPV(V=1.025, P=1.63))
-@named bus3 = Bus(mtkbus3; vidx=3, pf=pfPV(V=1.025, P=0.85))
-@named bus4 = Bus(mtkbus4; vidx=4)
-@named bus5 = Bus(mtkbus5; vidx=5, pf=pfPQ(P=-1.25, Q=-0.5))
-@named bus6 = Bus(mtkbus6; vidx=6, pf=pfPQ(P=-0.9, Q=-0.3))
-@named bus7 = Bus(mtkbus7; vidx=7)
-@named bus8 = Bus(mtkbus8; vidx=8, pf=pfPQ(P=-1.0, Q=-0.35))
-@named bus9 = Bus(mtkbus9; vidx=9)
+@named bus1 = compile_bus(mtkbus1; vidx=1, pf=pfSlack(V=1.04))
+@named bus2 = compile_bus(mtkbus2; vidx=2, pf=pfPV(V=1.025, P=1.63))
+@named bus3 = compile_bus(mtkbus3; vidx=3, pf=pfPV(V=1.025, P=0.85))
+@named bus4 = compile_bus(mtkbus4; vidx=4)
+@named bus5 = compile_bus(mtkbus5; vidx=5, pf=pfPQ(P=-1.25, Q=-0.5))
+@named bus6 = compile_bus(mtkbus6; vidx=6, pf=pfPQ(P=-0.9, Q=-0.3))
+@named bus7 = compile_bus(mtkbus7; vidx=7)
+@named bus8 = compile_bus(mtkbus8; vidx=8, pf=pfPQ(P=-1.0, Q=-0.35))
+@named bus9 = compile_bus(mtkbus9; vidx=9)
 
 # Branches
 function piline(; R, X, B)
@@ -86,28 +87,22 @@ function transformer(; R, X)
 end
 
 
-@named l45 = Line(piline(; R=0.0100, X=0.0850, B=0.1760), src=4, dst=5)
-@named l46 = Line(piline(; R=0.0170, X=0.0920, B=0.1580), src=4, dst=6)
-@named l69 = Line(piline(; R=0.0390, X=0.1700, B=0.3580), src=6, dst=9)
-@named l78 = Line(piline(; R=0.0085, X=0.0720, B=0.1490), src=7, dst=8)
-@named l89 = Line(piline(; R=0.0119, X=0.1008, B=0.2090), src=8, dst=9)
-@named t14 = Line(transformer(; R=0, X=0.0576), src=1, dst=4)
-@named t27 = Line(transformer(; R=0, X=0.0625), src=2, dst=7)
-@named t39 = Line(transformer(; R=0, X=0.0586), src=3, dst=9)
-@named l57 = Line(piline_shortcircuit(; R=0.0320, X=0.1610, B=0.3060, pos=0.99), src=5, dst=7) #S_b = 100 MVA, U_b = 230 kV; 2 Ω also G_fault=0.003781
+@named l45 = compile_line(piline(; R=0.0100, X=0.0850, B=0.1760), src=4, dst=5)
+@named l46 = compile_line(piline(; R=0.0170, X=0.0920, B=0.1580), src=4, dst=6)
+@named l69 = compile_line(piline(; R=0.0390, X=0.1700, B=0.3580), src=6, dst=9)
+@named l78 = compile_line(piline(; R=0.0085, X=0.0720, B=0.1490), src=7, dst=8)
+@named l89 = compile_line(piline(; R=0.0119, X=0.1008, B=0.2090), src=8, dst=9)
+@named t14 = compile_line(transformer(; R=0, X=0.0576), src=1, dst=4)
+@named t27 = compile_line(transformer(; R=0, X=0.0625), src=2, dst=7)
+@named t39 = compile_line(transformer(; R=0, X=0.0586), src=3, dst=9)
+@named l57 = compile_line(piline_shortcircuit(; R=0.0320, X=0.1610, B=0.3060, pos=0.99), src=5, dst=7) #S_b = 100 MVA, U_b = 230 kV; 2 Ω also G_fault=0.003781
 
 # build network
 vertexfs = [bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9];
 edgefs = [l45, l46, l69, l78, l89, t14, t27, t39, l57];
 nw = Network(vertexfs, edgefs)
 
-# solve powerflow and initialize
-OpPoDyn.solve_powerflow(nw)
-OpPoDyn.initialize!(nw)
-
-# get state for actual calculation
-u0 = NWState(nw)
-
+u0 = initialize_from_pf!(nw)
 
 # create faults
 affect1! = (integrator) -> begin

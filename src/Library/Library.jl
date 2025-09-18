@@ -9,7 +9,7 @@ using ModelingToolkitStandardLibrary.Blocks #: RealInput, RealOutput
 using NonlinearSolve: NonlinearProblem
 using SciMLBase: SciMLBase, solve
 
-using PowerDynamics.Library: BusBase
+using PowerDynamics.Library: BusBase, ConstantYLoad, PiLine, PiLine_fault
 
 @mtkmodel SystemBase begin
     @parameters begin
@@ -52,3 +52,21 @@ export DynawoFixedRatioTransformer
 include("Transformers/DynawoFixedRatioTransformer.jl")
 
 end
+
+####
+#### WECC modules
+####
+export limiter, lowlimit, uplimit, deadband, LVPLogic
+include("WECC-models/functions.jl")
+
+export regc_a
+include("WECC-models/regc.jl")
+
+export reec_b
+include("WECC-models/reec.jl")
+
+export repc_a
+include("WECC-models/repc.jl")
+
+export WECC_large_PV
+include("WECC-models/plantmodels.jl")
