@@ -1,5 +1,6 @@
 using OpPoDyn
 using OpPoDyn.Library
+using PowerDynamics.Library
 using ModelingToolkit
 using ModelingToolkitStandardLibrary.Blocks
 using NetworkDynamics
@@ -67,7 +68,7 @@ end
 @mtkmodel PVBus begin
     @components begin
         busbar = BusBar()
-        machine = WECC_large_PV()
+        machine = OpPoDyn.Library.WECC_large_PV()
     end
     @equations begin
         connect(busbar.terminal, machine.terminal)

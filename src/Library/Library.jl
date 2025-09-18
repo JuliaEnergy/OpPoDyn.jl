@@ -1,7 +1,7 @@
 module Library
 
 using ArgCheck: @argcheck
-using ModelingToolkit: ModelingToolkit, @named, @mtkmodel, @variables, @parameters, simplify,
+using ModelingToolkit: ModelingToolkit, @named, @mtkmodel, @variables, @parameters, simplify, connect,
                        t_nounits as t, D_nounits as Dt
 using ModelingToolkit: @unpack, Equation, Num, System # needed for @mtkmodel?
 using ModelingToolkitStandardLibrary.Blocks #: RealInput, RealOutput
@@ -50,8 +50,6 @@ include("Branches/DynawoPiLine.jl")
 export DynawoFixedRatioTransformer
 include("Transformers/DynawoFixedRatioTransformer.jl")
 
-end
-
 ####
 #### WECC modules
 ####
@@ -69,3 +67,6 @@ include("WECC-models/repc.jl")
 
 export WECC_large_PV
 include("WECC-models/plantmodels.jl")
+
+end
+

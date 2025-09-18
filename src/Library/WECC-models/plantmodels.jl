@@ -4,7 +4,7 @@
 @mtkmodel WECC_large_PV begin
     @components begin
         terminal=Terminal()
-        converter_interface = Library.regc_a(
+        converter_interface = regc_a(
             I_qrmax = 999.9,
             I_qrmin = -999.9,
             T_g     = 0.02,
@@ -13,7 +13,9 @@
             Zerox   = 0.4,
             L_vpl1  = 1.1,
             L_vplsw = 0,
-            rrpwr   = 10)
+            rrpwr   = 10,
+            V_0lim = 1.2,
+            K_hv = 0.7)
         #=electrical_control = Library.reec_b(
             V_dip   = 0.0,
             V_up    = 1.1,
@@ -96,8 +98,8 @@
         V_t ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
         converter_interface.Vt_in.u ~ V_t
         #electrical_control.Vt_in.u ~ V_t
-        #connect(converter_interface.Vt_in, V_t)
-        #connect(electrical_control.Vt_in, V_t)
+        ##connect(converter_interface.Vt_in, V_t)
+        ##connect(electrical_control.Vt_in, V_t)
         #Current injection from converter to terminal (negative for generation)
         #terminal.i_r ~ converter_interface.Ipout.u
         #terminal.i_i ~ -converter_interface.Iqout.u

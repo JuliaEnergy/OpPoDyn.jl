@@ -109,7 +109,7 @@
         Dt(P_e) ~ Dt(f_e) * K_pg + K_ig * f_e
         P_lim ~ limiter(P_e, P_min, P_max)
         T_lag * Dt(P_refa) ~ P_lim - P_refa
-        P_ref ~ freqFlag * P_refa + (1-freqFlag) * P_branch #oder P_plantref?
+        P_ref ~ freqFlag * P_refa + (1-freqFlag) * P_branch.u #oder P_plantref?
         #outputs
         Pref_out.u ~ P_ref
         Qext_out.u ~ Q_ext

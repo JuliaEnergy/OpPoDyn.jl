@@ -31,11 +31,11 @@
         #I_qz(t), [description="I_q after inverter current regulator"]
         I_qrsum(t), [description=""]
         I_qrlim(t), [description=""]
-        I_qr(t), [description=""]
+        I_qr(t), [guess=1, description=""]
         ΔV(t), [description=""]
         I_hv(t), [description=""]
-        #=I_hvlim(t), [description=""]
-        I_q(t), [description="I_q after inverter current regulator with rate limits"]
+        I_hvlim(t), [description=""]
+        #=I_q(t), [description="I_q after inverter current regulator with rate limits"]
         ΔI_q(t), [description=""]
         ΔI_pr(t), [description=""]
         I_pr(t), [description=""]
@@ -57,8 +57,8 @@
         T_g * Dt(I_qr) ~ I_qrlim
         ΔV ~ Vt_in.u - V_0lim
         I_hv ~ K_hv * ΔV
-        #=I_hvlim ~ lowlimit(I_hv, 0)
-        ΔI_q ~ I_qr - I_hvlim
+        I_hvlim ~ lowlimit(I_hv, 0)
+        #=ΔI_q ~ I_qr - I_hvlim
         I_q ~ lowlimit(ΔI_q, I_0lim)
         #p-phase current
         #T_fltr * Dt(V) ~ Vt_in.u - V
