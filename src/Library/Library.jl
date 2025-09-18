@@ -1,15 +1,14 @@
 module Library
 
 using ArgCheck: @argcheck
-using ..OpPoDyn: Terminal, BusBase, Ibase
-using ModelingToolkit: ModelingToolkit, @named, @mtkmodel, @variables, @parameters, simplify, connect,
+using ModelingToolkit: ModelingToolkit, @named, @mtkmodel, @variables, @parameters, simplify,
                        t_nounits as t, D_nounits as Dt
 using ModelingToolkit: @unpack, Equation, Num, System # needed for @mtkmodel?
 using ModelingToolkitStandardLibrary.Blocks #: RealInput, RealOutput
 using NonlinearSolve: NonlinearProblem
 using SciMLBase: SciMLBase, solve
 
-using PowerDynamics.Library: BusBase, ConstantYLoad, PiLine, PiLine_fault
+using PowerDynamics.Library: Terminal, Ibase, BusBase
 
 @mtkmodel SystemBase begin
     @parameters begin

@@ -14,7 +14,7 @@ using DataFrames
 @mtkmodel LoadBus begin
     @components begin
         busbar = BusBar()
-        load = ConstantYLoad()#Pset, Qset, Vset=nothing)
+        load = ConstantYLoad()
     end
     @equations begin
         connect(load.terminal, busbar.terminal)
@@ -47,10 +47,10 @@ end
 @named mtkbus2 = ClassicBus(; machine__H= 6.40, machine__X′_d=0.1198)
 @named mtkbus3 = ClassicBus(; machine__H= 3.01, machine__X′_d=0.1813)
 @named mtkbus4 = MTKBus()
-@named mtkbus5 = LoadBus()#;load__Pset=-1.25, load__Qset=-0.5)
-@named mtkbus6 = LoadBus()#;load__Pset=-0.90, load__Qset=-0.3)
+@named mtkbus5 = LoadBus()
+@named mtkbus6 = LoadBus()
 @named mtkbus7 = MTKBus()
-@named mtkbus8 = LoadBus()#;load__Pset=-1.0, load__Qset=-0.35)
+@named mtkbus8 = LoadBus()
 @named mtkbus9 = MTKBus()
 
 
@@ -102,6 +102,8 @@ vertexfs = [bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9];
 edgefs = [l45, l46, l69, l78, l89, t14, t27, t39, l57];
 nw = Network(vertexfs, edgefs)
 
+u0 = initialize_from_pf!(nw)
+# solve powerflow and initialize
 u0 = initialize_from_pf!(nw)
 
 # create faults

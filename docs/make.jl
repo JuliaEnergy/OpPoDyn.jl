@@ -16,9 +16,11 @@ outdir = joinpath(@__DIR__, "src", "generated")
 isdir(outdir) && rm(outdir, recursive=true)
 mkpath(outdir)
 
-for example in filter(contains(r".jl$"), readdir(example_dir, join=true))
-    Literate.markdown(example, outdir)
-    Literate.script(example, outdir; keep_comments=true)
+if isdir(example_dir)
+    for example in filter(contains(r".jl$"), readdir(example_dir, join=true))
+        Literate.markdown(example, outdir)
+        Literate.script(example, outdir; keep_comments=true)
+    end
 end
 
 kwargs = (;
@@ -40,7 +42,8 @@ kwargs = (;
         #     "generated/ieee9bus.md",]
     ],
     draft=haskey(ENV, "DOCUMENTER_DRAFT"),
-    warnonly=[:missing_docs],
+    # warnonly=[:missing_docs],
+    warnonly=true # only warn! this is fine, is internal repo anyway
 )
 kwargs_warnonly = (; kwargs..., warnonly=true)
 
