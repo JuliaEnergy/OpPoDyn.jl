@@ -1,6 +1,6 @@
 function deadband(x,low,high)
     ifelse(x < low, x-low, ifelse(x>high, x-high, 0))
-end
+end #TODO überprüfen: ist das korrekt?
 
 function limiter(x, lim_low, lim_high)
     ifelse(x<lim_low, lim_low, ifelse(x>lim_high, lim_high, x))

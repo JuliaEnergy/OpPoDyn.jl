@@ -190,7 +190,7 @@ primary_parameters_gen3 = Dict(
 
 # generate the dynamic component functions
 @named bus1 = compile_bus(mtkbus1; vidx=1, pf=pfSlack(V=1.04))
-@named bus2 = compile_bus(mtkbus2; vidx=2, pf=pfPV(V=1.025, P=1.63))
+@named bus2 = compile_bus(mtkbus2; vidx=2, pf=pfPV(V=1, P=1))
 @named bus3 = compile_bus(mtkbus3; vidx=3, pf=pfPV(V=1.025, P=0.85))
 @named bus4 = compile_bus(mtkbus4; vidx=4)
 @named bus5 = compile_bus(mtkbus5; vidx=5, pf=pfPQ(P=-1.25, Q=-0.5))

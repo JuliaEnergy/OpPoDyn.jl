@@ -10,11 +10,13 @@
         #end
         V_reg = RealInput(guess=1) #from bus - was ist Unterschied zu Vt = raw terminal voltage ? initialized based on initial power flow solution for V_reg and Q_gen
         I_branch = RealInput(guess=1) #current through a defined branch
-        Q_branch = RealInput(guess=1) #reactive power through a defined branch /from aggregated turbine model or collection point of wind plant
+        Q_branch = RealInput(guess=0) #reactive power through a defined branch /from aggregated turbine model or collection point of wind plant
         P_branch = RealInput(guess=1) #from aggregated turbine model or collection point of wind plant
         freq = RealInput(guess=1) #from aggregated turbine model or collection point of wind plant
         V_ref = RealInput(guess=1)
-        Q_ref = RealInput(guess=1)
+        Q_ref = RealInput(guess=0)
+        V_diff = RealInput(guess=0)
+        #TODO Variable/Parameter Voltage_dip richtig so?; Modelica: Voltage_dip = if vreg < Vfrz then true else false; mit vreg = sqrt(regulate_vr^2 + regulate_vi^2); und Vfrz=0 "Voltage below which State s2 is frozen"
         # outputs
         Pref_out = RealOutput() # active power [pu]
         Qext_out = RealOutput() # reactive power [pu]
@@ -61,35 +63,40 @@
         #end
     end
     @variables begin
-        V_comp(t), [description="Input voltage for VcombFlag=1"]
+        #V_comp(t), [description="Input voltage for VcombFlag=1"]
+        Voltage_dip(t), [description="freeze states if Voltagedip=1"]
         V_droop(t), [description="Input voltage for VcombFlag=0"]
         V_in(t), [description="resulting voltage after VcombFlag"]
-        V_fltr(t), [description="Voltage after filter"]
+        V_fltr(t), [guess=1, description="Voltage after filter"]
         ΔV(t), [description="Voltage difference between filter and reference"]
-        Q_fltr(t), [description="Reactive power after filter"]
+        Q_fltr(t), [guess=0, description="Reactive power after filter"]
         ΔQ(t), [description="Reactive power differemce between filter and reference"]
         ΔQ_in(t), [description="Input depending on RefFlag=1 (ΔV) or RefFlag=0 (ΔQ)"]
         ΔQ_dbd(t), [description="Reactive power differece after deadband"]
         Q_e(t), [description="Reactive power after error limits"]
         Q_x(t), [description="Reactive power before limits"]
-        s_2(t), [description="state of reactive power that can be frozen depending on V_reg"]
+        #s_2(t), [guess=0, description="state of reactive power that can be frozen depending on V_reg"]
+        Q_res(t), [description=""]
+        Q_I(t), [guess=0, description=""]
         Q_lim(t), [description="Reactive power after reactive power limits"]
-        Q_ext(t), [description="Reactive power output"]
+        Q_ext(t), [guess=0, description="Reactive power output"]
         Δf_deadband(t), [description="frequency difference after deadband"]
         Δf_corr(t), [description="Frequency difference after droop"]
-        P_branchp(t), [description="Active power after T_p"]
+        P_branchp(t), [guess=1, description="Active power after T_p"]
         Δf_in(t), [description="Difference between P_plantref and Δf_corr and P_branchp"]
         f_e(t), [description="frequency after frequency limits"]
-        P_e(t), [description="Active power before power limits"]
+        P_e(t), [guess=1,description="Active power before power limits"]
         P_lim(t), [description="Active power after power limits"]
-        P_refa(t), [description="Active Power reference if Freq_flag=1"]
+        P_refa(t), [guess=1, description="Active Power reference if Freq_flag=1"]
         P_ref(t), [description="Active power output"]
     end
     @equations begin
+        Voltage_dip ~ ifelse(V_reg.u<V_frz, 1,0) #TODO Variable/Parameter Voltage_dip richtig so?; Modelica: Voltage_dip = if vreg < Vfrz then true else false; mit vreg = sqrt(regulate_vr^2 + regulate_vi^2); und Vfrz=0 "Voltage below which State s2 is frozen"
         #reactive power control
         V_droop ~ K_c * Q_branch.u + V_reg.u
-        V_comp ~ abs(V_reg.u-(R_c+im*X_c)*I_branch.u)
-        V_in ~ VcombFlag * V_comp + (1-VcombFlag)*V_droop
+        #V_comp ~ abs(V_reg.u-(R_c+im*X_c)*I_branch.u)
+        #V_in ~ VcombFlag * V_comp + (1-VcombFlag)*V_droop
+        V_in ~ VcombFlag * V_diff.u + (1-VcombFlag) * V_droop #TODO Achtung: Woher kommt Volage_difference?? -> OpenModelica:  voltage_diff = sqrt((regulate_vr - Rc*branch_ir/CoB + Xc*branch_ii/CoB)^2 + (regulate_vi - Xc*branch_ir/CoB - Rc*branch_ii/CoB)^2);
         T_fltr * Dt(V_fltr) ~ V_in - V_fltr
         ΔV ~ V_ref.u - V_fltr
         T_fltr * Dt(Q_fltr) ~ Q_branch.u - Q_fltr
@@ -97,8 +104,11 @@
         ΔQ_in ~ RefFlag * ΔV + (1-RefFlag)*ΔQ
         ΔQ_dbd ~ deadband(ΔQ_in, dbd_dn, dbd_up)
         Q_e ~ limiter(ΔQ_dbd, e_min, e_max)
-        Q_x ~ Q_e * K_p + s_2
-        Dt(s_2) ~ ifelse(V_reg.u<V_frz, 0, K_i*Q_e)
+        Q_res ~ (1-Voltage_dip) * Q_e
+        Dt(Q_I) ~ K_i * Q_res
+        Q_x ~ K_p * Q_e + Q_I
+        #Q_x ~ Q_e * K_p + s_2
+        #Dt(s_2) ~ ifelse(V_reg.u<V_frz, 0, K_i*Q_e)
         Q_lim ~ limiter(Q_x, Q_min, Q_max)
         T_fv * Dt(Q_ext) ~ T_ft* Dt(Q_lim) + Q_lim - Q_ext
         #active power control
@@ -109,7 +119,7 @@
         Dt(P_e) ~ Dt(f_e) * K_pg + K_ig * f_e
         P_lim ~ limiter(P_e, P_min, P_max)
         T_lag * Dt(P_refa) ~ P_lim - P_refa
-        P_ref ~ freqFlag * P_refa + (1-freqFlag) * P_branch.u #oder P_plantref?
+        P_ref ~ freqFlag * P_refa + (1-freqFlag) * P_branch.u #TODO richtig? oder P_plantref?
         #outputs
         Pref_out.u ~ P_ref
         Qext_out.u ~ Q_ext

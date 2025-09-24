@@ -6,7 +6,7 @@
         Vt_in = RealInput(guess=1)
         Iqcmd_in = RealInput(guess=1)
         Ipcmd_in = RealInput(guess=1)
-        Q_gen0 = RealInput(guess=1) #woher?
+        Q_gen0 = RealInput(guess=0) #woher?
         # outputs
         Iqout = RealOutput()
         Ipout = RealOutput()
@@ -31,20 +31,20 @@
         #I_qz(t), [description="I_q after inverter current regulator"]
         I_qrsum(t), [description=""]
         I_qrlim(t), [description=""]
-        I_qr(t), [guess=1, description=""]
+        I_qr(t), [guess=0, description=""]
         ΔV(t), [description=""]
-        I_hv(t), [description=""]
+        I_hv(t), [guess=1, description=""]
         I_hvlim(t), [description=""]
         I_q(t), [description="I_q after inverter current regulator with rate limits"]
         ΔI_q(t), [description=""]
         ΔI_pr(t), [description=""]
         I_pr(t), [description=""]
         ΔI_prlim(t), [description=""]
-        I_pg(t), [description=""]
+        I_pg(t), [guess=1, description=""]
         y(t), [description=""]
         #I_pz(t), [description="I_p after Inverter current regulator"]
         I_p(t), [description="I_p after inverter current regulator with limits"]
-        V(t), [description="V_t after filter"]
+        V(t), [guess=1, description="V_t after filter"]
         I_lvpl(t), [description="current resulting from low voltage power logic"]
         #L_vplsw_adjust(t), [description="switch low voltage power logic off if V > breakpoint"]
     end
@@ -70,7 +70,7 @@
         ΔI_pr ~ Ipcmd_in.u - I_pr
         ΔI_prlim ~ uplimit(ΔI_pr, rrpwr)
         T_g * Dt(I_pg) ~ ΔI_prlim
-        I_pr ~ L_vplsw * uplimit(I_pg, L_vpl1) + (1-L_vplsw) * I_pg
+        I_pr ~ L_vplsw * uplimit(I_pg, I_lvpl) + (1-L_vplsw) * I_pg
         T_fltr * Dt(V) ~ Vt_in.u - V
         I_lvpl ~ LVPLogic(V, Zerox, Brkpt, L_vpl1)
         y ~ ifelse(Vt_in.u > lvpnt0, ifelse(Vt_in.u < lvpnt1, (Vt_in.u-lvpnt0)/(lvpnt1-lvpnt0),1),0)
@@ -78,8 +78,6 @@
         #outputs
         Iqout.u ~ I_q
         Ipout.u ~ I_p
-        #Iqout.u ~ I_hvlim #Iqcmd_in.u
-        #Ipout.u ~ Ipcmd_in.u
     end
 end
 
