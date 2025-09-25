@@ -90,7 +90,7 @@
         Vreg = Blocks.Constant(k=1.0)
         Ibranch = Blocks.Constant(k=1.0)
         Pe = Blocks.Constant(k=1.0)
-        Pfaref = Blocks.Constant(k=1.0)
+        Pfaref = Blocks.Constant(k=0.0)
         Qgen = Blocks.Constant(k=0.0)
         Qgen0 = Blocks.Constant(k=0.0)
         Vdiff = Blocks.Constant(k=0)

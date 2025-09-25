@@ -70,13 +70,14 @@
         I_lim(t), [description="limited current after voltage regulator"]
         V_tfiltlim(t), [description="Voltage after filter with lower limit 0.01"]
         I_t(t), [description="Current from Q_con/V_tfiltlim"]
+        ΔI(t), [description=""]
         I_qin(t), [description="Current after Reactive current regulator"]
         s_I(t), [guess=0, description="Frozen state in reactive current regulator"]
         I_qcon(t), [description="Current after QFlag"]
         I_sum(t), [description="sum of I_qcon and I_qinj"]
         I_qcmd(t), [description="q-Phase output current"]
         P_refout(t), [guess=1, description="Active power after inverter power order"]
-        s_P(t), [description="frozen state after inverter power order"]
+        s_P(t), [gues=0, description="frozen state after inverter power order"]
         P_lim(t), [description="Limited active power after inverter power order"]
         ΔP(t), [description="Active power difference between P_ref and P_refout"]
         ΔP_lim(t), [description="Ramp-limited active power difference"]
@@ -90,28 +91,35 @@
     @equations begin
         Voltage_dip ~ ifelse(Vt_in.u<V_dip, 1, ifelse(Vt_in.u>V_up, 1, 0))
         T_rv * Dt(V_tfilt) ~ Vt_in.u - V_tfilt
-        V_tfiltlim ~ ifelse(V_tfilt<0.01, 0.01, V_tfilt)
+        V_tfiltlim ~ lowlimit(V_tfilt, 0.01)
         #q-phase current
         ΔV_t ~ V_ref0 - V_tfilt
         ΔV_tdbd ~ deadband(ΔV_t, dbd1, dbd2)
-        I_qinj ~ limiter(K_qp*ΔV_tdbd, I_qll, I_qhl)
+        I_qinj ~ limiter(K_qv*ΔV_tdbd, I_qll, I_qhl)
         T_p * Dt(P_PF) ~ P_e.u - P_PF
         Q_con ~ PfFlag * P_PF * tan(P_faref.u) + (1-PfFlag) * Qext_in.u
         Q_lim ~ limiter(Q_con, Q_min, Q_max)
         ΔQ ~ Q_lim - Q_gen.u
-        V_in ~ K_qp * ΔQ + s_Q
-        Dt(s_Q) ~ (1-Voltage_dip) * K_qi * ΔQ
+        #V_in ~ K_qp * ΔQ + s_Q
+        #Dt(s_Q) ~ (1-Voltage_dip) * K_qi * ΔQ
+        s_Q ~ (1-Voltage_dip) * ΔQ
+        Dt(V_in) ~ K_qp * Dt(s_Q) + K_qi * s_Q
         V_lima ~ limiter(V_in, V_min, V_max)
         #V_con ~ Vflag * V_lima + (1-Vflag) * Q_con
         V_con ~ Vflag * V_lima + (1-Vflag) * V_ref0
         V_limb ~ limiter(V_con, V_min, V_max)
         ΔV ~ V_limb - V_tfilt
-        I_in ~ K_vp * ΔV + s_V
-        Dt(s_V) ~ (1-Voltage_dip) * K_vi * ΔV
+        #I_in ~ K_vp * ΔV + s_V
+        #Dt(s_V) ~ (1-Voltage_dip) * K_vi * ΔV
+        s_V ~ (1-Voltage_dip) * ΔV
+        Dt(I_in) ~ K_vp * Dt(s_V) + K_vi * s_V
         I_lim ~ limiter(I_in, I_qmin, I_qmax)
         I_t ~ Q_con / V_tfiltlim
-        T_iq * I_qin ~ s_I
-        Dt(s_I) ~ (1-Voltage_dip) * (I_t - I_qin)
+        #T_iq * I_qin ~ s_I
+        #Dt(s_I) ~ (1-Voltage_dip) * (I_t - I_qin)
+        ΔI ~ I_t - I_qin
+        s_I ~ (1-Voltage_dip) * ΔI
+        T_iq * Dt(I_qin) ~ s_I
         I_qcon ~ QFlag * I_lim + (1-QFlag) * I_qin
         I_sum ~ I_qcon + I_qinj
         I_qcmd ~ limiter(I_sum, I_qmin, I_qmax)
@@ -122,7 +130,8 @@
         #Dt(P_lim) ~ limiter(Dt(P_refout), dP_min, dP_max)
         ΔP ~ Pref_in.u - P_refout
         ΔP_lim ~ limiter(ΔP, dP_min, dP_max)
-        T_pord * Dt(P_refout) ~ ΔP_lim
+        s_P ~ (1-Voltage_dip) * ΔP_lim
+        T_pord * Dt(P_refout) ~ s_P
         P_lim ~ limiter(P_refout, P_min, P_max)
         I_pref ~ P_lim/V_tfiltlim
         I_pcmd ~ limiter(I_pref, I_pmin, I_pmax)
@@ -144,28 +153,23 @@ end
         Vt_in = RealInput(guess=1)
         P_e = RealInput(guess=1) #Inverter active power (pu on mbase)
         P_faref = RealInput(guess=1) #Inverter initial power factor angle (from power flow solution)
-        Qext_in = RealInput(guess=1)
+        Qext_in = RealInput(guess=0)
         Pref_in = RealInput(guess=1)
-        P_gen = RealInput(guess=1)
-        Q_gen = RealInput(guess=1) #woher? Power Flow solution?
-        SOC = RealInput(guess=1)
+        Q_gen = RealInput(guess=0) #woher? Power Flow solution?
         # outputs
         Iqcmd_out = RealOutput()
         Ipcmd_out = RealOutput()
     end
     @parameters begin
-        V_dip, [description="voltage below which vltage-dip logic is initiated (pu)"]
-        V_up, [description="voltage above which voltage dip/up logic is initiated(pu)"]
-        T_rv, [description="voltage measurement transducer time constant"]
-        V_ref0, [description="typically set to 1 pu (nominal voltage)"]
-        dbd1, [description="lower voltage deadband error"]
-        dbd2, [description="upper voltage deadband error"]
-        K_qv, [description="Reactive current injection proportional gain (0 to disable)"]
-        I_qh1, [description="Maximum reactive current injection (pu on mbase)"]
-        I_ql1, [description="Minimum reactive current injection (pu on mbase)"]
-        SOCini, [description="initial state of charge; must be between SOCmin and SOCmax"]
-        SOCmax, [description="Maximum allowable state of charge in pu"]
-        SOCmin, [description="Minimum allowable state of charge in pu"]
+        V_dip, [description="Low voltage condition trigger voltage (pu)"]
+        V_up, [description="High voltage condition trigger voltage (pu)"]
+        T_rv, [description="Terminal bus voltage filter time constant (s)"]
+        V_ref0, [description="Reference voltage for reactive current injection (pu)"]
+        dbd1, [description="Overvoltage deadband for reactive current injection (pu)"]
+        dbd2, [description="Undervoltage deadband for reactive current injection (pu)"]
+        K_qv, [description="Reactive current injection gain (pu/pu)"]
+        I_qhl, [description="Maximum reactive current injection (pu on mbase)"]
+        I_qll, [description="Minimum reactive current injection (pu on mbase)"]
         T_p, [description="Active power filter time constant (s)"]
         PfFlag, [description="Constant Q (0) or PF (1) local control"]
         Q_min, [description="Minimum reactive power when Vflag = 1 (pu on mbase)"]
@@ -189,38 +193,38 @@ end
     end
     @variables begin
         Voltage_dip(t), [description="freeze states if Voltagedip=1"]
-        V_tfilt(t), [description="Voltage after filter"]
+        V_tfilt(t), [guess=1, description="Voltage after filter"]
         ΔV_t(t), [description="Difference between filterd terminal voltage and reference voltage"]
         ΔV_tdbd(t), [description="Voltage after deadband"]
         I_qinj(t), [description="Limited current injection q-Phase from Voltage"]
-        P_PF(t), [description="Inverter active power after filter"]
+        P_PF(t), [guess=1, description="Inverter active power after filter"]
         Q_con(t), [description="Reactive Power after PfFlag"]
         Q_lim(t), [description="ReactivePower after limiter"]
         ΔQ(t), [description="Difference between Q_lim and Q_gen"]
         V_in(t), [description="Voltage after local Q regulator"]
-        s_Q(t), [description="Frozen state in Q regulator"]
+        s_Q(t), [guess=0, description="Frozen state in Q regulator"]
         V_lima(t), [description="Limited voltage after Q regulator"]
         V_con(t), [description="Voltage after Vflag"]
         V_limb(t), [description="Limited voltage V_con"]
         ΔV(t), [description="Difference between V_limb and V_tfilt"]
         I_in(t), [description="Current after local voltage regulator"]
-        s_V(t), [description="Frozen state at local voltage regulator"]
+        s_V(t), [guess=0, description="Frozen state at local voltage regulator"]
         I_lim(t), [description="limited current after voltage regulator"]
         V_tfiltlim(t), [description="Voltage after filter with lower limit 0.01"]
         I_t(t), [description="Current from Q_con/V_tfiltlim"]
         ΔI(t), [description=""]
         I_qin(t), [description="Current after Reactive current regulator"]
-        s_I(t), [description="Frozen state in reactive current regulator"]
+        s_I(t), [guess=0, description="Frozen state in reactive current regulator"]
         I_qcon(t), [description="Current after QFlag"]
         I_sum(t), [description="sum of I_qcon and I_qinj"]
         I_qcmd(t), [description="q-Phase output current"]
-        P_refout(t), [description="Active power after inverter power order"]
-        ΔP(t), [description=""]
-        s_P(t), [description="frozen state after inverter power order"]
-        P_lima(t), [description=""]
+        P_refout(t), [guess=1, description="Active power after inverter power order"]
+        s_P(t), [gues=0, description="frozen state after inverter power order"]
         P_lim(t), [description="Limited active power after inverter power order"]
+        ΔP(t), [description="Active power difference between P_ref and P_refout"]
+        ΔP_lim(t), [description="Ramp-limited active power difference"]
         I_pref(t), [description="Current from P_lim/V_tfiltlim"]
-        I_pcmd(t), [description="p-Phase output current"]
+        I_pcmd(t), [guess=1, description="p-Phase output current"]
         I_qmin(t), [description="Minumum q-Phase current limit (pu)"]
         I_qmax(t), [description="Maximum q-Phase current limit (pu)"]
         I_pmax(t), [description="Maximum p-Phase current limit (pu)"]
@@ -240,34 +244,36 @@ end
         ΔQ ~ Q_lim - Q_gen.u
         #V_in ~ K_qp * ΔQ + s_Q
         #Dt(s_Q) ~ (1-Voltage_dip) * K_qi * ΔQ
-        s_Q ~ ΔQ * (1-Voltage_dip)
+        s_Q ~ (1-Voltage_dip) * ΔQ
         Dt(V_in) ~ K_qp * Dt(s_Q) + K_qi * s_Q
         V_lima ~ limiter(V_in, V_min, V_max)
+        #V_con ~ Vflag * V_lima + (1-Vflag) * Q_con
         V_con ~ Vflag * V_lima + (1-Vflag) * V_ref0
         V_limb ~ limiter(V_con, V_min, V_max)
         ΔV ~ V_limb - V_tfilt
         #I_in ~ K_vp * ΔV + s_V
         #Dt(s_V) ~ (1-Voltage_dip) * K_vi * ΔV
-        s_V ~ ΔV * (1-Voltage_dip)
+        s_V ~ (1-Voltage_dip) * ΔV
         Dt(I_in) ~ K_vp * Dt(s_V) + K_vi * s_V
         I_lim ~ limiter(I_in, I_qmin, I_qmax)
         I_t ~ Q_con / V_tfiltlim
-        ΔI ~ I_t -  I_qin
         #T_iq * I_qin ~ s_I
         #Dt(s_I) ~ (1-Voltage_dip) * (I_t - I_qin)
-        s_I ~ ΔI * (1-Voltage_dip)
+        ΔI ~ I_t - I_qin
+        s_I ~ (1-Voltage_dip) * ΔI
         T_iq * Dt(I_qin) ~ s_I
         I_qcon ~ QFlag * I_lim + (1-QFlag) * I_qin
         I_sum ~ I_qcon + I_qinj
         I_qcmd ~ limiter(I_sum, I_qmin, I_qmax)
         #p-phase current
-        ΔP ~ Pref_in.u - P_refout
-        P_lima ~ limiter(ΔP, dP_min, dP_max)
-        s_P ~ P_lima *(1-Voltage_dip)
-        T_pord * Dt(P_refout) ~ s_P
         #T_pord * P_refout ~ s_P
         #Dt(s_P) ~ (1-Voltage_dip) * (Pref_in.u - P_refout)
-        #Dt(P_lim) ~ limiter(limiter(P_refout, P_min, P_max) - P_lim, dP_min, dP_max)
+        #P_lim ~ limiter(P_refout, P_min, P_max) #zwei Gleichungen für P_lim
+        #Dt(P_lim) ~ limiter(Dt(P_refout), dP_min, dP_max)
+        ΔP ~ Pref_in.u - P_refout
+        ΔP_lim ~ limiter(ΔP, dP_min, dP_max)
+        s_P ~ (1-Voltage_dip) * ΔP_lim
+        T_pord * Dt(P_refout) ~ s_P
         P_lim ~ limiter(P_refout, P_min, P_max)
         I_pref ~ P_lim/V_tfiltlim
         I_pcmd ~ limiter(I_pref, I_pmin, I_pmax)
