@@ -18,8 +18,8 @@
         dbd1, [description="Overvoltage deadband for reactive current injection (pu)"]
         dbd2, [description="Undervoltage deadband for reactive current injection (pu)"]
         K_qv, [description="Reactive current injection gain (pu/pu)"]
-        I_qhl, [description="Maximum reactive current injection (pu on mbase)"]
-        I_qll, [description="Minimum reactive current injection (pu on mbase)"]
+        I_qh1, [description="Maximum reactive current injection (pu on mbase)"]
+        I_ql1, [description="Minimum reactive current injection (pu on mbase)"]
         T_p, [description="Active power filter time constant (s)"]
         PfFlag, [description="Constant Q (0) or PF (1) local control"]
         Q_min, [description="Minimum reactive power when Vflag = 1 (pu on mbase)"]
@@ -85,7 +85,7 @@
         #q-phase current
         ΔV_t ~ V_ref0 - V_tfilt
         ΔV_tdbd ~ deadband(ΔV_t, dbd1, dbd2)
-        I_qinj ~ limiter(K_qv*ΔV_tdbd, I_qll, I_qhl)
+        I_qinj ~ limiter(K_qv*ΔV_tdbd, I_ql1, I_qh1)
         T_p * Dt(P_PF) ~ P_e.u - P_PF
         Q_con ~ PfFlag * P_PF * tan(P_faref.u) + (1-PfFlag) * Qext_in.u
         Q_lim ~ limiter(Q_con, Q_min, Q_max)
@@ -138,6 +138,8 @@ end
         Qext_in = RealInput(guess=0)
         Pref_in = RealInput(guess=1)
         Q_gen = RealInput(guess=0) #woher? Power Flow solution?
+        P_aux = RealInput(guess=1)
+        PELEC = RealInput(guess=0)
         # outputs
         Iqcmd_out = RealOutput()
         Ipcmd_out = RealOutput()
@@ -150,8 +152,8 @@ end
         dbd1, [description="Overvoltage deadband for reactive current injection (pu)"]
         dbd2, [description="Undervoltage deadband for reactive current injection (pu)"]
         K_qv, [description="Reactive current injection gain (pu/pu)"]
-        I_qhl, [description="Maximum reactive current injection (pu on mbase)"]
-        I_qll, [description="Minimum reactive current injection (pu on mbase)"]
+        I_qh1, [description="Maximum reactive current injection (pu on mbase)"]
+        I_ql1, [description="Minimum reactive current injection (pu on mbase)"]
         T_p, [description="Active power filter time constant (s)"]
         PfFlag, [description="Constant Q (0) or PF (1) local control"]
         Q_min, [description="Minimum reactive power when Vflag = 1 (pu on mbase)"]
@@ -172,6 +174,26 @@ end
         P_max, [description="Maximum active power (pu on mbase)"]
         dP_min, [description="Active power down-ramp limit (pu/s on mbase)"]
         dP_max, [description="Active power up-ramp limit (pu/s on mbase)"]
+        soc_ini, [description="initial state of charge"]
+        T_char, [description="Battery discharge time"]
+        SOCmin, [description="Minimum allowable state of charge"]
+        SOCmax, [description="Maximum allowable state of charge"]
+        Vq1=0.2, [description="q-VDL Table"]
+        Vq2=0.5, [description="q-VDL Table"]
+        Vq3=0.75, [description="q-VDL Table"]
+        Vq4=1, [description="q-VDL Table"]
+        Iq1=0.75, [description="q-VDL Table"]
+        Iq2=0.75, [description="q-VDL Table"]
+        Iq3=0.75, [description="q-VDL Table"]
+        Iq4=0.75, [description="q-VDL Table"]
+        Vp1=0.2, [description="p-VDL Table"]
+        Vp2=0.5, [description="p-VDL Table"]
+        Vp3=0.75, [description="p-VDL Table"]
+        Vp4=1, [description="p-VDL Table"]
+        Ip1=1.11, [description="p-VDL Table"]
+        Ip2=1.11, [description="p-VDL Table"]
+        Ip3=1.11, [description="p-VDL Table"]
+        Ip4=1.11, [description="p-VDL Table"]
     end
     @variables begin
         Voltage_dip(t), [description="freeze states if Voltagedip=1"]
@@ -195,7 +217,7 @@ end
         I_lim(t), [description="limited current after voltage regulator"]
         I_t(t), [description="Current from Q_con/V_tfiltlim"]
         ΔI(t), [description=""]
-        I_qin(t), [description="Current after Reactive current regulator"]
+        I_qin(t), [guess=1, description="Current after Reactive current regulator"]
         I_qcon(t), [description="Current after QFlag"]
         I_sum(t), [description="sum of I_qcon and I_qinj"]
         I_qcmd(t), [description="q-Phase output current"]
@@ -204,11 +226,21 @@ end
         ΔP(t), [description="Active power difference between P_ref and P_refout"]
         ΔP_lim(t), [description="Ramp-limited active power difference"]
         I_pref(t), [description="Current from P_lim/V_tfiltlim"]
+        ΔI_p(t), [description=""]
         I_pcmd(t), [guess=1, description="p-Phase output current"]
-        I_qmin(t), [description="Minumum q-Phase current limit (pu)"]
+        I_qmin(t), [guess=0, description="Minumum q-Phase current limit (pu)"]
         I_qmax(t), [description="Maximum q-Phase current limit (pu)"]
         I_pmax(t), [description="Maximum p-Phase current limit (pu)"]
         I_pmin(t), [description="Minumum p-Phase current limit (pu)"]
+        I_pmin_soc(t), [description=""]
+        I_pmax_soc(t), [description=""]
+        soc_Imin(t), [description=""]
+        soc_Imax(t), [description=""]
+        P_stor(t), [guess=1, description=""]
+        Δsoc(t), [description=""]
+        soc_lim(t), [description=""]
+        VDL1_out(t), [description=""]
+        VDL2_out(t), [description=""]
     end
     @equations begin
         Voltage_dip ~ ifelse(Vt_in.u<V_dip, 1, ifelse(Vt_in.u>V_up, 1, 0))
@@ -217,7 +249,7 @@ end
         #q-phase current
         ΔV_t ~ V_ref0 - V_tfilt
         ΔV_tdbd ~ deadband(ΔV_t, dbd1, dbd2)
-        I_qinj ~ limiter(K_qv*ΔV_tdbd, I_qll, I_qhl)
+        I_qinj ~ limiter(K_qv*ΔV_tdbd, I_ql1, I_qh1)
         T_p * Dt(P_PF) ~ P_e.u - P_PF
         Q_con ~ PfFlag * P_PF * tan(P_faref.u) + (1-PfFlag) * Qext_in.u
         Q_lim ~ limiter(Q_con, Q_min, Q_max)
@@ -225,7 +257,6 @@ end
         Dt(s_Q) ~ (1-Voltage_dip) * ΔQ
         V_in ~ K_qp * (1-Voltage_dip) * ΔQ + K_qi * s_Q
         V_lima ~ limiter(V_in, V_min, V_max)
-        #V_con ~ Vflag * V_lima + (1-Vflag) * Q_con
         V_con ~ Vflag * V_lima + (1-Vflag) * V_ref0
         V_limb ~ limiter(V_con, V_min, V_max)
         ΔV ~ V_limb - V_tfilt
@@ -248,14 +279,28 @@ end
         T_pord * Dt(P_refout) ~ (1-Voltage_dip) * ΔP_lim
         P_lim ~ limiter(P_refout, P_min, P_max)
         I_pref ~ P_lim/V_tfiltlim
-        I_pcmd ~ limiter(I_pref, I_pmin, I_pmax)
+        ΔI_p ~ P_aux.u + I_pref
+        I_pmin_soc ~ I_pmin * soc_Imin
+        I_pmax_soc ~ I_pmax * soc_Imax
+        I_pcmd ~ limiter(ΔI_p, I_pmin_soc, I_pmax_soc)
+        #soc logic
+        T_char * Dt(P_stor) ~ PELEC.u
+        Δsoc ~ soc_ini - P_stor
+        soc_lim ~ limiter(Δsoc, SOCmin, SOCmax)
+        soc_Imin ~ ifelse(soc_lim<=SOCmin, 0, 1)
+        soc_Imax ~ ifelse(soc_lim>=SOCmax, 0, 1)
+        #VDL tables
+        VDL1_out ~ VDL(V_tfilt, Vq1, Vq2, Vq3, Vq4, Iq1, Iq2, Iq3, Iq4)
+        VDL2_out ~ VDL(V_tfilt, Vp1, Vp2, Vp3, Vp4, Ip1, Ip2, Ip3, Ip4)
         #current limiter logic
-        I_pmin ~ 0
-        I_qmin ~ - I_qmax
-        I_pmax ~ PqFlag * I_max + (1-PqFlag) * sqrt(I_max^2 - I_qcmd^2)
-        I_qmax ~ PqFlag * sqrt(I_max^2 - I_pcmd^2) + (1-PqFlag) * I_max
+        I_pmin ~ -I_pmax
+        I_qmin ~ -I_qmax
+        I_pmax ~ PqFlag * min(VDL2_out, I_max) + (1-PqFlag) * min(VDL2_out, sqrt(I_max^2 - I_qcmd^2))
+        I_qmax ~ PqFlag * min(VDL1_out, sqrt(I_max^2 - I_pcmd^2)) + (1-PqFlag) * min(VDL1_out, I_max)
         #outputs
         Iqcmd_out.u ~ I_qcmd
         Ipcmd_out.u ~ I_pcmd
     end
 end
+
+

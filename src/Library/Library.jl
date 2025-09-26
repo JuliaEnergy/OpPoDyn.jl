@@ -53,19 +53,19 @@ include("Transformers/DynawoFixedRatioTransformer.jl")
 ####
 #### WECC modules
 ####
-export limiter, lowlimit, uplimit, deadband, LVPLogic
+export limiter, lowlimit, uplimit, deadband, LVPLogic, VDL
 include("WECC-models/functions.jl")
 
 export regc_a
 include("WECC-models/regc.jl")
 
-export reec_b
+export reec_b, reec_c
 include("WECC-models/reec.jl")
 
 export repc_a
 include("WECC-models/repc.jl")
 
-export WECC_large_PV
+export WECC_large_PV, WECC_BESS
 include("WECC-models/plantmodels.jl")
 
 end
