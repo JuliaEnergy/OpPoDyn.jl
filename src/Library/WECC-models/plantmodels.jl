@@ -134,11 +134,7 @@
         connect(converter_interface.Q_gen0, Qgen0.output)
         connect(plant_control.Pref_out, electrical_control.Pref_in)
         connect(plant_control.Qext_out, electrical_control.Qext_in)
-        #electrical_control.Pref_in ~ 1
-        #electrical_control.Qext_in ~ 1
         connect(electrical_control.Iqcmd_out, converter_interface.Iqcmd_in)
         connect(electrical_control.Ipcmd_out, converter_interface.Ipcmd_in)
-        #converter_interface.Iqcmd_in.u ~ 1
-        #converter_interface.Ipcmd_in.u ~ 1
     end
 end

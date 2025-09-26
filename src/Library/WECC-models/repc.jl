@@ -110,13 +110,13 @@
         #Q_x ~ Q_e * K_p + s_2
         #Dt(s_2) ~ ifelse(V_reg.u<V_frz, 0, K_i*Q_e)
         Q_lim ~ limiter(Q_x, Q_min, Q_max)
-        T_fv * Dt(Q_ext) ~ T_ft* Dt(Q_lim) + Q_lim - Q_ext
+        T_fv * Dt(Q_ext) - T_ft* Dt(Q_lim) ~ Q_lim - Q_ext
         #active power control
         Δf_deadband ~ deadband(freq_ref-freq.u, fdbd1, fdbd2)
         Δf_corr ~ lowlimit(Δf_deadband * D_up, 0) + uplimit(Δf_deadband * D_dn, 0) #min(0, Δf_deadband*D_dn) + max(0, Δf_deadband*D_up)
         T_p * Dt(P_branchp) ~ P_branch.u - P_branchp
         f_e ~ limiter(P_plantref-P_branchp+Δf_corr, femin, femax)
-        Dt(P_e) ~ Dt(f_e) * K_pg + K_ig * f_e
+        Dt(P_e) - Dt(f_e) * K_pg ~ K_ig * f_e
         P_lim ~ limiter(P_e, P_min, P_max)
         T_lag * Dt(P_refa) ~ P_lim - P_refa
         P_ref ~ freqFlag * P_refa + (1-freqFlag) * P_branch.u #TODO richtig? oder P_plantref?
