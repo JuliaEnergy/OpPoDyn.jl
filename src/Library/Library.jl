@@ -59,13 +59,13 @@ include("WECC-models/functions.jl")
 export regc_a
 include("WECC-models/regc.jl")
 
-export reec_b, reec_c
+export reec_a, reec_b, reec_c
 include("WECC-models/reec.jl")
 
 export repc_a
 include("WECC-models/repc.jl")
 
-export WECC_large_PV, WECC_BESS
+export WECC_large_PV, WECC_BESS, WECC_WT_4B, WTDTA1
 include("WECC-models/plantmodels.jl")
 
 end
