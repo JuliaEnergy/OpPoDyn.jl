@@ -4,9 +4,9 @@
     @components begin
         # inputs
         Vt_in = RealInput(guess=1)
-        Iqcmd_in = RealInput(guess=1)
-        Ipcmd_in = RealInput(guess=1)
-        Q_gen0 = RealInput(guess=0) #woher?
+        Iqcmd_in = RealInput(guess=-0.0567)
+        Ipcmd_in = RealInput(guess=0.015)
+        #Q_gen0 = RealInput(guess=0) #woher?
         # outputs
         Iqout = RealOutput()
         Ipout = RealOutput()
@@ -31,16 +31,16 @@
         #I_qz(t), [description="I_q after inverter current regulator"]
         I_qrsum(t), [description=""]
         I_qrlim(t), [description=""]
-        I_qr(t), [guess=0, description=""]
+        I_qr(t), [guess=0.0567, description=""]
         ΔV(t), [description=""]
-        I_hv(t), [guess=1, description=""]
+        I_hv(t), [guess=-0.14, description=""]
         I_hvlim(t), [description=""]
         I_q(t), [description="I_q after inverter current regulator with rate limits"]
         ΔI_q(t), [description=""]
         ΔI_pr(t), [description=""]
         I_pr(t), [description=""]
         ΔI_prlim(t), [description=""]
-        I_pg(t), [guess=1, description=""]
+        I_pg(t), [guess=0.015, description=""]
         y(t), [description=""]
         #I_pz(t), [description="I_p after Inverter current regulator"]
         I_p(t), [description="I_p after inverter current regulator with limits"]

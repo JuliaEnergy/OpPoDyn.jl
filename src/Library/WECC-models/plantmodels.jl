@@ -12,7 +12,7 @@
             Brkpt   = 0.9,
             Zerox   = 0.5,
             L_vpl1  = 1.22,
-            L_vplsw = 0,
+            L_vplsw = 1,
             rrpwr   = 10,
             V_0lim = 1.2,
             K_hv = 0.7,
@@ -81,25 +81,30 @@
             D_up       = 0.0,
             P_plantref = 1.0, #from powerflow
             freq_ref   = 1.0,
-            freqFlag   = 0)
-        f = Blocks.Constant(k=1.0)
+            freqFlag   = 1,
+            p_0        = 0.015)
+        f = Blocks.Constant(k=60.0)
         Vref = Blocks.Constant(k=1.0)
-        Qref = Blocks.Constant(k=0.0)
-        Qbranch = Blocks.Constant(k=0.0)
-        Pbranch = Blocks.Constant(k=1.0)
+        Qref = Blocks.Constant(k=-0.0567)
+        Qbranch = Blocks.Constant(k=-0.0567)
+        Pbranch = Blocks.Constant(k=0.015)
         Vreg = Blocks.Constant(k=1.0)
-        Ibranch = Blocks.Constant(k=1.0)
-        Pe = Blocks.Constant(k=1.0)
-        Pfaref = Blocks.Constant(k=0.0)
-        Qgen = Blocks.Constant(k=0.0)
-        Qgen0 = Blocks.Constant(k=0.0)
-        Vdiff = Blocks.Constant(k=0)
+        #Ibranch = Blocks.Constant(k=1.0)
+        #Pe = Blocks.Constant(k=1.0)
+        Pfaref = Blocks.Constant(k=-1.31199)
+        #Qgen = Blocks.Constant(k=0.0)
+        #Qgen0 = Blocks.Constant(k=0.0)
+        Vdiff = Blocks.Constant(k=1)
     end
     @variables begin
         V_t(t), [description="Raw terminal voltage"]
         δ_v(t), [guess=0, description="voltage angle"]
         pir(t), [description="negative terminal current real part"]
         pii(t), [description="negative terminal current im part"]
+        pvi(t), [description=""]
+        pvr(t), [description=""]
+        P_gen(t), [description=""]
+        Q_gen(t), [description=""]
     end
     @parameters begin
         S_b=100e6, [description="System Base Power"]
@@ -116,10 +121,12 @@
         electrical_control.Vt_in.u ~ V_t
         pii ~ - terminal.i_i
         pir ~ - terminal.i_r
+        pvr ~ terminal.u_r
+        pvi ~ terminal.u_i
+        P_gen ~ -(1/CoB) * (pvr*pir + pvi*pii)
+        Q_gen ~ -(1/CoB) * (pvi*pir - pvr*pii)
         #Current injection from converter to terminal (negative for generation)
         [converter_interface.Ipout.u, converter_interface.Iqout.u].~ -1/CoB*[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii]
-        ##terminal.i_r ~ converter_interface.Ipout.u
-        ##terminal.i_i ~ converter_interface.Iqout.u
         connect(plant_control.V_diff, Vdiff.output)
         connect(plant_control.freq, f.output)
         connect(plant_control.V_ref, Vref.output)
@@ -127,11 +134,13 @@
         connect(plant_control.Q_branch, Qbranch.output)
         connect(plant_control.P_branch, Pbranch.output)
         connect(plant_control.V_reg, Vreg.output)
-        connect(plant_control.I_branch, Ibranch.output)
-        connect(electrical_control.P_e, Pe.output)
+        #connect(plant_control.I_branch, Ibranch.output)
+        #connect(electrical_control.P_e, Pe.output)
+        #connect(electrical_control.Q_gen, Qgen.output)
+        electrical_control.P_e.u ~ P_gen
+        electrical_control.Q_gen.u ~ Q_gen
         connect(electrical_control.P_faref, Pfaref.output)
-        connect(electrical_control.Q_gen, Qgen.output)
-        connect(converter_interface.Q_gen0, Qgen0.output)
+        #connect(converter_interface.Q_gen0, Qgen0.output)
         connect(plant_control.Pref_out, electrical_control.Pref_in)
         connect(plant_control.Qext_out, electrical_control.Qext_in)
         connect(electrical_control.Iqcmd_out, converter_interface.Iqcmd_in)
@@ -180,7 +189,7 @@ end
             K_vp    = 0,
             K_vi    = 40,
             QFlag   = 0,
-            I_max   = 1.1,
+            I_max   = 1.11,
             PqFlag  = 0,
             T_iq    = 0.01,
             T_pord  = 0.02,
@@ -224,7 +233,7 @@ end
             D_up       = 0.0,
             P_plantref = 1.0, #from powerflow
             freq_ref   = 1.0,
-            freqFlag   = 0)
+            freqFlag   = 1)
         f = Blocks.Constant(k=1.0)
         Vref = Blocks.Constant(k=1.0)
         Qref = Blocks.Constant(k=0.0)
@@ -232,19 +241,23 @@ end
         Pbranch = Blocks.Constant(k=1.0)
         Vreg = Blocks.Constant(k=1.0)
         Ibranch = Blocks.Constant(k=1.0)
-        Pe = Blocks.Constant(k=1.0)
-        Pfaref = Blocks.Constant(k=0.0)
-        Qgen = Blocks.Constant(k=0.0)
-        Qgen0 = Blocks.Constant(k=0.0)
+        #Pe = Blocks.Constant(k=1.0)
+        Pfaref = Blocks.Constant(k=-1.311)
+        #Qgen = Blocks.Constant(k=0.0)
+        #Qgen0 = Blocks.Constant(k=0.0)
         Vdiff = Blocks.Constant(k=0)
         P_aux = Blocks.Constant(k=0)
-        PELEC = Blocks.Constant(k=1)
+        PELEC = Blocks.Constant(k=0.015)
     end
     @variables begin
         V_t(t), [description="Raw terminal voltage"]
         δ_v(t), [guess=0, description="voltage angle"]
         pir(t), [description="negative terminal current real part"]
         pii(t), [description="negative terminal current im part"]
+        pvr(t), [description=""]
+        pvi(t), [description=""]
+        P_gen(t), [description=""]
+        Q_gen(t), [description=""]
     end
     @parameters begin
         S_b=100e6, [description="System Base Power"]
@@ -261,6 +274,10 @@ end
         electrical_control.Vt_in.u ~ V_t
         pii ~ - terminal.i_i
         pir ~ - terminal.i_r
+        pvr ~ terminal.u_r
+        pvi ~ terminal.u_i
+        P_gen ~ -(1/CoB) * (pvr*pir + pvi*pii)
+        Q_gen ~ -(1/CoB) * (pvi*pir - pvr*pii)
         [converter_interface.Ipout.u, converter_interface.Iqout.u].~ -1/CoB*[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii]
         connect(plant_control.V_diff, Vdiff.output)
         connect(plant_control.freq, f.output)
@@ -270,12 +287,14 @@ end
         connect(plant_control.P_branch, Pbranch.output)
         connect(plant_control.V_reg, Vreg.output)
         connect(plant_control.I_branch, Ibranch.output)
-        connect(electrical_control.P_e, Pe.output)
+        #connect(electrical_control.P_e, Pe.output)
         connect(electrical_control.P_faref, Pfaref.output)
-        connect(electrical_control.Q_gen, Qgen.output)
+        #connect(electrical_control.Q_gen, Qgen.output)
+        electrical_control.P_e.u ~ P_gen
+        electrical_control.Q_gen.u ~ Q_gen
         connect(electrical_control.PELEC, PELEC.output)
         connect(electrical_control.P_aux, P_aux.output)
-        connect(converter_interface.Q_gen0, Qgen0.output)
+        #connect(converter_interface.Q_gen0, Qgen0.output)
         connect(plant_control.Pref_out, electrical_control.Pref_in)
         connect(plant_control.Qext_out, electrical_control.Qext_in)
         connect(electrical_control.Iqcmd_out, converter_interface.Iqcmd_in)
@@ -306,7 +325,7 @@ end
             V_dip   = -99, #0.85,
             V_up    = 99, #1.2,
             T_rv    = 0.01,
-            V_ref0  = 0,
+            V_ref0  = 1,
             dbd1    = -0.05,
             dbd2    = 0.05,
             K_qv    = 0.0,
@@ -325,7 +344,7 @@ end
             K_vp    = 0,
             K_vi    = 120,
             QFlag   = 0,
-            I_max   = 1.7,
+            I_max   = 1.2,
             PqFlag  = 0,
             T_iq    = 0.02,
             T_pord  = 0.04,
@@ -365,7 +384,7 @@ end
             D_up       = 0.0,
             P_plantref = 1.0, #from powerflow
             freq_ref   = 1.0,
-            freqFlag   = 0)
+            freqFlag   = 1)
         drive_train = Library.WTDTA1()
         f = Blocks.Constant(k=1.0)
         Vref = Blocks.Constant(k=1.0)
@@ -374,13 +393,11 @@ end
         Pbranch = Blocks.Constant(k=1.0)
         Vreg = Blocks.Constant(k=1.0)
         Ibranch = Blocks.Constant(k=1.0)
-        Pe = Blocks.Constant(k=1.0)
-        Pfaref = Blocks.Constant(k=0.0)
-        Qgen = Blocks.Constant(k=0.0)
-        Qgen0 = Blocks.Constant(k=0.0)
+        #Pe = Blocks.Constant(k=1.0)
+        Pfaref = Blocks.Constant(k=-1.311)
+        #Qgen = Blocks.Constant(k=0.0)
+        #Qgen0 = Blocks.Constant(k=0.0)
         Vdiff = Blocks.Constant(k=0)
-        P_aux = Blocks.Constant(k=0)
-        PELEC = Blocks.Constant(k=1)
         #WG = Blocks.Constant(k=1)
         W0 = Blocks.Constant(k=1)
     end
@@ -392,11 +409,12 @@ end
         pvr(t), [description=""]
         pvi(t), [description=""]
         P_gen(t), [description=""]
+        Q_gen(t), [description=""]
     end
     @parameters begin
         S_b=100e6, [description="System Base Power in VA"]
         M_b=S_b, [description="Machine Base Power in VA"]
-        P_0=S_b, [description="Initial activa power in W"]
+        P_0=1.5e6, [description="Initial activa power in W"]
     end
     begin
         #derived parameters
@@ -412,11 +430,12 @@ end
         pvi ~ terminal.u_i
         [converter_interface.Ipout.u, converter_interface.Iqout.u].~ -1/CoB*[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii]
         P_gen ~ -(1/CoB) * (pvr*pir + pvi*pii)
+        Q_gen ~ -(1/CoB) * (pvi*pir - pvr*pii)
         converter_interface.Vt_in.u ~ V_t
         electrical_control.Vt_in.u ~ V_t
         drive_train.P_e.u ~ P_gen
         drive_train.P_m.u ~ p0
-        connect(converter_interface.Q_gen0, Qgen0.output)
+        #connect(converter_interface.Q_gen0, Qgen0.output)
         connect(plant_control.V_diff, Vdiff.output)
         connect(plant_control.freq, f.output)
         connect(plant_control.V_ref, Vref.output)
@@ -425,9 +444,11 @@ end
         connect(plant_control.P_branch, Pbranch.output)
         connect(plant_control.V_reg, Vreg.output)
         connect(plant_control.I_branch, Ibranch.output)
-        connect(electrical_control.P_e, Pe.output)
+        #connect(electrical_control.P_e, Pe.output)
         connect(electrical_control.P_faref, Pfaref.output)
-        connect(electrical_control.Q_gen, Qgen.output)
+        #connect(electrical_control.Q_gen, Qgen.output)
+        electrical_control.P_e.u ~ P_gen
+        electrical_control.Q_gen.u ~ Q_gen
         connect(drive_train.W_0, W0.output)
         connect(drive_train.W_gout, electrical_control.Wg)
         #connect(electrical_control.Wg, WG.output)

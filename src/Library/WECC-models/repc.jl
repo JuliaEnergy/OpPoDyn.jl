@@ -9,13 +9,13 @@
         #    vf_in = RealInput(guess=1) # field voltage input [pu]
         #end
         V_reg = RealInput(guess=1) #from bus - was ist Unterschied zu Vt = raw terminal voltage ? initialized based on initial power flow solution for V_reg and Q_gen
-        I_branch = RealInput(guess=1) #current through a defined branch
-        Q_branch = RealInput(guess=0) #reactive power through a defined branch /from aggregated turbine model or collection point of wind plant
-        P_branch = RealInput(guess=1) #from aggregated turbine model or collection point of wind plant
-        freq = RealInput(guess=1) #from aggregated turbine model or collection point of wind plant
+        #I_branch = RealInput(guess=1) #current through a defined branch
+        Q_branch = RealInput(guess=-0.0567) #reactive power through a defined branch /from aggregated turbine model or collection point of wind plant
+        P_branch = RealInput(guess=0.015) #from aggregated turbine model or collection point of wind plant
+        freq = RealInput(guess=60) #from aggregated turbine model or collection point of wind plant
         V_ref = RealInput(guess=1)
-        Q_ref = RealInput(guess=0)
-        V_diff = RealInput(guess=0)
+        Q_ref = RealInput(guess=-0.0567)
+        V_diff = RealInput(guess=1)
         #TODO Variable/Parameter Voltage_dip richtig so?; Modelica: Voltage_dip = if vreg < Vfrz then true else false; mit vreg = sqrt(regulate_vr^2 + regulate_vi^2); und Vfrz=0 "Voltage below which State s2 is frozen"
         # outputs
         Pref_out = RealOutput() # active power [pu]
@@ -55,6 +55,7 @@
         P_plantref, [description="Initial power reference in pu"]
         freq_ref, [description="Frequency reference in pu"]
         freqFlag, [description="Flag to turn on (1) or off (0) the active power control loop within the plant controller"]
+        p_0, [description="Initial active power in pu"]
         #vbus, [description="The bus number in powerflow from which V_reg, freq is picked up (i.e. the voltage being regulated and frequency being controlled; it can be the terminal of the aggregated WTG model or the point of interconnection)"]
         #branch, [description="The branch (actual definition depends on software program) from which I_branch, Q_branch and P_branch is being measured"]
         # input/parameter switches
@@ -69,7 +70,7 @@
         V_in(t), [description="resulting voltage after VcombFlag"]
         V_fltr(t), [guess=1, description="Voltage after filter"]
         ΔV(t), [description="Voltage difference between filter and reference"]
-        Q_fltr(t), [guess=0, description="Reactive power after filter"]
+        Q_fltr(t), [guess=-0.0567, description="Reactive power after filter"]
         ΔQ(t), [description="Reactive power differemce between filter and reference"]
         ΔQ_in(t), [description="Input depending on RefFlag=1 (ΔV) or RefFlag=0 (ΔQ)"]
         ΔQ_dbd(t), [description="Reactive power differece after deadband"]
@@ -77,17 +78,17 @@
         Q_x(t), [description="Reactive power before limits"]
         #s_2(t), [guess=0, description="state of reactive power that can be frozen depending on V_reg"]
         Q_res(t), [description=""]
-        Q_I(t), [guess=0, description=""]
+        Q_I(t), [guess=-0.0567, description=""]
         Q_lim(t), [description="Reactive power after reactive power limits"]
-        Q_ext(t), [guess=0, description="Reactive power output"]
+        Q_ext(t), [guess=-0.0567, description="Reactive power output"]
         Δf_deadband(t), [description="frequency difference after deadband"]
         Δf_corr(t), [description="Frequency difference after droop"]
-        P_branchp(t), [guess=1, description="Active power after T_p"]
+        P_branchp(t), [guess=0.015, description="Active power after T_p"]
         Δf_in(t), [description="Difference between P_plantref and Δf_corr and P_branchp"]
         f_e(t), [description="frequency after frequency limits"]
-        P_e(t), [guess=1,description="Active power before power limits"]
+        P_e(t), [guess=0.015,description="Active power before power limits"]
         P_lim(t), [description="Active power after power limits"]
-        P_refa(t), [guess=1, description="Active Power reference if Freq_flag=1"]
+        P_refa(t), [guess=0.015, description="Active Power reference if Freq_flag=1"]
         P_ref(t), [description="Active power output"]
     end
     @equations begin
@@ -119,7 +120,7 @@
         Dt(P_e) - Dt(f_e) * K_pg ~ K_ig * f_e
         P_lim ~ limiter(P_e, P_min, P_max)
         T_lag * Dt(P_refa) ~ P_lim - P_refa
-        P_ref ~ freqFlag * P_refa + (1-freqFlag) * P_branch.u #TODO richtig? oder P_plantref?
+        P_ref ~ freqFlag * P_refa + (1-freqFlag) * p_0
         #outputs
         Pref_out.u ~ P_ref
         Qext_out.u ~ Q_ext

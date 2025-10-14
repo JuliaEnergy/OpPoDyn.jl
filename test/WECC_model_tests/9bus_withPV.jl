@@ -251,6 +251,16 @@ vertexfs = [bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9];
 edgefs = [l45, l46, l69, l78, l89, t14, t27, t39, l57];
 nw = Network(vertexfs, edgefs)
 
+#powerflow solution
+verbose = true
+pfnw=nothing
+pfs0=nothing
+pfs=nothing
+pfnw = isnothing(pfnw) ? powerflow_model(nw) : pfnw
+pfs0 = isnothing(pfs0) ? NWState(pfnw) : pfnw
+pfs = solve_powerflow(nw; pfnw, pfs0, verbose)
+interface_vals = interface_values(pfs)
+
 u0 = initialize_from_pf!(nw)
 
 # create faults
