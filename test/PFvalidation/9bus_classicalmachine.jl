@@ -102,7 +102,6 @@ vertexfs = [bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9];
 edgefs = [l45, l46, l69, l78, l89, t14, t27, t39, l57];
 nw = Network(vertexfs, edgefs)
 
-u0 = initialize_from_pf!(nw)
 # solve powerflow and initialize
 u0 = initialize_from_pf!(nw)
 

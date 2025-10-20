@@ -13,7 +13,7 @@ using DataFrames
 @mtkmodel LoadBus begin
     @components begin
         busbar = BusBar()
-        load = ConstantYLoad(Pset, Qset, Vset=nothing)
+        load = ConstantYLoad(P, Q)
     end
     @equations begin
         connect(load.terminal, busbar.terminal)
@@ -148,7 +148,7 @@ end
 
 @mtkmodel StandardBus begin
     @components begin
-        machine = Library.StandardModel_pf(;
+        machine = StandardModel_pf(;
             S_b,
             Sn,
             V_b,
@@ -369,10 +369,10 @@ primary_parameters_gen3 = Dict(
 @named mtkbus2 = StandardBus(; primary_parameters_gen2...)
 @named mtkbus3 = StandardBus(; primary_parameters_gen3...)
 @named mtkbus4 = MTKBus()
-@named mtkbus5 = LoadBus(;load__Pset=-1.25, load__Qset=-0.5)
-@named mtkbus6 = LoadBus(;load__Pset=-0.90, load__Qset=-0.3)
+@named mtkbus5 = LoadBus(;load__P=-1.25, load__Q=-0.5)
+@named mtkbus6 = LoadBus(;load__P=-0.90, load__Q=-0.3)
 @named mtkbus7 = MTKBus()
-@named mtkbus8 = LoadBus(;load__Pset=-1.0, load__Qset=-0.35)
+@named mtkbus8 = LoadBus(;load__P=-1.0, load__Q=-0.35)
 @named mtkbus9 = MTKBus()
 
 
@@ -429,11 +429,7 @@ edgefs = [l45, l46, l69, l78, l89, t14, t27, t39, l57];
 nw = Network(vertexfs, edgefs)
 
 # solve powerflow and initialize
-OpPoDyn.solve_powerflow!(nw)
-OpPoDyn.initialize!(nw)
-
-# get state for actual calculation
-u0 = NWState(nw)
+u0 = initialize_from_pf!(nw)
 
 # create faults
 affect1! = (integrator) -> begin
