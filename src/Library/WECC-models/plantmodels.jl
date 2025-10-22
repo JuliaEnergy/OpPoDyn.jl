@@ -1,5 +1,5 @@
 # WECC Model for  large scale PV plant taken from OpenIPSL Modelica PSSE (or https://www.esig.energy/wiki-main-page/generic-models-pv-plants/#WECC_Generic_Model_for_Large-scale_PV_Plants)
-# default parameter taken from OpenIPSL, flags=0
+# default parameter taken from OpenIPSL Examples
 
 @mtkmodel WECC_large_PV begin
     @components begin
@@ -80,7 +80,7 @@
             D_dn       = 20.0,
             D_up       = 0.0,
             P_plantref = 1.0, #from powerflow
-            freq_ref   = 1.0,
+            freq_ref   = 60.0,
             freqFlag   = 1,
             p_0        = 0.015)
         f = Blocks.Constant(k=60.0)
@@ -98,7 +98,7 @@
     end
     @variables begin
         V_t(t), [description="Raw terminal voltage"]
-        δ_v(t), [guess=0, description="voltage angle"]
+        δ_v(t), [guess=0.026, description="voltage angle"]
         pir(t), [description="negative terminal current real part"]
         pii(t), [description="negative terminal current im part"]
         pvi(t), [description=""]
@@ -232,15 +232,16 @@ end
             D_dn       = 20.0,
             D_up       = 0.0,
             P_plantref = 1.0, #from powerflow
-            freq_ref   = 1.0,
-            freqFlag   = 1)
-        f = Blocks.Constant(k=1.0)
+            freq_ref   = 50.0,
+            freqFlag   = 1,
+            p_0        = 0.015)
+        f = Blocks.Constant(k=50.0)
         Vref = Blocks.Constant(k=1.0)
         Qref = Blocks.Constant(k=0.0)
         Qbranch = Blocks.Constant(k=0.0)
         Pbranch = Blocks.Constant(k=1.0)
         Vreg = Blocks.Constant(k=1.0)
-        Ibranch = Blocks.Constant(k=1.0)
+        #Ibranch = Blocks.Constant(k=1.0)
         #Pe = Blocks.Constant(k=1.0)
         Pfaref = Blocks.Constant(k=-1.311)
         #Qgen = Blocks.Constant(k=0.0)
@@ -251,7 +252,7 @@ end
     end
     @variables begin
         V_t(t), [description="Raw terminal voltage"]
-        δ_v(t), [guess=0, description="voltage angle"]
+        δ_v(t), [guess=0.026, description="voltage angle"]
         pir(t), [description="negative terminal current real part"]
         pii(t), [description="negative terminal current im part"]
         pvr(t), [description=""]
@@ -286,7 +287,7 @@ end
         connect(plant_control.Q_branch, Qbranch.output)
         connect(plant_control.P_branch, Pbranch.output)
         connect(plant_control.V_reg, Vreg.output)
-        connect(plant_control.I_branch, Ibranch.output)
+        #connect(plant_control.I_branch, Ibranch.output)
         #connect(electrical_control.P_e, Pe.output)
         connect(electrical_control.P_faref, Pfaref.output)
         #connect(electrical_control.Q_gen, Qgen.output)
@@ -383,10 +384,11 @@ end
             D_dn       = 20.0,
             D_up       = 0.0,
             P_plantref = 1.0, #from powerflow
-            freq_ref   = 1.0,
-            freqFlag   = 1)
+            freq_ref   = 50.0,
+            freqFlag   = 1,
+            p_0        = 0.015)
         drive_train = Library.WTDTA1()
-        f = Blocks.Constant(k=1.0)
+        f = Blocks.Constant(k=50.0)
         Vref = Blocks.Constant(k=1.0)
         Qref = Blocks.Constant(k=0.0)
         Qbranch = Blocks.Constant(k=0.0)
@@ -403,7 +405,7 @@ end
     end
     @variables begin
         V_t(t), [description="Raw terminal voltage"]
-        δ_v(t), [guess=0, description="voltage angle"]
+        δ_v(t), [guess=0.026, description="voltage angle"]
         pir(t), [description="negative terminal current real part"]
         pii(t), [description="negative terminal current im part"]
         pvr(t), [description=""]
@@ -443,7 +445,7 @@ end
         connect(plant_control.Q_branch, Qbranch.output)
         connect(plant_control.P_branch, Pbranch.output)
         connect(plant_control.V_reg, Vreg.output)
-        connect(plant_control.I_branch, Ibranch.output)
+        #connect(plant_control.I_branch, Ibranch.output)
         #connect(electrical_control.P_e, Pe.output)
         connect(electrical_control.P_faref, Pfaref.output)
         #connect(electrical_control.Q_gen, Qgen.output)
@@ -478,13 +480,13 @@ end
     end
     @variables begin
         w_tin(t), [description=""]
-        w_add(t), [guess=1, description=""]
+        w_add(t), [guess=0.015, description=""]
         w_tsum(t), [description=""]
-        w_t(t), [guess=1, description=""]
+        w_t(t), [guess=0, description=""]
         w_gin(t), [description=""]
         Δw_g(t), [description=""]
         w_g(t), [description=""]
-        w_gint(t), [guess=1, description=""]
+        w_gint(t), [guess=0, description=""]
         Δw(t), [description=""]
         #w_add3(t), [description=""] #not connected
         #Δw_g3(t), [description=""]

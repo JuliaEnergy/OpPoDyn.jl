@@ -12,7 +12,7 @@ function OpenIPSL_RePSSE(_bus1; just_init=false, tol=1e-10, nwtol=1e-10)
         X_d = 0.2               # Internal impedance
         D = 0
         # V_b = 400e3
-        ω_b = 2π*60
+        ω_b = 2π*60 #50 bei BESS und WT4B; 60 bei PV
 
         # pf results, just used for pf modek
         # P_0 = 10.017110e6       # From OpenIPSL SMIB.mo

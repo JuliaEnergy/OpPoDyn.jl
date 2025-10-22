@@ -53,7 +53,7 @@
         D_dn, [description="Downside droop in pu/pu"]
         D_up, [description="upside droop in pu/pu"]
         P_plantref, [description="Initial power reference in pu"]
-        freq_ref, [description="Frequency reference in pu"]
+        freq_ref, [description="Frequency reference"]
         freqFlag, [description="Flag to turn on (1) or off (0) the active power control loop within the plant controller"]
         p_0, [description="Initial active power in pu"]
         #vbus, [description="The bus number in powerflow from which V_reg, freq is picked up (i.e. the voltage being regulated and frequency being controlled; it can be the terminal of the aggregated WTG model or the point of interconnection)"]

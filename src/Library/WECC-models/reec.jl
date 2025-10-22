@@ -53,12 +53,14 @@
         Q_lim(t), [description="ReactivePower after limiter"]
         ΔQ(t), [description="Difference between Q_lim and Q_gen"]
         s_Q(t), [guess=0, description="Frozen state in Q regulator"]
+        s_Qint(t), [guess=1, description=""]
         V_in(t), [description="Voltage after local Q regulator"]
         V_lima(t), [description="Limited voltage after Q regulator"]
         V_con(t), [description="Voltage after Vflag"]
         V_limb(t), [description="Limited voltage V_con"]
         ΔV(t), [description="Difference between V_limb and V_tfilt"]
         s_V(t), [guess=0, description="Frozen state at local voltage regulator"]
+        s_Vint(t), [guess=-0.0567, description=""]
         I_in(t), [description="Current after local voltage regulator"]
         I_lim(t), [description="limited current after voltage regulator"]
         I_t(t), [description="Current from Q_con/V_tfiltlim"]
@@ -90,15 +92,17 @@
         Q_con ~ PfFlag * P_PF * tan(P_faref.u) + (1-PfFlag) * Qext_in.u
         Q_lim ~ limiter(Q_con, Q_min, Q_max)
         ΔQ ~ Q_lim - Q_gen.u
-        Dt(s_Q) ~ (1-Voltage_dip) * ΔQ
-        V_in ~ K_qp * (1-Voltage_dip) * ΔQ + K_qi * s_Q
+        s_Q ~ (1-Voltage_dip) * ΔQ
+        Dt(s_Qint) ~ K_qi * s_Q
+        V_in ~ K_qp * s_Q + s_Qint
         V_lima ~ limiter(V_in, V_min, V_max)
         #V_con ~ Vflag * V_lima + (1-Vflag) * Q_con
         V_con ~ Vflag * V_lima + (1-Vflag) * V_ref0
         V_limb ~ limiter(V_con, V_min, V_max)
         ΔV ~ V_limb - V_tfilt
-        Dt(s_V) ~ (1-Voltage_dip) * ΔV
-        I_in ~ K_vp * (1-Voltage_dip) * ΔV + K_vi * s_V
+        s_V ~ (1-Voltage_dip) * ΔV
+        Dt(s_Vint) ~ K_vi * s_V
+        I_in ~ K_vp * s_V + s_Vint
         I_lim ~ limiter(I_in, I_qmin, I_qmax)
         I_t ~ Q_con / V_tfiltlim
         ΔI ~ I_t - I_qin
@@ -207,12 +211,14 @@ end
         Q_lim(t), [description="ReactivePower after limiter"]
         ΔQ(t), [description="Difference between Q_lim and Q_gen"]
         s_Q(t), [guess=0, description="Frozen state in Q regulator"]
+        s_Qint(t), [guess=1, description=""]
         V_in(t), [description="Voltage after local Q regulator"]
         V_lima(t), [description="Limited voltage after Q regulator"]
         V_con(t), [description="Voltage after Vflag"]
         V_limb(t), [description="Limited voltage V_con"]
         ΔV(t), [description="Difference between V_limb and V_tfilt"]
         s_V(t), [guess=0, description="Frozen state at local voltage regulator"]
+        s_Vint(t), [guess=-0.0567, description=""]
         I_in(t), [description="Current after local voltage regulator"]
         I_lim(t), [description="limited current after voltage regulator"]
         I_t(t), [description="Current from Q_con/V_tfiltlim"]
@@ -254,14 +260,16 @@ end
         Q_con ~ PfFlag * P_PF * tan(P_faref.u) + (1-PfFlag) * Qext_in.u
         Q_lim ~ limiter(Q_con, Q_min, Q_max)
         ΔQ ~ Q_lim - Q_gen.u
-        Dt(s_Q) ~ (1-Voltage_dip) * ΔQ
-        V_in ~ K_qp * (1-Voltage_dip) * ΔQ + K_qi * s_Q
+        s_Q ~ (1-Voltage_dip) * ΔQ
+        Dt(s_Qint) ~ K_qi * s_Q
+        V_in ~ K_qp * s_Q + s_Qint
         V_lima ~ limiter(V_in, V_min, V_max)
         V_con ~ Vflag * V_lima + (1-Vflag) * V_ref0
         V_limb ~ limiter(V_con, V_min, V_max)
         ΔV ~ V_limb - V_tfilt
-        Dt(s_V) ~ (1-Voltage_dip) * ΔV
-        I_in ~ K_vp * (1-Voltage_dip) * ΔV + K_vi * s_V
+        s_V ~ (1-Voltage_dip) * ΔV
+        Dt(s_Vint) ~ K_vi * s_V
+        I_in ~ K_vp * s_V + s_Vint
         I_lim ~ limiter(I_in, I_qmin, I_qmax)
         I_t ~ Q_con / V_tfiltlim
         ΔI ~ I_t - I_qin
@@ -378,13 +386,13 @@ end
         Q_con(t), [description="Reactive Power after PfFlag"]
         Q_lim(t), [description="ReactivePower after limiter"]
         ΔQ(t), [description="Difference between Q_lim and Q_gen"]
-        s_Q(t), [guess=0, description="Frozen state in Q regulator"]
+        s_Q(t), [guess=1, description="Frozen state in Q regulator"]
         V_in(t), [description="Voltage after local Q regulator"]
         V_lima(t), [description="Limited voltage after Q regulator"]
         V_con(t), [description="Voltage after Vflag"]
         V_limb(t), [description="Limited voltage V_con"]
         ΔV(t), [description="Difference between V_limb and V_tfilt"]
-        s_V(t), [guess=0, description="Frozen state at local voltage regulator"]
+        s_V(t), [guess=-0.0567, description="Frozen state at local voltage regulator"]
         I_in(t), [description="Current after local voltage regulator"]
         I_lim(t), [description="limited current after voltage regulator"]
         I_t(t), [description="Current from Q_con/V_tfiltlim"]
@@ -422,14 +430,14 @@ end
         Q_con ~ PfFlag * P_PF * tan(P_faref.u) + (1-PfFlag) * Qext_in.u
         Q_lim ~ limiter(Q_con, Q_min, Q_max)
         ΔQ ~ Q_lim - Q_gen.u
-        Dt(s_Q) ~ ΔQ
-        V_in ~ K_qp * ΔQ + K_qi * (1-Voltage_dip)* s_Q
+        Dt(s_Q) ~ K_qi * (1-Voltage_dip)* ΔQ
+        V_in ~ K_qp * ΔQ + s_Q
         V_lima ~ limiter(V_in, V_min, V_max)
         V_con ~ Vflag * V_lima + (1-Vflag) * (Q_con + V_bias)
         V_limb ~ limiter(V_con, V_min, V_max)
         ΔV ~ V_limb - V_tfilt
-        Dt(s_V) ~ ΔV
-        I_in ~ K_vp * ΔV + (1-Voltage_dip) * K_vi * s_V
+        Dt(s_V) ~ (1-Voltage_dip) * K_vi * ΔV
+        I_in ~ K_vp * ΔV + s_V
         I_lim ~ limiter(I_in, I_qmin, I_qmax)
         I_t ~ Q_con / V_tfiltlim
         ΔI ~ I_t - I_qin

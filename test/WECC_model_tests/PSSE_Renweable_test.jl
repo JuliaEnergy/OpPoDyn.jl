@@ -1,8 +1,7 @@
-using OpPoDyn
-using OpPoDyn.Library
 using PowerDynamics
 PowerDynamics.load_pdtesting()
 using Main.PowerDynamicsTesting
+using OpPoDyn
 
 using PowerDynamics.Library
 using ModelingToolkit
@@ -11,7 +10,7 @@ using OrdinaryDiffEqNonlinearSolve
 
 using CSV
 using DataFrames
-#using CairoMakie
+using CairoMakie
 #=
 ref = CSV.read(
     joinpath(pkgdir(PowerDynamics),"test","OpenIPSL_test","GENROE","modelica_results.csv.gz"),
@@ -26,7 +25,7 @@ PV_BUS = let
 
     # Powerflow results
     v_0 = 1.0
-    angle_0 = 0.02574992
+    angle_0 = 1.475 * π /180
 
     @named PV = OpPoDyn.Library.WECC_large_PV()
     busmodel = MTKBus(PV; name=:GEN1)
@@ -35,6 +34,33 @@ end
 
 sol = OpenIPSL_RePSSE(PV_BUS);
 
+BESS_BUS = let
+    ω_b = 2π*50
+
+    # Powerflow results
+    v_0 = 1.0
+    angle_0 = 1.475 * π /180 #in rad
+
+    @named BESS = OpPoDyn.Library.WECC_BESS()
+    busmodel = MTKBus(BESS; name=:GEN1)
+    compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
+end
+
+sol = OpenIPSL_RePSSE(BESS_BUS);
+
+WT4B_BUS = let
+    ω_b = 2π*50
+
+    # Powerflow results
+    v_0 = 1.0
+    angle_0 = 1.475 * π /180
+
+    @named WT = OpPoDyn.Library.WECC_WT_4B()
+    busmodel = MTKBus(WT; name=:GEN1)
+    compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
+end
+
+sol = OpenIPSL_RePSSE(WT4B_BUS);
 #=
 ## perform tests for all variables of interest
 # Core machine variables
