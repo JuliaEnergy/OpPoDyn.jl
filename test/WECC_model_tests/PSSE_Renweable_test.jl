@@ -25,25 +25,29 @@ PV_BUS = let
 
     # Powerflow results
     v_0 = 1.0
-    angle_0 = 1.475 * π /180
+    angle_0 = 0.0004339 #0.02574992
+    P_0 = 0.015
 
     @named PV = OpPoDyn.Library.WECC_large_PV()
     busmodel = MTKBus(PV; name=:GEN1)
-    compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
+    #compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
+    compile_bus(busmodel, pf=pfPV(V=v_0, P=P_0))
 end
 
-sol = OpenIPSL_RePSSE(PV_BUS);
+sol = OpenIPSL_RePSSE(PV_BUS; ω_b = 2π*60);
 
 BESS_BUS = let
     ω_b = 2π*50
 
     # Powerflow results
     v_0 = 1.0
-    angle_0 = 1.475 * π /180 #in rad
+    angle_0 = 0.02574992 #in rad
+    P_0 = 0.015
 
     @named BESS = OpPoDyn.Library.WECC_BESS()
     busmodel = MTKBus(BESS; name=:GEN1)
-    compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
+    #compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
+    compile_bus(busmodel, pf=pfPV(V=v_0, P=P_0))
 end
 
 sol = OpenIPSL_RePSSE(BESS_BUS);
@@ -53,11 +57,13 @@ WT4B_BUS = let
 
     # Powerflow results
     v_0 = 1.0
-    angle_0 = 1.475 * π /180
+    angle_0 = 0.02574992
+    P_0 = 0.015
 
     @named WT = OpPoDyn.Library.WECC_WT_4B()
     busmodel = MTKBus(WT; name=:GEN1)
-    compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
+    #compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
+    compile_bus(busmodel, pf=pfPV(V=v_0, P=P_0))
 end
 
 sol = OpenIPSL_RePSSE(WT4B_BUS);

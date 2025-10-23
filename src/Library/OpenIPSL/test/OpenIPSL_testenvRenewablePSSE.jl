@@ -1,9 +1,9 @@
-function OpenIPSL_RePSSE(_bus1; just_init=false, tol=1e-10, nwtol=1e-10)
+function OpenIPSL_RePSSE(_bus1; ω_b=50, just_init=false, tol=1e-10, nwtol=1e-10)
     # copy constructor and set vidxs
     bus1 = VertexModel(_bus1, vidx=1, name=:GEN1)
 
     S_b = 100e6
-
+    ω_b = 2π*50 #50 bei BESS und WT4B; 60 bei PV
 
     bus3 = let
         # OpenIPSL infinite bus parameters from SMIB base class
@@ -12,13 +12,12 @@ function OpenIPSL_RePSSE(_bus1; just_init=false, tol=1e-10, nwtol=1e-10)
         X_d = 0.2               # Internal impedance
         D = 0
         # V_b = 400e3
-        ω_b = 2π*60 #50 bei BESS und WT4B; 60 bei PV
 
         # pf results, just used for pf modek
         # P_0 = 10.017110e6       # From OpenIPSL SMIB.mo
         # Q_0 = 8.006544e6        # From OpenIPSL SMIB.mo
         v_0 = 1.0
-        angle_0 = 0.0           # From OpenIPSL SMIB.mo
+        angle_0 = 0 #-0.0000157           # From OpenIPSL SMIB.mo
 
         @named gencls_inf = PSSE_GENCLS(; S_b, ω_b, H, M_b, X_d, D)
         busmodel = MTKBus(gencls_inf; name=:GEN2)
@@ -47,22 +46,31 @@ function OpenIPSL_RePSSE(_bus1; just_init=false, tol=1e-10, nwtol=1e-10)
 
     # line template
     pwLine = MTKLine(PiLine(; name=:PwLine))
-
-    line = compile_line(pwLine; name=:pwLine,
-        src=:FAULT, dst=:GEN2,
-        PwLine₊X=0.025, PwLine₊R=0.025, PwLine₊B_src=0.025, PwLine₊B_dst=0.025)
-    line1 = compile_line(pwLine; name=:pwLine1,
-        src=:GEN2, dst=:FAULT,
-        PwLine₊X=0.025, PwLine₊R=0.025, PwLine₊B_src=0.025, PwLine₊B_dst=0.025)
     line2 = compile_line(pwLine; name=:pwLine2,
         src=:GEN1, dst=:FAULT,
         PwLine₊X=0.0025, PwLine₊R=0.0025)
 
+    @named branchA = PiLine(; name=:pwLine,
+        X=0.025, R=0.025, B_src=0.025, B_dst=0.025)
+    @named branchB = PiLine(; name=:pwLine1,
+        X=0.025, R=0.025, B_src=0.025, B_dst=0.025)
+    linemodel = MTKLine(branchA, branchB)
+    parallelline = compile_line(linemodel, src=:FAULT, dst=:GEN2)
+
 
     buses = [bus1, bus2, bus3]
-    lines = [line, line1, line2]
+    lines = [parallelline, line2]
     nw = Network(buses, lines; warn_order=false)
 
+    verbose = true
+    pfnw=nothing
+    pfs0=nothing
+    pfs=nothing
+    pfnw = isnothing(pfnw) ? powerflow_model(nw) : pfnw
+    pfs0 = isnothing(pfs0) ? NWState(pfnw) : pfnw
+    pfs = solve_powerflow(nw; pfnw, pfs0, verbose)
+    interface_vals = interface_values(pfs)
+    println(interface_vals)
     # pfnw = powerflow_model(nw)
     # pfs = solve_powerflow(pfnw)
 
