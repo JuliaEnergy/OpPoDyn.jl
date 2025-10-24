@@ -27,7 +27,9 @@ function OpenIPSL_RePSSE(_bus1; ω_b=50, just_init=false, tol=1e-10, nwtol=1e-10
     bus2 = let
         @named pwFault = ConstantYLoad(B=0, G=0, allow_zero_conductance=true)
         busmodel = MTKBus(pwFault; name=:FAULT)
-        faultbus = compile_bus(busmodel, vidx=2)
+        #v_0 = 1.0001
+        #angle_0 = deg2rad(0.014)
+        faultbus = compile_bus(busmodel, vidx=2) #, pf=pfSlack(V=v_0, δ=angle_0)
 
         enable = ComponentAffect([], [:pwFault₊B, :pwFault₊G]) do u, p, ctx
             p[:pwFault₊B] = 2
@@ -69,6 +71,7 @@ function OpenIPSL_RePSSE(_bus1; ω_b=50, just_init=false, tol=1e-10, nwtol=1e-10
     pfnw = isnothing(pfnw) ? powerflow_model(nw) : pfnw
     pfs0 = isnothing(pfs0) ? NWState(pfnw) : pfnw
     pfs = solve_powerflow(nw; pfnw, pfs0, verbose)
+    println(show_powerflow(pfs))
     interface_vals = interface_values(pfs)
     println(interface_vals)
     # pfnw = powerflow_model(nw)

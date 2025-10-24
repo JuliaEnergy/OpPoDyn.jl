@@ -1,0 +1,90 @@
+// Load OpenIPSL library
+// loadFile(getEnvironmentVar("OPENIPSL_PATH") + "/package.mo");
+loadFile("C:/Users/smmywael/Downloads/OpenIPSL-master/OpenIPSL-master/OpenIPSL/package.mo");
+
+
+// Run GENROE simulation with model's native experiment settings
+simulate(OpenIPSL.Tests.Renewable.PSSE.WindPlant);
+
+// Extract minimal generator data for main testing
+filterSimulationResults(
+      "OpenIPSL.Tests.Renewable.PSSE.WindPlant_res.mat",
+      "modelica_results.csv",
+      {
+        // PlantController variables
+        "wind.PlantController.Pref",
+        "wind.PlantController.Qext",
+        "wind.PlantController.Qbranch.y",
+        "wind.PlantController.Pbranch.y",
+        "wind.DriveTrain.wg",
+        "wind.DriveTrain.wt",
+        "wind.DriveTrain.Pe",
+
+        "wind.RenewableController.Qext",
+        "wind.RenewableController.Pref",
+        "wind.RenewableController.Qgen",
+        "wind.RenewableController.Wg",
+        "wind.RenewableController.Pe",
+        "wind.RenewableController.Vt",
+        "wind.RenewableController.Ipcmd",
+        "wind.RenewableController.Iqcmd",
+        "wind.RenewableController.IPMAX.y",
+        "wind.RenewableController.IPMIN.y",
+        "wind.RenewableController.IQMAX.y",
+        "wind.RenewableController.IQMIN.y",
+
+        "wind.RenewableGenerator.Ipcmd",
+        "wind.RenewableGenerator.Iqcmd",
+        "wind.RenewableGenerator.LVPL.y",
+        "wind.RenewableGenerator.p.ii",
+        "wind.RenewableGenerator.p.ir",
+        "wind.RenewableGenerator.p.vi",
+        "wind.RenewableGenerator.p.vr"
+    }
+      //addHeader=false
+);
+
+// Extract extended data with all bus variables and injector powers for debugging
+filterSimulationResults(
+      "OpenIPSL.Tests.Renewable.PSSE.windPlant_res.mat",
+      "modelica_results_extended.csv",
+      {
+        // --- All main variables (same as above) ---
+                "wind.PlantController.Pref",
+        "wind.PlantController.Qext",
+        "wind.PlantController.Qbranch.y",
+        "wind.PlantController.Pbranch.y",
+        "wind.DriveTrain.wg",
+        "wind.DriveTrain.wt",
+        "wind.DriveTrain.Pe",
+
+        "wind.RenewableController.Qext",
+        "wind.RenewableController.Pref",
+        "wind.RenewableController.Qgen",
+        "wind.RenewableController.Wg",
+        "wind.RenewableController.Pe",
+        "wind.RenewableController.Vt",
+        "wind.RenewableController.Ipcmd",
+        "wind.RenewableController.Iqcmd",
+        "wind.RenewableController.IPMAX.y",
+        "wind.RenewableController.IPMIN.y",
+        "wind.RenewableController.IQMAX.y",
+        "wind.RenewableController.IQMIN.y",
+
+        "wind.RenewableGenerator.Ipcmd",
+        "wind.RenewableGenerator.Iqcmd",
+        "wind.RenewableGenerator.LVPL.y",
+        "wind.RenewableGenerator.p.ii",
+        "wind.RenewableGenerator.p.ir",
+        "wind.RenewableGenerator.p.vi",
+        "wind.RenewableGenerator.p.vr",
+
+        // --- Additional
+        "GEN1.v", "GEN1.angle",
+        "GEN2.v", "GEN2.angle",
+        "FAULT.v", "FAULT.angle",
+
+        "gENCLS2_1.P", "gENCLS2_1.Q"
+    }
+      //addHeader=false
+);

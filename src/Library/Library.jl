@@ -8,7 +8,8 @@ using ModelingToolkitStandardLibrary.Blocks #: RealInput, RealOutput
 using NonlinearSolve: NonlinearProblem
 using SciMLBase: SciMLBase, solve
 
-using PowerDynamics.Library: Terminal, Ibase, BusBase
+using PowerDynamics
+using PowerDynamics.Library
 
 @mtkmodel SystemBase begin
     @parameters begin
@@ -74,7 +75,7 @@ include("WECC-models/repc.jl")
 export WECC_large_PV, WECC_BESS, WECC_WT_4B, WTDTA1
 include("WECC-models/plantmodels.jl")
 
-export OpenIPSL_RePSSE
+export OpenIPSL_RePSSE, ref_rms_error
 include("OpenIPSL/test/OpenIPSL_testenvRenewablePSSE.jl")
 
 end

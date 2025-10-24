@@ -1,0 +1,86 @@
+// Load OpenIPSL library
+// loadFile(getEnvironmentVar("OPENIPSL_PATH") + "/package.mo");
+loadFile("C:/Users/smmywael/Downloads/OpenIPSL-master/OpenIPSL-master/OpenIPSL/package.mo");
+
+
+// Run GENROE simulation with model's native experiment settings
+simulate(OpenIPSL.Tests.Renewable.PSSE.BESSPlant);
+
+// Extract minimal generator data for main testing
+filterSimulationResults(
+      "OpenIPSL.Tests.Renewable.PSSE.BESSPlant_res.mat",
+      "modelica_results.csv",
+      {
+        // PlantController variables
+        "bESS.PlantController.Pref",
+        "bESS.PlantController.Qext",
+        "bESS.PlantController.Qbranch.y",
+        "bESS.PlantController.Pbranch.y",
+
+        "bESS.RenewableController.Qext",
+        "bESS.RenewableController.Pref",
+        "bESS.RenewableController.Qgen",
+        "bESS.RenewableController.Pe",
+        "bESS.RenewableController.Vt",
+        "bESS.RenewableController.Ipcmd",
+        "bESS.RenewableController.Iqcmd",
+        "bESS.RenewableController.PELEC.y",
+        "bESS.RenewableController.sOC_logic.SOC",
+        "bESS.RenewableController.IPMAX.y",
+        "bESS.RenewableController.IPMIN.y",
+        "bESS.RenewableController.IQMAX.y",
+        "bESS.RenewableController.IQMIN.y",
+
+        "bESS.RenewableGenerator.Ipcmd",
+        "bESS.RenewableGenerator.Iqcmd",
+        "bESS.RenewableGenerator.LVPL.y",
+        "bESS.RenewableGenerator.p.ii",
+        "bESS.RenewableGenerator.p.ir",
+        "bESS.RenewableGenerator.p.vi",
+        "bESS.RenewableGenerator.p.vr"
+    }
+      //addHeader=false
+);
+
+// Extract extended data with all bus variables and injector powers for debugging
+filterSimulationResults(
+      "OpenIPSL.Tests.Renewable.PSSE.BESSPlant_res.mat",
+      "modelica_results_extended.csv",
+      {
+        // --- All main variables (same as above) ---
+        "bESS.PlantController.Pref",
+        "bESS.PlantController.Qext",
+        "bESS.PlantController.Qbranch.y",
+        "bESS.PlantController.Pbranch.y",
+
+        "bESS.RenewableController.Qext",
+        "bESS.RenewableController.Pref",
+        "bESS.RenewableController.Qgen",
+        "bESS.RenewableController.Pe",
+        "bESS.RenewableController.Vt",
+        "bESS.RenewableController.Ipcmd",
+        "bESS.RenewableController.Iqcmd",
+        "bESS.RenewableController.PELEC.y",
+        "bESS.RenewableController.sOC_logic.SOC",
+        "bESS.RenewableController.IPMAX.y",
+        "bESS.RenewableController.IPMIN.y",
+        "bESS.RenewableController.IQMAX.y",
+        "bESS.RenewableController.IQMIN.y",
+
+        "bESS.RenewableGenerator.Ipcmd",
+        "bESS.RenewableGenerator.Iqcmd",
+        "bESS.RenewableGenerator.LVPL.y",
+        "bESS.RenewableGenerator.p.ii",
+        "bESS.RenewableGenerator.p.ir",
+        "bESS.RenewableGenerator.p.vi",
+        "bESS.RenewableGenerator.p.vr",
+
+        // --- Additional
+        "GEN1.v", "GEN1.angle",
+        "GEN2.v", "GEN2.angle",
+        "FAULT.v", "FAULT.angle",
+
+        "gENCLS2_1.P", "gENCLS2_1.Q"
+    }
+      //addHeader=false
+);

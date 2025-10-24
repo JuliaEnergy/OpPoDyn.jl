@@ -1,0 +1,82 @@
+// Load OpenIPSL library
+// loadFile(getEnvironmentVar("OPENIPSL_PATH") + "/package.mo");
+loadFile("C:/Users/smmywael/Downloads/OpenIPSL-master/OpenIPSL-master/OpenIPSL/package.mo");
+
+
+// Run GENROE simulation with model's native experiment settings
+simulate(OpenIPSL.Tests.Renewable.PSSE.PVPlant);
+
+// Extract minimal generator data for main testing
+filterSimulationResults(
+      "OpenIPSL.Tests.Renewable.PSSE.PVPlant_res.mat",
+      "modelica_results.csv",
+      {
+        // PlantController variables
+        "pV.PlantController.Pref",
+        "pV.PlantController.Qext",
+        "pV.PlantController.Qbranch.y",
+        "pV.PlantController.Pbranch.y",
+
+        "pV.RenewableController.Qext",
+        "pV.RenewableController.Pref",
+        "pV.RenewableController.Qgen",
+        "pV.RenewableController.Pe",
+        "pV.RenewableController.Vt",
+        "pV.RenewableController.Ipcmd",
+        "pV.RenewableController.Iqcmd",
+        "pV.RenewableController.IPMAX.y",
+        "pV.RenewableController.IPMIN.y",
+        "pV.RenewableController.IQMAX.y",
+        "pV.RenewableController.IQMIN.y",
+
+        "pV.RenewableGenerator.Ipcmd",
+        "pV.RenewableGenerator.Iqcmd",
+        "pV.RenewableGenerator.LVPL.y",
+        "pV.RenewableGenerator.p.ii",
+        "pV.RenewableGenerator.p.ir",
+        "pV.RenewableGenerator.p.vi",
+        "pV.RenewableGenerator.p.vr"
+    }
+      //addHeader=false
+);
+
+// Extract extended data with all bus variables and injector powers for debugging
+filterSimulationResults(
+      "OpenIPSL.Tests.Renewable.PSSE.pVPlant_res.mat",
+      "modelica_results_extended.csv",
+      {
+        // --- All main variables (same as above) ---
+        "pV.PlantController.Pref",
+        "pV.PlantController.Qext",
+        "pV.PlantController.Qbranch.y",
+        "pV.PlantController.Pbranch.y",
+
+        "pV.RenewableController.Qext",
+        "pV.RenewableController.Pref",
+        "pV.RenewableController.Qgen",
+        "pV.RenewableController.Pe",
+        "pV.RenewableController.Vt",
+        "pV.RenewableController.Ipcmd",
+        "pV.RenewableController.Iqcmd",
+        "pV.RenewableController.IPMAX.y",
+        "pV.RenewableController.IPMIN.y",
+        "pV.RenewableController.IQMAX.y",
+        "pV.RenewableController.IQMIN.y",
+
+        "pV.RenewableGenerator.Ipcmd",
+        "pV.RenewableGenerator.Iqcmd",
+        "pV.RenewableGenerator.LVPL.y",
+        "pV.RenewableGenerator.p.ii",
+        "pV.RenewableGenerator.p.ir",
+        "pV.RenewableGenerator.p.vi",
+        "pV.RenewableGenerator.p.vr",
+
+        // --- Additional
+        "GEN1.v", "GEN1.angle",
+        "GEN2.v", "GEN2.angle",
+        "FAULT.v", "FAULT.angle",
+
+        "gENCLS2_1.P", "gENCLS2_1.Q"
+    }
+      //addHeader=false
+);
