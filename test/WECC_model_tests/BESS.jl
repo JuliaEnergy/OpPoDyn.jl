@@ -1,6 +1,6 @@
 using PowerDynamics
-PowerDynamics.load_pdtesting()
-using Main.PowerDynamicsTesting
+#PowerDynamics.load_pdtesting()
+#using Main.PowerDynamicsTesting
 using OpPoDyn
 using OpPoDyn.Library
 
@@ -12,6 +12,7 @@ using OrdinaryDiffEqNonlinearSolve
 using CSV
 using DataFrames
 using CairoMakie
+using Test
 
 ref = CSV.read(
     joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","BESS","modelica_results_extended.csv"),

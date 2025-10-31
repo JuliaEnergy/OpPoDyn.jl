@@ -1,6 +1,6 @@
 using PowerDynamics
-PowerDynamics.load_pdtesting()
-using Main.PowerDynamicsTesting
+#PowerDynamics.load_pdtesting()
+#using Main.PowerDynamicsTesting
 using OpPoDyn
 using OpPoDyn.Library
 
@@ -12,6 +12,7 @@ using OrdinaryDiffEqNonlinearSolve
 using CSV
 using DataFrames
 using CairoMakie
+using Test
 
 ref = CSV.read(
     joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV","modelica_results_extended.csv"),
@@ -28,11 +29,13 @@ PV_BUS = let
     v_0 = 1.0
     angle_0 = 0.0004339 #deg2rad(1.4753617387995086)
     P_0 = 0.015
+    Q_0 = -0.056658
 
     @named PV = OpPoDyn.Library.WECC_large_PV()
     busmodel = MTKBus(PV; name=:GEN1)
     #compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
     compile_bus(busmodel, pf=pfPV(V=v_0, P=P_0))
+    #compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0))
 end
 
 sol = OpenIPSL_RePSSE(PV_BUS; ω_b = 2π*60);
@@ -46,7 +49,7 @@ sol = OpenIPSL_RePSSE(PV_BUS; ω_b = 2π*60);
 @test ref_rms_error(sol, ref, VIndex(:GEN1, :PV₊plant_control₊P_branch.u), "pV.PlantController.Pbranch.y") < 1e-3
 
 # Electrical control (reec_b)
-@test ref_rms_error(sol, ref, VIndex(:GEN1, :PV₊electrical_control₊Qext_in.u), "pV.RenewableController.Qext") < 1e-3
+@test ref_rms_error(sol, ref, VIndex(:GEN1, :PV₊electrical_control₊Qext_in).u, "pV.RenewableController.Qext") < 1e-3
 @test ref_rms_error(sol, ref, VIndex(:GEN1, :PV₊electrical_control₊Pref_in.u), "pV.RenewableController.Pref") < 1e-3
 @test ref_rms_error(sol, ref, VIndex(:GEN1, :PV₊electrical_control₊Q_gen.u), "pV.RenewableController.Qgen") < 1e-3
 @test ref_rms_error(sol, ref, VIndex(:GEN1, :PV₊electrical_control₊P_e.u), "pV.RenewableController.Pe") < 1e-3

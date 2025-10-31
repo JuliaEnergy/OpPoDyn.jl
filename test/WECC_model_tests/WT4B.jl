@@ -1,6 +1,6 @@
 using PowerDynamics
-PowerDynamics.load_pdtesting()
-using Main.PowerDynamicsTesting
+#PowerDynamics.load_pdtesting()
+#using Main.PowerDynamicsTesting
 using OpPoDyn
 using OpPoDyn.Library
 
@@ -12,6 +12,7 @@ using OrdinaryDiffEqNonlinearSolve
 using CSV
 using DataFrames
 using CairoMakie
+using Test
 
 ref = CSV.read(
     joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","WT4B","modelica_results_extended.csv"),
@@ -28,11 +29,13 @@ WT4B_BUS = let
     v_0 = 1.0
     angle_0 = deg2rad(1.4753617387995086)
     P_0 = 0.015
+    Q_0 = -0.056658
 
     @named WT = OpPoDyn.Library.WECC_WT_4B()
     busmodel = MTKBus(WT; name=:GEN1)
     #compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
     compile_bus(busmodel, pf=pfPV(V=v_0, P=P_0))
+    #compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0))
 end
 
 sol = OpenIPSL_RePSSE(WT4B_BUS);

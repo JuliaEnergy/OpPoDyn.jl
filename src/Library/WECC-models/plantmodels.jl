@@ -23,7 +23,7 @@
             V_dip   = -99, #0.85
             V_up    = 99, #1.2
             T_rv    = 0.01,
-            V_ref0  = 0.95,
+            V_ref0  = 1,
             dbd1    = -0.1,
             dbd2    = 0.1,
             K_qv    = 0.0,
@@ -60,7 +60,7 @@
             R_c        = 0.0025,
             X_c        = 0.0025,
             K_c        = 0.02,
-            VcombFlag  = 0,
+            VcombFlag  = 1,
             e_max      = 0.1,
             e_min      = -0.1,
             dbd_up     = 0.0,
@@ -79,7 +79,7 @@
             T_lag      = 0.1,
             D_dn       = 20.0,
             D_up       = 0.0,
-            P_plantref = 1.0, #from powerflow
+            P_plantref = 0.015, #from powerflow
             freq_ref   = 60.0,
             freqFlag   = 1,
             p_0        = 0.015)
@@ -97,14 +97,14 @@
         Vdiff = Blocks.Constant(k=1)
     end
     @variables begin
-        V_t(t), [description="Raw terminal voltage"]
-        δ_v(t), [guess=0.026, description="voltage angle"]
-        pir(t), [description="negative terminal current real part"]
-        pii(t), [description="negative terminal current im part"]
-        pvi(t), [description=""]
-        pvr(t), [description=""]
-        P_gen(t), [description=""]
-        Q_gen(t), [description=""]
+        V_t(t), [guess=1, description="Raw terminal voltage"]
+        δ_v(t), [guess=0.00045, description="voltage angle"]
+        pir(t), [guess=-0.015, description="negative terminal current real part"]
+        pii(t), [guess=-0.0567, description="negative terminal current im part"]
+        pvr(t), [guess=1, description=""]
+        pvi(t), [guess=0.00045, description=""]
+        P_gen(t), [guess=0.015, description=""]
+        Q_gen(t), [guess=-0.0567, description=""]
     end
     @parameters begin
         S_b=100e6, [description="System Base Power"]
@@ -212,7 +212,7 @@ end
             R_c        = 0.0025,
             X_c        = 0.0025,
             K_c        = 0.02,
-            VcombFlag  = 0,
+            VcombFlag  = 1,
             e_max      = 0.1,
             e_min      = -0.1,
             dbd_up     = 0.0,
@@ -231,34 +231,34 @@ end
             T_lag      = 0.1,
             D_dn       = 20.0,
             D_up       = 0.0,
-            P_plantref = 1.0, #from powerflow
+            P_plantref = 0.015, #from powerflow
             freq_ref   = 50.0,
             freqFlag   = 1,
             p_0        = 0.015)
         f = Blocks.Constant(k=50.0)
         Vref = Blocks.Constant(k=1.0)
-        Qref = Blocks.Constant(k=0.0)
-        Qbranch = Blocks.Constant(k=0.0)
-        Pbranch = Blocks.Constant(k=1.0)
+        Qref = Blocks.Constant(k=-0.0567)
+        Qbranch = Blocks.Constant(k=-0.0567)
+        Pbranch = Blocks.Constant(k=0.015)
         Vreg = Blocks.Constant(k=1.0)
         #Ibranch = Blocks.Constant(k=1.0)
         #Pe = Blocks.Constant(k=1.0)
         Pfaref = Blocks.Constant(k=-1.311)
         #Qgen = Blocks.Constant(k=0.0)
         #Qgen0 = Blocks.Constant(k=0.0)
-        Vdiff = Blocks.Constant(k=0)
+        Vdiff = Blocks.Constant(k=1)
         P_aux = Blocks.Constant(k=0)
         PELEC = Blocks.Constant(k=0.015)
     end
     @variables begin
-        V_t(t), [description="Raw terminal voltage"]
-        δ_v(t), [guess=0.026, description="voltage angle"]
-        pir(t), [description="negative terminal current real part"]
-        pii(t), [description="negative terminal current im part"]
-        pvr(t), [description=""]
-        pvi(t), [description=""]
-        P_gen(t), [description=""]
-        Q_gen(t), [description=""]
+        V_t(t), [guess=1, description="Raw terminal voltage"]
+        δ_v(t), [guess=0.00045, description="voltage angle in rad"]
+        pir(t), [guess=-0.015, description="negative terminal current real part"]
+        pii(t), [guess=-0.0567, description="negative terminal current im part"]
+        pvr(t), [guess=1, description=""]
+        pvi(t), [guess=0.00045, description=""]
+        P_gen(t), [guess=0.015, description=""]
+        Q_gen(t), [guess=-0.0567, description=""]
     end
     @parameters begin
         S_b=100e6, [description="System Base Power"]
@@ -342,8 +342,8 @@ end
             K_qi    = 0.1,
             Vflag   = 0,
             V_bias  = 0,
-            K_vp    = 0,
-            K_vi    = 120,
+            K_vp    = 1.6,
+            K_vi    = 1,
             QFlag   = 0,
             I_max   = 1.2,
             PqFlag  = 0,
@@ -364,7 +364,7 @@ end
             R_c        = 0.0025,
             X_c        = 0.0025,
             K_c        = 0.02,
-            VcombFlag  = 0,
+            VcombFlag  = 1,
             e_max      = 0.1,
             e_min      = -0.1,
             dbd_up     = 0.0,
@@ -383,35 +383,35 @@ end
             T_lag      = 0.1,
             D_dn       = 20.0,
             D_up       = 0.0,
-            P_plantref = 1.0, #from powerflow
+            P_plantref = 0.015, #from powerflow
             freq_ref   = 50.0,
             freqFlag   = 1,
             p_0        = 0.015)
         drive_train = Library.WTDTA1()
         f = Blocks.Constant(k=50.0)
         Vref = Blocks.Constant(k=1.0)
-        Qref = Blocks.Constant(k=0.0)
-        Qbranch = Blocks.Constant(k=0.0)
-        Pbranch = Blocks.Constant(k=1.0)
+        Qref = Blocks.Constant(k=-0.0567)
+        Qbranch = Blocks.Constant(k=-0.0567)
+        Pbranch = Blocks.Constant(k=0.015)
         Vreg = Blocks.Constant(k=1.0)
-        Ibranch = Blocks.Constant(k=1.0)
+        #Ibranch = Blocks.Constant(k=1.0)
         #Pe = Blocks.Constant(k=1.0)
         Pfaref = Blocks.Constant(k=-1.311)
         #Qgen = Blocks.Constant(k=0.0)
         #Qgen0 = Blocks.Constant(k=0.0)
-        Vdiff = Blocks.Constant(k=0)
+        Vdiff = Blocks.Constant(k=1)
         #WG = Blocks.Constant(k=1)
-        W0 = Blocks.Constant(k=1)
+        W0 = Blocks.Constant(k=0)
     end
     @variables begin
-        V_t(t), [description="Raw terminal voltage"]
-        δ_v(t), [guess=0.026, description="voltage angle"]
-        pir(t), [description="negative terminal current real part"]
-        pii(t), [description="negative terminal current im part"]
-        pvr(t), [description=""]
-        pvi(t), [description=""]
-        P_gen(t), [description=""]
-        Q_gen(t), [description=""]
+        V_t(t), [guess=1, description="Raw terminal voltage"]
+        δ_v(t), [guess=0.00045, description="voltage angle"]
+        pir(t), [guess=-0.015, description="negative terminal current real part"]
+        pii(t), [guess=-0.0567, description="negative terminal current im part"]
+        pvr(t), [guess=1, description=""]
+        pvi(t), [guess=0.00045, description=""]
+        P_gen(t), [guess=0.015, description=""]
+        Q_gen(t), [guess=-0.0567, description=""]
     end
     @parameters begin
         S_b=100e6, [description="System Base Power in VA"]
@@ -464,9 +464,9 @@ end
 
 @mtkmodel WTDTA1 begin
     @components begin
-        P_m = RealInput(guess=1)
-        P_e = RealInput(guess=1)
-        W_0 = RealInput(guess=1)
+        P_m = RealInput(guess=0.015)
+        P_e = RealInput(guess=0.015)
+        W_0 = RealInput(guess=0)
         W_tout = RealOutput()
         W_gout = RealOutput()
     end
@@ -479,15 +479,15 @@ end
         freq1=2.132, [description="First shaft torsional resonancy frequency"]
     end
     @variables begin
-        w_tin(t), [description=""]
+        w_tin(t), [guess=0, description=""]
         w_add(t), [guess=0.015, description=""]
-        w_tsum(t), [description=""]
+        w_tsum(t), [guess=1, description=""]
         w_t(t), [guess=0, description=""]
-        w_gin(t), [description=""]
-        Δw_g(t), [description=""]
-        w_g(t), [description=""]
+        w_gin(t), [guess=0, description=""]
+        Δw_g(t), [guess=0, description=""]
+        w_g(t), [guess=1, description=""]
         w_gint(t), [guess=0, description=""]
-        Δw(t), [description=""]
+        Δw(t), [guess=0, description=""]
         #w_add3(t), [description=""] #not connected
         #Δw_g3(t), [description=""]
     end
@@ -498,10 +498,10 @@ end
         K_shaft= 2 * H_t * H_g * (2 * π * freq1)^2/(H * w0)
     end
     @equations begin
-        w_tin ~ P_m.u/w_tsum - w_add - D_shaft * W_0.u
+        w_tin ~ P_m.u/w_tsum - w_add - D_shaft * Δw
         2 * H_t * Dt(w_t) ~ w_tin
         w_tsum ~ w_t + 1
-        w_gin ~ D_shaft * W_0.u + w_add - P_e.u/w_g
+        w_gin ~ D_shaft * Δw + w_add - P_e.u/w_g
         Δw_g ~ w_gin - K_damp * w_gint
         2 * H_g * Dt(w_gint) ~ Δw_g
         w_g ~ w_gint + 1

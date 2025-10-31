@@ -6,10 +6,13 @@ using ModelingToolkit: ModelingToolkit, @named, @mtkmodel, @variables, @paramete
 using ModelingToolkit: @unpack, Equation, Num, System # needed for @mtkmodel?
 using ModelingToolkitStandardLibrary.Blocks #: RealInput, RealOutput
 using NonlinearSolve: NonlinearProblem
-using SciMLBase: SciMLBase, solve
+using SciMLBase: SciMLBase, solve, ODEProblem
 
 using PowerDynamics
 using PowerDynamics.Library
+using OrdinaryDiffEqRosenbrock: Rodas5P
+using Statistics: mean
+using LinearAlgebra: norm
 
 @mtkmodel SystemBase begin
     @parameters begin
