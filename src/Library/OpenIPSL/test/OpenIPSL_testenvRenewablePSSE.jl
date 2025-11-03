@@ -1,4 +1,4 @@
-function OpenIPSL_RePSSE(_bus1; ω_b=2π*50, just_init=false, tol=1e-3, nwtol=1e-3)
+function OpenIPSL_RePSSE(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=1e0)
     # copy constructor and set vidxs
     bus1 = VertexModel(_bus1, vidx=1, name=:GEN1)
 
@@ -87,11 +87,11 @@ function OpenIPSL_RePSSE(_bus1; ω_b=2π*50, just_init=false, tol=1e-3, nwtol=1e
         set_default!(bus1, sym, get_guess(bus1, sym))
     end
 
-    s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol=13, nwtol=13)
+    s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol, nwtol)
     #dump_initial_state(bus1)
     init_residual(bus1; verbose=true)
 
-    prob = ODEProblem(nw, uflat(s0), (0, 5), copy(pflat(s0)), callback=get_callbacks(nw))
+    prob = ODEProblem(nw, uflat(s0), (0,5), copy(pflat(s0)), callback=get_callbacks(nw))
     sol = solve(prob, Rodas5P())
     @assert SciMLBase.successful_retcode(sol) "Simulation was not successful: retcode=$(sol.retcode)"
     sol

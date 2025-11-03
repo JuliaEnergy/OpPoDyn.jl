@@ -326,6 +326,7 @@ end
         Ipcmd_out = RealOutput()
     end
     @parameters begin
+        V_0, [description=""]
         V_dip, [description="Low voltage condition trigger voltage (pu)"]
         V_up, [description="High voltage condition trigger voltage (pu)"]
         T_rv, [description="Terminal bus voltage filter time constant (s)"]
@@ -389,6 +390,7 @@ end
         s_Q(t), [guess=1, description="Frozen state in Q regulator"]
         V_in(t), [guess=1, description="Voltage after local Q regulator"]
         V_lima(t), [guess=1, description="Limited voltage after Q regulator"]
+        V_mod(t), [guess=0, description=""]
         V_con(t), [guess=-0.0567, description="Voltage after Vflag"]
         V_limb(t), [guess=0.9, description="Limited voltage V_con"]
         ΔV(t), [guess=-0.1, description="Difference between V_limb and V_tfilt"]
@@ -433,6 +435,7 @@ end
         Dt(s_Q) ~ K_qi * (1-Voltage_dip)* ΔQ
         V_in ~ K_qp * ΔQ + s_Q
         V_lima ~ limiter(V_in, V_min, V_max)
+        V_mod ~ ifelse((1-PfFlag) * Vflag * QFlag > 0, (V_0 - PfFlag), V_bias)
         V_con ~ Vflag * V_lima + (1-Vflag) * (Q_con + V_bias)
         V_limb ~ limiter(V_con, V_min, V_max)
         ΔV ~ V_limb - V_tfilt
