@@ -227,3 +227,13 @@ fig_plant = let
     axislegend(ax; position=:rt)
     fig
 end
+
+#voltage V_dip
+fig_plant = let
+    fig = Figure(size=(1200, 400))
+    ax = Axis(fig[1,1]; xlabel="Time [s]", ylabel="pu", title="Voltage_dip")
+    lines!(ax, ts, sol_pv(ts, idxs=VIndex(:GEN1, :PV₊plant_control₊Voltage_dip)).u; label="PD Voltage_dip plant control", color=Cycled(2), linewidth=2, linestyle=:dash)
+    lines!(ax, ts, sol_pv(ts, idxs=VIndex(:GEN1, :PV₊electrical_control₊Voltage_dip)).u; label="PD Voltage_dip electrical control", color=Cycled(2), linewidth=2, linestyle=:dash)
+    axislegend(ax; position=:rt)
+    fig
+end

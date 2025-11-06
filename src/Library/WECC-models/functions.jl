@@ -1,21 +1,24 @@
 function deadband(x,low,high)
     ifelse(x < low, x-low, ifelse(x>high, x-high, 0))
-end #TODO überprüfen: ist das korrekt?
+end
 
 function limiter(x, lim_low, lim_high)
-    ifelse(x<lim_low, lim_low, ifelse(x>lim_high, lim_high, x))
+    #ifelse(x<lim_low, lim_low, ifelse(x>lim_high, lim_high, x))
+    clamp(x, lim_low, lim_high)
 end
 
 function lowlimit(x, lim_low)
-    ifelse(x<lim_low, lim_low,  x)
+    #ifelse(x<lim_low, lim_low,  x)
+    max(x, lim_low)
 end
 
 function uplimit(x, lim_high)
-    ifelse(x>lim_high, lim_high, x)
+    #ifelse(x>lim_high, lim_high, x)
+    min(x, lim_high)
 end
 
 function LVPLogic(in, zero, Brkpt, gain)
-    ifelse(in<=Brkpt, ifelse(in>=zero, gain * (in-zero)/(Brkpt-zero), 0), gain)
+    ifelse(in<zero, 0, ifelse(in>Brkpt, gain, gain * (in-zero)/(Brkpt-zero)))
 end
 
 function VDL(V, v1, v2, v3, v4, i1, i2, i3, i4)

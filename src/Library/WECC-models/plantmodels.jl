@@ -12,55 +12,53 @@
             Brkpt   = 0.9,
             Zerox   = 0.5,
             L_vpl1  = 1.22,
-            L_vplsw = 1,
             rrpwr   = 10,
             V_0lim = 1.2,
             K_hv = 0.7,
             lvpnt0 = 0.4,
             lvpnt1 = 0.8,
-            I_0lim = -1.3)
+            I_0lim = -1.3,
+            L_vplsw = true)
         electrical_control = Library.reec_b(
-            V_dip   = -99, #0.85
-            V_up    = 99, #1.2
-            T_rv    = 0.01,
+            V_dip   = -99,
+            V_up    = 99,
+            T_rv    = 0.0001, #TODO T_rv=0 Error
             V_ref0  = 1,
-            dbd1    = -0.1,
-            dbd2    = 0.1,
+            dbd1    = -0.05,
+            dbd2    = 0.05,
             K_qv    = 0.0,
             I_qh1   = 1.05,
             I_ql1   = -1.05,
-            T_p     = 0.051,
-            PfFlag  = 0,
+            T_p     = 0.05,
             Q_min   = -0.436,
             Q_max   = 0.436,
             V_min   = 0.9,
             V_max   = 1.1,
             K_qp    = 0,
             K_qi    = 0.1,
-            Vflag   = 0,
             K_vp    = 0,
             K_vi    = 40,
-            QFlag   = 0,
             I_max   = 1.82,
-            PqFlag  = 0,
             T_iq    = 0.02,
             T_pord  = 0.02,
             P_min   = 0.0,
             P_max   = 1.0,
             dP_min  = -99,
-            dP_max  = 99)
+            dP_max  = 99,
+            PqFlag  = false,
+            QFlag   = false,
+            PfFlag  = false,
+            Vflag   = false)
         plant_control = Library.repc_a(
             K_p        = 18,
             K_i        = 5,
             T_fltr     = 0.02,
             T_ft       = 0,
             T_fv       = 0.075,
-            RefFlag    = 0,
             V_frz      = 0,
             R_c        = 0.0025,
             X_c        = 0.0025,
             K_c        = 0.02,
-            VcombFlag  = 1,
             e_max      = 0.1,
             e_min      = -0.1,
             dbd_up     = 0.0,
@@ -81,19 +79,17 @@
             D_up       = 0.0,
             P_plantref = 0.015,
             freq_ref   = 60.0,
-            freqFlag   = 1,
-            p_0        = 0.015)
+            RefFlag    = false,
+            VcombFlag  = false,
+            freqFlag   = false#=,
+            p_0        = 0.015=#)
         f = Blocks.Constant(k=60.0)
         Vref = Blocks.Constant(k=1.0)
-        Qref = Blocks.Constant(k=-0.0567)
+        Qref = Blocks.Constant(k=-0.056658)
         #Qbranch = Blocks.Constant(k=-0.0567) #TODO nicht konstant
         #Pbranch = Blocks.Constant(k=0.015) #TODO nicht konstant
         #Vreg = Blocks.Constant(k=1.0) #TODO nicht konstant
-        #Ibranch = Blocks.Constant(k=1.0)
-        #Pe = Blocks.Constant(k=1.0)
         Pfaref = Blocks.Constant(k=-1.31199)
-        #Qgen = Blocks.Constant(k=0.0)
-        #Qgen0 = Blocks.Constant(k=0.0)
         #Vdiff = Blocks.Constant(k=1) #TODO nicht konstant
     end
     @variables begin
@@ -174,59 +170,57 @@ end
             Brkpt   = 0.9,
             Zerox   = 0.5,
             L_vpl1  = 1.22,
-            L_vplsw = 0,
             rrpwr   = 10,
             V_0lim = 1.2,
             K_hv = 0.7,
             lvpnt0 = 0.4,
             lvpnt1 = 0.8,
-            I_0lim = -1.3)
+            I_0lim = -1.3,
+            L_vplsw = true)
         electrical_control = Library.reec_c(
-            V_dip   = -99, #0.85,
-            V_up    = 99, #1.2,
+            V_dip   = -99,
+            V_up    = 99,
             T_rv    = 0.01,
             V_ref0  = 1,
-            dbd1    = 0,
-            dbd2    = 0,
-            K_qv    = 0.0,
-            I_qh1   = 1,
-            I_ql1   = -1,
-            T_p     = 0.01,
-            PfFlag  = 0,
-            Q_min   = -1,
-            Q_max   = 1,
+            dbd1    = -0.05,
+            dbd2    = 0.05,
+            K_qv    = 15,
+            I_qh1   = 0.75,
+            I_ql1   = -0.75,
+            T_p     = 0.05,
+            Q_min   = -0.75,
+            Q_max   = 0.75,
             V_min   = 0.9,
             V_max   = 1.1,
             K_qp    = 0,
-            K_qi    = 0.1,
-            Vflag   = 0,
+            K_qi    = 1,
             K_vp    = 0,
-            K_vi    = 40,
-            QFlag   = 0,
+            K_vi    = 1,
             I_max   = 1.11,
-            PqFlag  = 0,
-            T_iq    = 0.01,
-            T_pord  = 0.02,
-            P_min   = 0.0,
+            T_iq    = 0.017,
+            T_pord  = 0.017,
+            P_min   = -0.667,
             P_max   = 1.0,
             dP_min  = -99,
             dP_max  = 99,
             soc_ini = 0.5,
             T_char = 999,
             SOCmin = 0.2,
-            SOCmax = 0.8)
+            SOCmax = 0.8,
+            PfFlag  = false,
+            Vflag   = false,
+            QFlag   = false,
+            PqFlag  = false)
         plant_control = Library.repc_a(
             K_p        = 18,
             K_i        = 5,
             T_fltr     = 0.02,
             T_ft       = 0,
             T_fv       = 0.075,
-            RefFlag    = 0,
             V_frz      = 0,
             R_c        = 0.0025,
             X_c        = 0.0025,
             K_c        = 0.02,
-            VcombFlag  = 1,
             e_max      = 0.1,
             e_min      = -0.1,
             dbd_up     = 0.0,
@@ -247,8 +241,10 @@ end
             D_up       = 0.0,
             P_plantref = 0.015, #from powerflow
             freq_ref   = 50.0,
-            freqFlag   = 1,
-            p_0        = 0.015)
+            p_0        = 0.015,
+            RefFlag    = false,
+            VcombFlag  = false,
+            freqFlag   = false)
         f = Blocks.Constant(k=50.0)
         Vref = Blocks.Constant(k=1.0)
         Qref = Blocks.Constant(k=-0.0567)
@@ -345,57 +341,55 @@ end
             Brkpt   = 0.9,
             Zerox   = 0.5,
             L_vpl1  = 1.22,
-            L_vplsw = 0,
             rrpwr   = 10,
             V_0lim = 1.2,
             K_hv = 0.7,
             lvpnt0 = 0.4,
             lvpnt1 = 0.8,
-            I_0lim = -1.3)
+            I_0lim = -1.3,
+            L_vplsw = true)
         electrical_control = Library.reec_a(
             V_0     = 1,
             V_dip   = -99, #0.85,
             V_up    = 99, #1.2,
             T_rv    = 0.01,
             V_ref0  = 1,
-            dbd1    = -0.05,
-            dbd2    = 0.05,
+            dbd1    = -0.1,
+            dbd2    = 0.1,
             K_qv    = 0.0,
-            I_qh1   = 1.05,
-            I_ql1   = -1.05,
-            T_p     = 0.05,
-            PfFlag  = 0,
-            Q_min   = -0.4,
-            Q_max   = 0.4,
+            I_qh1   = 1,
+            I_ql1   = -1,
+            T_p     = 0.3,
+            Q_min   = -0.5,
+            Q_max   = 0.5,
             V_min   = 0.9,
             V_max   = 1.1,
-            K_qp    = 0,
+            K_qp    = 0.1,
             K_qi    = 0.1,
-            Vflag   = 0,
             V_bias  = 0,
             K_vp    = 1.6,
             K_vi    = 1,
-            QFlag   = 0,
             I_max   = 1.2,
-            PqFlag  = 0,
-            T_iq    = 0.02,
-            T_pord  = 0.04,
+            T_iq    = 0.01,
+            T_pord  = 0.3,
             P_min   = 0.0,
             P_max   = 1.0,
             dP_min  = -99,
-            dP_max  = 99)
+            dP_max  = 99,
+            PfFlag  = false,
+            Vflag   = false,
+            QFlag   = false,
+            PqFlag  = false)
         plant_control = Library.repc_a(
             K_p        = 18,
             K_i        = 5,
             T_fltr     = 0.02,
             T_ft       = 0,
             T_fv       = 0.075,
-            RefFlag    = 0,
             V_frz      = 0,
             R_c        = 0.0025,
             X_c        = 0.0025,
             K_c        = 0.02,
-            VcombFlag  = 1,
             e_max      = 0.1,
             e_min      = -0.1,
             dbd_up     = 0.0,
@@ -416,8 +410,10 @@ end
             D_up       = 0.0,
             P_plantref = 0.015, #from powerflow
             freq_ref   = 50.0,
-            freqFlag   = 1,
-            p_0        = 0.015)
+            p_0        = 0.015,
+            RefFlag    = false,
+            VcombFlag  = false,
+            freqFlag   = false)
         drive_train = Library.WTDTA1()
         f = Blocks.Constant(k=50.0)
         Vref = Blocks.Constant(k=1.0)

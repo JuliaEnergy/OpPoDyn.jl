@@ -195,7 +195,7 @@ fig_Qgen = let
     fig = Figure(size=(1200, 400))
     ax = Axis(fig[1,1]; xlabel="Time [s]", ylabel="Q [pu]", title="Reactive Power Q_gen Comparison")
     lines!(ax, ref_wt_extended.time, ref_wt_extended[!, "wind.RenewableController.Qgen"]; label="OpenIPSL Q_gen", color=Cycled(1), linewidth=2, alpha=0.5)
-    lines!(ax, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊electrical_control₊Q_gen)).u; label="PD Q_gen", color=Cycled(1), linewidth=2, linestyle=:dash)
+    lines!(ax, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊Q_gen)).u; label="PD Q_gen", color=Cycled(1), linewidth=2, linestyle=:dash)
     axislegend(ax; position=:rt)
     fig
 end
