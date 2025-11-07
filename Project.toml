@@ -1,7 +1,7 @@
 name = "OpPoDyn"
 uuid = "88be6d57-9a19-43dd-942c-8912817e6f84"
-authors = ["Hans Würfel <git@wuerfel.io> and contributors"]
 version = "0.1.0-DEV"
+authors = ["Hans Würfel <git@wuerfel.io> and contributors"]
 
 [deps]
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
@@ -43,5 +43,5 @@ SciMLBase = "2.48.1"
 Setfield = "1.1.1"
 StaticArrays = "1.9.7"
 SymbolicIndexingInterface = "0.3.28"
-Symbolics = "6.5.0"
+Symbolics = "6.5.0, 7"
 julia = "1.10"
