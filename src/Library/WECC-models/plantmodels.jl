@@ -4,7 +4,7 @@
 @mtkmodel WECC_large_PV begin
     @components begin
         terminal=Terminal()
-        converter_interface = regc_a(
+        regca = regc_a(
             I_qrmax = 9999,
             I_qrmin = -9999,
             T_g     = 0.02,
@@ -19,7 +19,7 @@
             lvpnt1 = 0.8,
             I_0lim = -1.3,
             L_vplsw = true)
-        electrical_control = Library.reec_b(
+        reecb = Library.reec_b(
             V_dip   = -99,
             V_up    = 99,
             T_rv    = 0.0001, #TODO T_rv=0 Error
@@ -49,7 +49,7 @@
             QFlag   = false,
             PfFlag  = false,
             Vflag   = false)
-        plant_control = Library.repc_a(
+        repca = Library.repc_a(
             K_p        = 18,
             K_i        = 5,
             T_fltr     = 0.02,
@@ -81,8 +81,8 @@
             freq_ref   = 60.0,
             RefFlag    = false,
             VcombFlag  = false,
-            freqFlag   = false#=,
-            p_0        = 0.015=#)
+            freqFlag   = false,
+            p_0        = 0.015)
         f = Blocks.Constant(k=60.0)
         Vref = Blocks.Constant(k=1.0)
         Qref = Blocks.Constant(k=-0.056658)
@@ -119,8 +119,8 @@
     @equations begin
         V_t ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
         δ_v ~ atan(terminal.u_i, terminal.u_r)
-        converter_interface.Vt_in.u ~ V_t
-        electrical_control.Vt_in.u ~ V_t
+        regca.Vt_in.u ~ V_t
+        reecb.Vt_in.u ~ V_t
         pii ~ - terminal.i_i
         pir ~ - terminal.i_r
         pvr ~ terminal.u_r
@@ -132,29 +132,29 @@
         Vreg ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
         Vdiff ~ sqrt((terminal.u_r - R_c*terminal.i_r/CoB + X_c*terminal.i_i/CoB)^2 + (terminal.u_i - X_c*terminal.i_r/CoB - R_c*terminal.i_i/CoB)^2)
         #Current injection from converter to terminal (negative for generation)
-        [converter_interface.Ipout.u, converter_interface.Iqout.u].~ -1/CoB*[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii]
-        connect(plant_control.freq, f.output)
-        connect(plant_control.V_ref, Vref.output)
-        connect(plant_control.Q_ref, Qref.output)
-        #connect(plant_control.Q_branch, Qbranch.output)
-        #connect(plant_control.P_branch, Pbranch.output)
-        #connect(plant_control.V_reg, Vreg.output)
-        #connect(plant_control.V_diff, Vdiff.output)
-        plant_control.Q_branch.u ~ Qbranch
-        plant_control.P_branch.u ~ Pbranch
-        plant_control.V_reg.u ~ Vreg
-        plant_control.V_diff.u ~ Vdiff
-        #connect(plant_control.I_branch, Ibranch.output)
-        #connect(electrical_control.P_e, Pe.output)
-        #connect(electrical_control.Q_gen, Qgen.output)
-        electrical_control.P_e.u ~ P_gen
-        electrical_control.Q_gen.u ~ Q_gen
-        connect(electrical_control.P_faref, Pfaref.output)
-        #connect(converter_interface.Q_gen0, Qgen0.output)
-        connect(plant_control.Pref_out, electrical_control.Pref_in)
-        connect(plant_control.Qext_out, electrical_control.Qext_in)
-        connect(electrical_control.Iqcmd_out, converter_interface.Iqcmd_in)
-        connect(electrical_control.Ipcmd_out, converter_interface.Ipcmd_in)
+        [regca.Ipout.u, regca.Iqout.u].~ -1/CoB*[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii]
+        connect(repca.freq, f.output)
+        connect(repca.V_ref, Vref.output)
+        connect(repca.Q_ref, Qref.output)
+        #connect(repca.Q_branch, Qbranch.output)
+        #connect(repca.P_branch, Pbranch.output)
+        #connect(repca.V_reg, Vreg.output)
+        #connect(repca.V_diff, Vdiff.output)
+        repca.Q_branch.u ~ Qbranch
+        repca.P_branch.u ~ Pbranch
+        repca.V_reg.u ~ Vreg
+        repca.V_diff.u ~ Vdiff
+        #connect(repca.I_branch, Ibranch.output)
+        #connect(reecb.P_e, Pe.output)
+        #connect(reecb.Q_gen, Qgen.output)
+        reecb.P_e.u ~ P_gen
+        reecb.Q_gen.u ~ Q_gen
+        connect(reecb.P_faref, Pfaref.output)
+        #connect(regca.Q_gen0, Qgen0.output)
+        connect(repca.Pref_out, reecb.Pref_in)
+        connect(repca.Qext_out, reecb.Qext_in)
+        connect(reecb.Iqcmd_out, regca.Iqcmd_in)
+        connect(reecb.Ipcmd_out, regca.Ipcmd_in)
     end
 end
 
@@ -162,7 +162,7 @@ end
 @mtkmodel WECC_BESS begin
     @components begin
         terminal=Terminal()
-        converter_interface = regc_a(
+        regca = regc_a(
             I_qrmax = 9999,
             I_qrmin = -9999,
             T_g     = 0.02,
@@ -177,7 +177,7 @@ end
             lvpnt1 = 0.8,
             I_0lim = -1.3,
             L_vplsw = true)
-        electrical_control = Library.reec_c(
+        reecc = Library.reec_c(
             V_dip   = -99,
             V_up    = 99,
             T_rv    = 0.01,
@@ -211,7 +211,7 @@ end
             Vflag   = false,
             QFlag   = false,
             PqFlag  = false)
-        plant_control = Library.repc_a(
+        repca = Library.repc_a(
             K_p        = 18,
             K_i        = 5,
             T_fltr     = 0.02,
@@ -288,8 +288,8 @@ end
     @equations begin
         V_t ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
         δ_v ~ atan(terminal.u_i, terminal.u_r)
-        converter_interface.Vt_in.u ~ V_t
-        electrical_control.Vt_in.u ~ V_t
+        regca.Vt_in.u ~ V_t
+        reecc.Vt_in.u ~ V_t
         pii ~ - terminal.i_i
         pir ~ - terminal.i_r
         pvr ~ terminal.u_r
@@ -300,32 +300,32 @@ end
         Qbranch ~ (1/CoB) * (pvi*terminal.i_r - pvr*terminal.i_i)
         Vreg ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
         Vdiff ~ sqrt((terminal.u_r - R_c*terminal.i_r/CoB + X_c*terminal.i_i/CoB)^2 + (terminal.u_i - X_c*terminal.i_r/CoB - R_c*terminal.i_i/CoB)^2)
-        [converter_interface.Ipout.u, converter_interface.Iqout.u].~ -1/CoB*[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii]
-        connect(plant_control.freq, f.output)
-        connect(plant_control.V_ref, Vref.output)
-        connect(plant_control.Q_ref, Qref.output)
-        #connect(plant_control.V_diff, Vdiff.output)
-        #connect(plant_control.Q_branch, Qbranch.output)
-        #connect(plant_control.P_branch, Pbranch.output)
-        #connect(plant_control.V_reg, Vreg.output)
-        plant_control.Q_branch.u ~ Qbranch
-        plant_control.P_branch.u ~ Pbranch
-        plant_control.V_reg.u ~ Vreg
-        plant_control.V_diff.u ~ Vdiff
-        #connect(plant_control.I_branch, Ibranch.output)
-        #connect(electrical_control.P_e, Pe.output)
-        connect(electrical_control.P_faref, Pfaref.output)
-        #connect(electrical_control.Q_gen, Qgen.output)
-        electrical_control.P_e.u ~ P_gen
-        electrical_control.Q_gen.u ~ Q_gen
-        #connect(electrical_control.PELEC, PELEC.output)
-        electrical_control.PELEC.u ~ P_gen
-        connect(electrical_control.P_aux, P_aux.output)
-        #connect(converter_interface.Q_gen0, Qgen0.output)
-        connect(plant_control.Pref_out, electrical_control.Pref_in)
-        connect(plant_control.Qext_out, electrical_control.Qext_in)
-        connect(electrical_control.Iqcmd_out, converter_interface.Iqcmd_in)
-        connect(electrical_control.Ipcmd_out, converter_interface.Ipcmd_in)
+        [regca.Ipout.u, regca.Iqout.u].~ -1/CoB*[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii]
+        connect(repca.freq, f.output)
+        connect(repca.V_ref, Vref.output)
+        connect(repca.Q_ref, Qref.output)
+        #connect(repca.V_diff, Vdiff.output)
+        #connect(repca.Q_branch, Qbranch.output)
+        #connect(repca.P_branch, Pbranch.output)
+        #connect(repca.V_reg, Vreg.output)
+        repca.Q_branch.u ~ Qbranch
+        repca.P_branch.u ~ Pbranch
+        repca.V_reg.u ~ Vreg
+        repca.V_diff.u ~ Vdiff
+        #connect(repca.I_branch, Ibranch.output)
+        #connect(reecc.P_e, Pe.output)
+        connect(reecc.P_faref, Pfaref.output)
+        #connect(reecc.Q_gen, Qgen.output)
+        reecc.P_e.u ~ P_gen
+        reecc.Q_gen.u ~ Q_gen
+        #connect(reecc.PELEC, PELEC.output)
+        reecc.PELEC.u ~ P_gen
+        connect(reecc.P_aux, P_aux.output)
+        #connect(regca.Q_gen0, Qgen0.output)
+        connect(repca.Pref_out, reecc.Pref_in)
+        connect(repca.Qext_out, reecc.Qext_in)
+        connect(reecc.Iqcmd_out, regca.Iqcmd_in)
+        connect(reecc.Ipcmd_out, regca.Ipcmd_in)
     end
 end
 
@@ -333,7 +333,7 @@ end
 @mtkmodel WECC_WT_4B begin
     @components begin
         terminal=Terminal()
-        converter_interface = regc_a(
+        regca = regc_a(
             I_qrmax = 9999,
             I_qrmin = -9999,
             T_g     = 0.02,
@@ -348,7 +348,7 @@ end
             lvpnt1 = 0.8,
             I_0lim = -1.3,
             L_vplsw = true)
-        electrical_control = Library.reec_a(
+        reeca = Library.reec_a(
             V_0     = 1,
             V_dip   = -99, #0.85,
             V_up    = 99, #1.2,
@@ -380,7 +380,7 @@ end
             Vflag   = false,
             QFlag   = false,
             PqFlag  = false)
-        plant_control = Library.repc_a(
+        repca = Library.repc_a(
             K_p        = 18,
             K_i        = 5,
             T_fltr     = 0.02,
@@ -463,42 +463,42 @@ end
         pir ~ - terminal.i_r
         pvr ~ terminal.u_r
         pvi ~ terminal.u_i
-        [converter_interface.Ipout.u, converter_interface.Iqout.u].~ -1/CoB*[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii]
+        [regca.Ipout.u, regca.Iqout.u].~ -1/CoB*[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii]
         P_gen ~ -(1/CoB) * (pvr*pir + pvi*pii)
         Q_gen ~ -(1/CoB) * (pvi*pir - pvr*pii)
         Pbranch ~ (1/CoB) * (pvr*terminal.i_r + pvi*terminal.i_i)
         Qbranch ~ (1/CoB) * (pvi*terminal.i_r - pvr*terminal.i_i)
         Vreg ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
         Vdiff ~ sqrt((terminal.u_r - R_c*terminal.i_r/CoB + X_c*terminal.i_i/CoB)^2 + (terminal.u_i - X_c*terminal.i_r/CoB - R_c*terminal.i_i/CoB)^2)
-        converter_interface.Vt_in.u ~ V_t
-        electrical_control.Vt_in.u ~ V_t
+        regca.Vt_in.u ~ V_t
+        reeca.Vt_in.u ~ V_t
         drive_train.P_e.u ~ P_gen
         drive_train.P_m.u ~ p0
-        #connect(converter_interface.Q_gen0, Qgen0.output)
-        connect(plant_control.freq, f.output)
-        connect(plant_control.V_ref, Vref.output)
-        connect(plant_control.Q_ref, Qref.output)
-        #connect(plant_control.Q_branch, Qbranch.output)
-        #connect(plant_control.P_branch, Pbranch.output)
-        #connect(plant_control.V_reg, Vreg.output)
-        #connect(plant_control.V_diff, Vdiff.output)
-        plant_control.Q_branch.u ~ Qbranch
-        plant_control.P_branch.u ~ Pbranch
-        plant_control.V_reg.u ~ Vreg
-        plant_control.V_diff.u ~ Vdiff
-        #connect(plant_control.I_branch, Ibranch.output)
-        #connect(electrical_control.P_e, Pe.output)
-        connect(electrical_control.P_faref, Pfaref.output)
-        #connect(electrical_control.Q_gen, Qgen.output)
-        electrical_control.P_e.u ~ P_gen
-        electrical_control.Q_gen.u ~ Q_gen
+        #connect(regca.Q_gen0, Qgen0.output)
+        connect(repca.freq, f.output)
+        connect(repca.V_ref, Vref.output)
+        connect(repca.Q_ref, Qref.output)
+        #connect(repca.Q_branch, Qbranch.output)
+        #connect(repca.P_branch, Pbranch.output)
+        #connect(repca.V_reg, Vreg.output)
+        #connect(repca.V_diff, Vdiff.output)
+        repca.Q_branch.u ~ Qbranch
+        repca.P_branch.u ~ Pbranch
+        repca.V_reg.u ~ Vreg
+        repca.V_diff.u ~ Vdiff
+        #connect(repca.I_branch, Ibranch.output)
+        #connect(reeca.P_e, Pe.output)
+        connect(reeca.P_faref, Pfaref.output)
+        #connect(reeca.Q_gen, Qgen.output)
+        reeca.P_e.u ~ P_gen
+        reeca.Q_gen.u ~ Q_gen
         connect(drive_train.W_0, W0.output)
-        connect(drive_train.W_gout, electrical_control.Wg)
-        #connect(electrical_control.Wg, WG.output)
-        connect(plant_control.Pref_out, electrical_control.Pref_in)
-        connect(plant_control.Qext_out, electrical_control.Qext_in)
-        connect(electrical_control.Iqcmd_out, converter_interface.Iqcmd_in)
-        connect(electrical_control.Ipcmd_out, converter_interface.Ipcmd_in)
+        connect(drive_train.W_gout, reeca.Wg)
+        #connect(reeca.Wg, WG.output)
+        connect(repca.Pref_out, reeca.Pref_in)
+        connect(repca.Qext_out, reeca.Qext_in)
+        connect(reeca.Iqcmd_out, regca.Iqcmd_in)
+        connect(reeca.Ipcmd_out, regca.Ipcmd_in)
     end
 end
 

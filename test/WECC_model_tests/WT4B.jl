@@ -42,8 +42,8 @@ sol_wt = OpenIPSL_RePSSE(WT4B_BUS);
 
 ## perform tests for all variables of interest
 # Plant controls (repc_a)
-@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊plant_control₊P_ref), "wind.PlantController.Pref") < 1e-3
-@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊plant_control₊Q_ext), "wind.PlantController.Qext") < 1e-3
+@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊repca₊P_ref), "wind.PlantController.Pref") < 1e-3
+@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊repca₊Q_ext), "wind.PlantController.Qext") < 1e-3
 
 @test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊drive_train₊w_g), "wind.DriveTrain.wg") < 1e-3
 @test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊drive_train₊w_t), "wind.DriveTrain.wt") < 1e-3
@@ -54,15 +54,15 @@ sol_wt = OpenIPSL_RePSSE(WT4B_BUS);
 @test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊drive_train₊w_g), "wind.RenewableController.Wg") < 1e-3
 @test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊P_gen), "wind.RenewableController.Pe") < 1e-3
 @test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊V_t), "wind.RenewableController.Vt") < 1e-3
-@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊electrical_control₊I_pcmd), "wind.RenewableController.Ipcmd") < 1e-3
-@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊electrical_control₊I_qcmd), "wind.RenewableController.Iqcmd") < 1e-3
-@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊electrical_control₊I_pmax), "wind.RenewableController.IPMAX.y") < 1e-3
-@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊electrical_control₊I_pmin), "wind.RenewableController.IPMIN.y") < 1e-3
-@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊electrical_control₊I_qmax), "wind.RenewableController.IQMAX.y") < 1e-3
-@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊electrical_control₊I_qmin), "wind.RenewableController.IQMIN.y") < 1e-3
+@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊reeca₊I_pcmd), "wind.RenewableController.Ipcmd") < 1e-3
+@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊reeca₊I_qcmd), "wind.RenewableController.Iqcmd") < 1e-3
+@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊reeca₊I_pmax), "wind.RenewableController.IPMAX.y") < 1e-3
+@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊reeca₊I_pmin), "wind.RenewableController.IPMIN.y") < 1e-3
+@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊reeca₊I_qmax), "wind.RenewableController.IQMAX.y") < 1e-3
+@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊reeca₊I_qmin), "wind.RenewableController.IQMIN.y") < 1e-3
 
 # Renewable generator (regc_a)
-@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊converter_interface₊I_lvpl), "wind.RenewableGenerator.LVPL.y") < 1e-3
+@test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊regca₊I_lvpl), "wind.RenewableGenerator.LVPL.y") < 1e-3
 @test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊pii), "wind.RenewableGenerator.p.ii") < 1e-3
 @test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊pir), "wind.RenewableGenerator.p.ir") < 1e-3
 @test ref_rms_error(sol_wt, ref_wt, VIndex(:GEN1, :WT₊pvi), "wind.RenewableGenerator.p.vi") < 1e-3
@@ -112,21 +112,21 @@ if isdefined(Main, :EXPORT_FIGURES) && Main.EXPORT_FIGURES
         # Plot 6: Ipcmd
         ax6 = Axis(fig[3,2]; xlabel="Time [s]", ylabel="Current [pu]", title="Ipcmd")
         lines!(ax6, ref_wt.time, ref_wt[!, Symbol("wind.RenewableController.Ipcmd")]; label="OpenIPSL Ipcmd", color=:green, linewidth=2, alpha=0.7)
-        lines!(ax6, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊electrical_control₊I_pcmd)).u; label="PowerDynamics Ipcmd", color=:green, linestyle=:dash, linewidth=2)
+        lines!(ax6, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊reeca₊I_pcmd)).u; label="PowerDynamics Ipcmd", color=:green, linestyle=:dash, linewidth=2)
         axislegend(ax6)
 
         # Plot 7: Iqcmd
         ax7 = Axis(fig[4,1]; xlabel="Time [s]", ylabel="Current [pu]", title="Iqcmd")
         lines!(ax7, ref_wt.time, ref_wt[!, Symbol("wind.RenewableController.Iqcmd")]; label="OpenIPSL Iqcmd", color=:orange, linewidth=2, alpha=0.7)
-        lines!(ax7, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊electrical_control₊I_qcmd)).u; label="PowerDynamics Iqcmd", color=:orange, linestyle=:dash, linewidth=2)
+        lines!(ax7, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊reeca₊I_qcmd)).u; label="PowerDynamics Iqcmd", color=:orange, linestyle=:dash, linewidth=2)
         axislegend(ax7)
 
         # Plot 8: Qext & Pref (PlantController)
         ax8 = Axis(fig[4,2]; xlabel="Time [s]", ylabel="[pu]", title="PlantController: Qext & Pref")
         lines!(ax8, ref_wt.time, ref_wt[!, Symbol("wind.PlantController.Qext")]; label="OpenIPSL Qext", color=:blue, linewidth=2, alpha=0.7)
-        lines!(ax8, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊plant_control₊Q_ext)).u; label="PowerDynamics Qext", color=:blue, linestyle=:dash, linewidth=2)
+        lines!(ax8, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊repca₊Q_ext)).u; label="PowerDynamics Qext", color=:blue, linestyle=:dash, linewidth=2)
         lines!(ax8, ref_wt.time, ref_wt[!, Symbol("wind.PlantController.Pref")]; label="OpenIPSL Pref", color=:red, linewidth=2, alpha=0.7)
-        lines!(ax8, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊plant_control₊P_ref)).u; label="PowerDynamics Pref", color=:red, linestyle=:dash, linewidth=2)
+        lines!(ax8, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊repca₊P_ref)).u; label="PowerDynamics Pref", color=:red, linestyle=:dash, linewidth=2)
         axislegend(ax8)
 
         fig
@@ -205,7 +205,7 @@ fig_Ipcmd = let
     fig = Figure(size=(1200, 400))
     ax = Axis(fig[1,1]; xlabel="Time [s]", ylabel="I [pu]", title="Ipcmd Comparison")
     lines!(ax, ref_wt_extended.time, ref_wt_extended[!, "wind.RenewableController.Ipcmd"]; label="OpenIPSL Ipcmd", color=Cycled(1), linewidth=2, alpha=0.5)
-    lines!(ax, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊electrical_control₊I_pcmd)).u; label="PD Ipcmd", color=Cycled(1), linewidth=2, linestyle=:dash)
+    lines!(ax, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊reeca₊I_pcmd)).u; label="PD Ipcmd", color=Cycled(1), linewidth=2, linestyle=:dash)
     axislegend(ax; position=:rt)
     fig
 end
@@ -215,7 +215,7 @@ fig_Iqcmd = let
     fig = Figure(size=(1200, 400))
     ax = Axis(fig[1,1]; xlabel="Time [s]", ylabel="I [pu]", title="Iqcmd Comparison")
     lines!(ax, ref_wt_extended.time, ref_wt_extended[!, "wind.RenewableController.Iqcmd"]; label="OpenIPSL Iqcmd", color=Cycled(1), linewidth=2, alpha=0.5)
-    lines!(ax, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊electrical_control₊I_qcmd)).u; label="PD Iqcmd", color=Cycled(1), linewidth=2, linestyle=:dash)
+    lines!(ax, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊reeca₊I_qcmd)).u; label="PD Iqcmd", color=Cycled(1), linewidth=2, linestyle=:dash)
     axislegend(ax; position=:rt)
     fig
 end
@@ -225,9 +225,9 @@ fig_plant = let
     fig = Figure(size=(1200, 400))
     ax = Axis(fig[1,1]; xlabel="Time [s]", ylabel="pu", title="PlantController: Qext & Pref")
     lines!(ax, ref_wt_extended.time, ref_wt_extended[!, "wind.PlantController.Qext"]; label="OpenIPSL Qext", color=Cycled(1), linewidth=2, alpha=0.5)
-    lines!(ax, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊plant_control₊Q_ext)).u; label="PD Qext", color=Cycled(1), linewidth=2, linestyle=:dash)
+    lines!(ax, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊repca₊Q_ext)).u; label="PD Qext", color=Cycled(1), linewidth=2, linestyle=:dash)
     lines!(ax, ref_wt_extended.time, ref_wt_extended[!, "wind.PlantController.Pref"]; label="OpenIPSL Pref", color=Cycled(2), linewidth=2, alpha=0.5)
-    lines!(ax, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊plant_control₊P_ref)).u; label="PD Pref", color=Cycled(2), linewidth=2, linestyle=:dash)
+    lines!(ax, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊repca₊P_ref)).u; label="PD Pref", color=Cycled(2), linewidth=2, linestyle=:dash)
     axislegend(ax; position=:rt)
     fig
 end

@@ -29,7 +29,7 @@
     @variables begin
         I_qrsum(t), [guess=0, description=""]
         I_qrlim(t), [guess=0, description=""]
-        I_qr(t), [guess=0.0567, description=""]
+        I_qr(t), [guess=0.056657, description=""]
         ΔV(t), [guess=-0.2, description=""]
         I_hv(t), [guess=-0.14, description=""]
         I_hvlim(t), [guess=0, description=""]
