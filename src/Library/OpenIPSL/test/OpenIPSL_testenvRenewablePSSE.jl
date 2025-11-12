@@ -82,7 +82,6 @@ function OpenIPSL_RePSSE_pv(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=
         return s0
     end
 
-
     for sym in sym(bus1)
         has_guess(bus1, sym) || continue
         (sym==:PV₊repca₊p_0) && continue
@@ -160,10 +159,10 @@ function OpenIPSL_RePSSE_pv(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=
         (sym==:PV₊regca₊I_pg) && continue
         (sym==:PV₊regca₊y) && continue
         (sym==:PV₊regca₊I_p) && continue
-        (sym==:PV₊regca₊V) && continue
+        #(sym==:PV₊regca₊V) && continue
         (sym==:PV₊regca₊I_lvpl) && continue
         (sym==:PV₊V_t) && continue
-        (sym==:PV₊δ_v) && continue
+        #(sym==:PV₊δ_v) && continue
         (sym==:PV₊pir) && continue
         (sym==:PV₊pii) && continue
         (sym==:PV₊pvr) && continue
@@ -272,9 +271,10 @@ function OpenIPSL_RePSSE_bess(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwto
         return s0
     end
 
+    #=
     for sym in sym(bus1)
         has_guess(bus1, sym) || continue
-        #=(sym==:BESS₊repca₊p_0) && continue
+        (sym==:BESS₊repca₊p_0) && continue
         (sym==:BESS₊repca₊Voltage_dip) && continue
         (sym==:BESS₊repca₊V_droop) && continue
         (sym==:BESS₊repca₊V_in) && continue
@@ -349,7 +349,7 @@ function OpenIPSL_RePSSE_bess(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwto
         (sym==:BESS₊regca₊I_qrlim) && continue
         (sym==:BESS₊regca₊I_qr) && continue
         (sym==:BESS₊regca₊ΔV) && continue
-        #(sym==:BESS₊regca₊I_hv) && continue
+        (sym==:BESS₊regca₊I_hv) && continue
         (sym==:BESS₊regca₊I_hvlim) && continue
         (sym==:BESS₊regca₊I_q) && continue
         (sym==:BESS₊regca₊ΔI_q) && continue
@@ -362,7 +362,7 @@ function OpenIPSL_RePSSE_bess(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwto
         (sym==:BESS₊regca₊V) && continue
         (sym==:BESS₊regca₊I_lvpl) && continue
         (sym==:BESS₊V_t) && continue
-        #(sym==:BESS₊δ_v) && continue
+        (sym==:BESS₊δ_v) && continue
         (sym==:BESS₊pir) && continue
         (sym==:BESS₊pii) && continue
         (sym==:BESS₊pvr) && continue
@@ -373,9 +373,10 @@ function OpenIPSL_RePSSE_bess(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwto
         (sym==:BESS₊Vdiff) && continue
         (sym==:BESS₊Vreg) && continue
         (sym==:BESS₊Qbranch) && continue
-        (sym==:BESS₊Pbranch) && continue =#
+        (sym==:BESS₊Pbranch) && continue
         set_default!(bus1, sym, get_guess(bus1, sym))
     end
+=#
 
     s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol, nwtol)
     #dump_initial_state(bus1)

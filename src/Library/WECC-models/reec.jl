@@ -140,16 +140,16 @@ end
     end
     @components begin
         Vt_in = RealInput(guess=1)
-        P_e = RealInput(guess=1) #Inverter active power (pu on mbase)
-        P_faref = RealInput(guess=1) #Inverter initial power factor angle (from power flow solution)
-        Qext_in = RealInput(guess=0)
-        Pref_in = RealInput(guess=1)
-        Q_gen = RealInput(guess=0) #woher? Power Flow solution?
-        P_aux = RealInput(guess=1)
-        PELEC = RealInput(guess=0)
+        P_e = RealInput(guess=0.015) #Inverter active power (pu on mbase)
+        P_faref = RealInput(guess=-1.31199) #Inverter initial power factor angle (from power flow solution)
+        Qext_in = RealInput(guess=-0.056656797)
+        Pref_in = RealInput(guess=0.015)
+        Q_gen = RealInput(guess=-0.056656801)
+        P_aux = RealInput(guess=0)
+        PELEC = RealInput(guess=0.015)
         # outputs
-        Iqcmd_out = RealOutput()
-        Ipcmd_out = RealOutput()
+        Iqcmd_out = RealOutput(guess=-0.056656797)
+        Ipcmd_out = RealOutput(guess=0.015)
     end
     @parameters begin
         V_dip, [description="Low voltage condition trigger voltage (pu)"]
@@ -202,30 +202,30 @@ end
         Voltage_dip(t), [guess=0, description="freeze states if Voltagedip=1"]
         V_tfilt(t), [guess=1, description="Voltage after filter"]
         V_tfiltlim(t), [guess=1, description="Voltage after filter with lower limit 0.01"]
-        ΔV_t(t), [guess=0, description="Difference between filterd terminal voltage and reference voltage"]
+        ΔV_t(t), [guess=6.6613381e-14, description="Difference between filterd terminal voltage and reference voltage"]
         ΔV_tdbd(t), [guess=0, description="Voltage after deadband"]
         I_qinj(t), [guess=0, description="Limited current injection q-Phase from Voltage"]
         P_PF(t), [guess=0.015, description="Inverter active power after filter"]
-        Q_con(t), [guess=-0.0567, description="Reactive Power after PfFlag"]
-        Q_lim(t), [guess=-0.0567, description="ReactivePower after limiter"]
-        ΔQ(t), [guess=0, description="Difference between Q_lim and Q_gen"]
-        s_Q(t), [guess=0, description="Frozen state in Q regulator"]
+        Q_con(t), [guess=-0.056656797, description="Reactive Power after PfFlag"]
+        Q_lim(t), [guess=-0.056656797, description="ReactivePower after limiter"]
+        ΔQ(t), [guess=4.8269116e-9, description="Difference between Q_lim and Q_gen"]
+        s_Q(t), [guess=4.8269116e-9, description="Frozen state in Q regulator"]
         s_Qint(t), [guess=1, description=""]
         V_in(t), [guess=1, description="Voltage after local Q regulator"]
         V_lima(t), [guess=1, description="Limited voltage after Q regulator"]
         V_con(t), [guess=1, description="Voltage after Vflag"]
         V_limb(t), [guess=1, description="Limited voltage V_con"]
-        ΔV(t), [guess=0, description="Difference between V_limb and V_tfilt"]
-        s_V(t), [guess=0, description="Frozen state at local voltage regulator"]
+        ΔV(t), [guess=6.6613381e-14, description="Difference between V_limb and V_tfilt"]
+        s_V(t), [guess=6.6613381e-14, description="Frozen state at local voltage regulator"]
         s_Vint(t), [guess=-0.0567, description=""]
         I_in(t), [guess=-0.0567, description="Current after local voltage regulator"]
         I_lim(t), [guess=-0.0567, description="limited current after voltage regulator"]
-        I_t(t), [guess=-0.0567, description="Current from Q_con/V_tfiltlim"]
+        I_t(t), [guess=-0.056656797, description="Current from Q_con/V_tfiltlim"]
         ΔI(t), [guess=0, description=""]
-        I_qin(t), [guess=-0.0567, description="Current after Reactive current regulator"]
-        I_qcon(t), [guess=-0.0567, description="Current after QFlag"]
-        I_sum(t), [guess=-0.0567, description="sum of I_qcon and I_qinj"]
-        I_qcmd(t), [guess=-0.0567, description="q-Phase output current"]
+        I_qin(t), [guess=-0.056656797, description="Current after Reactive current regulator"]
+        I_qcon(t), [guess=-0.056656797, description="Current after QFlag"]
+        I_sum(t), [guess=-0.056656797, description="sum of I_qcon and I_qinj"]
+        I_qcmd(t), [guess=-0.056656797, description="q-Phase output current"]
         P_refout(t), [guess=0.015, description="Active power after inverter power order"]
         P_lim(t), [guess=0.015, description="Limited active power after inverter power order"]
         ΔP(t), [guess=0, description="Active power difference between P_ref and P_refout"]
@@ -235,10 +235,10 @@ end
         I_pcmd(t), [guess=0.015, description="p-Phase output current"]
         I_qmin(t), [guess=-0.75, description="Minumum q-Phase current limit (pu)"]
         I_qmax(t), [guess=0.75, description="Maximum q-Phase current limit (pu)"]
-        I_pmax(t), [guess=1.11, description="Maximum p-Phase current limit (pu)"]
-        I_pmin(t), [guess=-1.11, description="Minumum p-Phase current limit (pu)"]
-        I_pmin_soc(t), [guess=1.11, description=""]
-        I_pmax_soc(t), [guess=1.11, description=""]
+        I_pmax(t), [guess=1.108553114, description="Maximum p-Phase current limit (pu)"]
+        I_pmin(t), [guess=-1.108553114, description="Minumum p-Phase current limit (pu)"]
+        I_pmin_soc(t), [guess=-1.108553114, description=""]
+        I_pmax_soc(t), [guess=1.108553114, description=""]
         soc_Imin(t), [guess=1, description=""]
         soc_Imax(t), [guess=1, description=""]
         P_stor(t), [guess=0.015, description=""]
@@ -316,15 +316,15 @@ end
     end
     @components begin
         Vt_in = RealInput(guess=1)
-        P_e = RealInput(guess=1) #Inverter active power (pu on mbase)
-        P_faref = RealInput(guess=1) #Inverter initial power factor angle (from power flow solution)
-        Qext_in = RealInput(guess=0)
-        Pref_in = RealInput(guess=1)
-        Q_gen = RealInput(guess=0) #woher? Power Flow solution?
+        P_e = RealInput(guess=0.015) #Inverter active power (pu on mbase)
+        P_faref = RealInput(guess=-1.31199) #Inverter initial power factor angle (from power flow solution)
+        Qext_in = RealInput(guess=-0.056656797)
+        Pref_in = RealInput(guess=0.015)
+        Q_gen = RealInput(guess=-0.056656801)
         Wg = RealInput(guess=1) #Rotational speed generator
         # outputs
-        Iqcmd_out = RealOutput()
-        Ipcmd_out = RealOutput()
+        Iqcmd_out = RealOutput(guess=-0.056656797)
+        Ipcmd_out = RealOutput(guess=0.015)
     end
     @parameters begin
         V_0, [description=""]
@@ -379,25 +379,25 @@ end
         ΔV_tdbd(t), [guess=0, description="Voltage after deadband"]
         I_qinj(t), [guess=0, description="Limited current injection q-Phase from Voltage"]
         P_PF(t), [guess=0.015, description="Inverter active power after filter"]
-        Q_con(t), [guess=-0.0567, description="Reactive Power after PfFlag"]
-        Q_lim(t), [guess=-0.0567, description="ReactivePower after limiter"]
-        ΔQ(t), [guess=0, description="Difference between Q_lim and Q_gen"]
+        Q_con(t), [guess=-0.056656797, description="Reactive Power after PfFlag"]
+        Q_lim(t), [guess=-0.056656797, description="ReactivePower after limiter"]
+        ΔQ(t), [guess=4.8269116e-9, description="Difference between Q_lim and Q_gen"]
         s_Q(t), [guess=1, description="Frozen state in Q regulator"]
         V_in(t), [guess=1, description="Voltage after local Q regulator"]
         V_lima(t), [guess=1, description="Limited voltage after Q regulator"]
         V_mod(t), [guess=0, description=""]
-        V_con(t), [guess=-0.0567, description="Voltage after Vflag"]
+        V_con(t), [guess=1, description="Voltage after Vflag"]
         V_limb(t), [guess=0.9, description="Limited voltage V_con"]
         ΔV(t), [guess=-0.1, description="Difference between V_limb and V_tfilt"]
-        s_V(t), [guess=-0.0567, description="Frozen state at local voltage regulator"]
-        I_in(t), [guess=-0.217, description="Current after local voltage regulator"]
-        I_lim(t), [guess=-0.217, description="limited current after voltage regulator"]
-        I_t(t), [guess=-0.0567, description="Current from Q_con/V_tfiltlim"]
+        s_V(t), [guess=-0.056658, description="Frozen state at local voltage regulator"]
+        I_in(t), [guess=-0.216658, description="Current after local voltage regulator"]
+        I_lim(t), [guess=-0.216658, description="limited current after voltage regulator"]
+        I_t(t), [guess=-0.056656797, description="Current from Q_con/V_tfiltlim"]
         ΔI(t), [guess=0, description=""]
-        I_qin(t), [guess=-0.0567, description="Current after Reactive current regulator"]
-        I_qcon(t), [guess=-0.0567, description="Current after QFlag"]
-        I_sum(t), [guess=-0.0567, description="sum of I_qcon and I_qinj"]
-        I_qcmd(t), [guess=-0.0567, description="q-Phase output current"]
+        I_qin(t), [guess=-0.056656797, description="Current after Reactive current regulator"]
+        I_qcon(t), [guess=-0.056656797, description="Current after QFlag"]
+        I_sum(t), [guess=-0.056656797, description="sum of I_qcon and I_qinj"]
+        I_qcmd(t), [guess=-0.056656797, description="q-Phase output current"]
         P_in(t), [guess=0.015, description=""]
         P_refout(t), [guess=0.015, description="Active power after inverter power order"]
         P_lim(t), [guess=0.015, description="Limited active power after inverter power order"]
@@ -407,10 +407,10 @@ end
         I_pcmd(t), [guess=0.015, description="p-Phase output current"]
         I_qmin(t), [guess=-1.1, description="Minumum q-Phase current limit (pu)"]
         I_qmax(t), [guess=1.1, description="Maximum q-Phase current limit (pu)"]
-        I_pmax(t), [guess=0.926, description="Maximum p-Phase current limit (pu)"]
+        I_pmax(t), [guess=0.9259688073, description="Maximum p-Phase current limit (pu)"]
         I_pmin(t), [guess=0, description="Minumum p-Phase current limit (pu)"]
-        I_pre(t), [guess=0.857, description=""]
-        I_post(t), [guess=0.926, description=""]
+        I_pre(t), [guess=0.8574182321, description=""]
+        I_post(t), [guess=0.9259688073, description=""]
         VDL1_out(t), [guess=1.1, description=""]
         VDL2_out(t), [guess=1.2, description=""]
     end

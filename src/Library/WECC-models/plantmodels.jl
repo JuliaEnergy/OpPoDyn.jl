@@ -253,7 +253,7 @@ end
         #Vreg = Blocks.Constant(k=1.0)
         #Ibranch = Blocks.Constant(k=1.0)
         #Pe = Blocks.Constant(k=1.0)
-        Pfaref = Blocks.Constant(k=-1.311)
+        Pfaref = Blocks.Constant(k=-1.31199)
         #Qgen = Blocks.Constant(k=0.0)
         #Qgen0 = Blocks.Constant(k=0.0)
         #Vdiff = Blocks.Constant(k=1)
@@ -262,17 +262,17 @@ end
     end
     @variables begin
         V_t(t), [guess=1, description="Raw terminal voltage"]
-        δ_v(t), [guess=0.00045, description="voltage angle in rad"]
-        pir(t), [guess=-0.015, description="negative terminal current real part"]
-        pii(t), [guess=-0.0567, description="negative terminal current im part"]
-        pvr(t), [guess=1, description=""]
-        pvi(t), [guess=0.00045, description=""]
+        δ_v(t), [guess=0.00045, description="voltage angle"]
+        pir(t), [guess=-0.014974521, description="negative terminal current real part"]
+        pii(t), [guess=-0.056663541, description="negative terminal current im part"]
+        pvr(t), [guess=0.9999999, description=""]
+        pvi(t), [guess=0.00044967497, description=""]
         P_gen(t), [guess=0.015, description=""]
-        Q_gen(t), [guess=-0.0567, description=""]
+        Q_gen(t), [guess=-0.056656801, description=""]
         PELEC(t), [guess=0.015, description=""]
-        Vdiff(t), [guess=1, description=""]
+        Vdiff(t), [guess=1.0001042, description=""]
         Vreg(t), [guess=1, description=""]
-        Qbranch(t), [guess=-0.0567, description=""]
+        Qbranch(t), [guess=-0.056656801, description=""]
         Pbranch(t), [guess=0.015, description=""]
     end
     @parameters begin
@@ -417,13 +417,13 @@ end
         drive_train = Library.WTDTA1()
         f = Blocks.Constant(k=50.0)
         Vref = Blocks.Constant(k=1.0)
-        Qref = Blocks.Constant(k=-0.0567)
+        Qref = Blocks.Constant(k=-0.056658)
         #Qbranch = Blocks.Constant(k=-0.0567)
         #Pbranch = Blocks.Constant(k=0.015)
         #Vreg = Blocks.Constant(k=1.0)
         #Ibranch = Blocks.Constant(k=1.0)
         #Pe = Blocks.Constant(k=1.0)
-        Pfaref = Blocks.Constant(k=-1.311)
+        Pfaref = Blocks.Constant(k=-1.31199)
         #Qgen = Blocks.Constant(k=0.0)
         #Qgen0 = Blocks.Constant(k=0.0)
         #Vdiff = Blocks.Constant(k=1)
@@ -433,15 +433,15 @@ end
     @variables begin
         V_t(t), [guess=1, description="Raw terminal voltage"]
         δ_v(t), [guess=0.00045, description="voltage angle"]
-        pir(t), [guess=-0.015, description="negative terminal current real part"]
-        pii(t), [guess=-0.0567, description="negative terminal current im part"]
-        pvr(t), [guess=1, description=""]
-        pvi(t), [guess=0.00045, description=""]
+        pir(t), [guess=-0.014974521, description="negative terminal current real part"]
+        pii(t), [guess=-0.056663541, description="negative terminal current im part"]
+        pvr(t), [guess=0.9999999, description=""]
+        pvi(t), [guess=0.00044967497, description=""]
         P_gen(t), [guess=0.015, description=""]
-        Q_gen(t), [guess=-0.0567, description=""]
-        Vdiff(t), [guess=1, description=""]
+        Q_gen(t), [guess=-0.056656801, description=""]
+        Vdiff(t), [guess=1.0001042, description=""]
         Vreg(t), [guess=1, description=""]
-        Qbranch(t), [guess=-0.0567, description=""]
+        Qbranch(t), [guess=-0.056656801, description=""]
         Pbranch(t), [guess=0.015, description=""]
     end
     @parameters begin
@@ -508,8 +508,8 @@ end
         P_m = RealInput(guess=0.015)
         P_e = RealInput(guess=0.015)
         W_0 = RealInput(guess=0)
-        W_tout = RealOutput()
-        W_gout = RealOutput()
+        W_tout = RealOutput(guess=0)
+        W_gout = RealOutput(guess=1)
     end
     @parameters begin
         D_shaft=1, [description="Shaft damping factor"]
