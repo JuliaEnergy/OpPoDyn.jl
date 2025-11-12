@@ -37,7 +37,7 @@ BESS_BUS = let
     compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0))
 end
 
-sol_bess = OpenIPSL_RePSSE(BESS_BUS);
+sol_bess = OpenIPSL_RePSSE_bess(BESS_BUS);
 
 ## perform tests for all variables of interest
 # Plant controls (repc_a)

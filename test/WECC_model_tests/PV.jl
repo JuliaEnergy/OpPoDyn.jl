@@ -38,7 +38,7 @@ PV_BUS = let
     #compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0))
 end
 
-sol_pv = OpenIPSL_RePSSE(PV_BUS; ω_b = 2π*60);
+sol_pv = OpenIPSL_RePSSE_pv(PV_BUS; ω_b = 2π*60);
 
 
 ## perform tests for all variables of interest

@@ -38,7 +38,7 @@ WT4B_BUS = let
     #compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0))
 end
 
-sol_wt = OpenIPSL_RePSSE(WT4B_BUS);
+sol_wt = OpenIPSL_RePSSE_wt(WT4B_BUS);
 
 ## perform tests for all variables of interest
 # Plant controls (repc_a)

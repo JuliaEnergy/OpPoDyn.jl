@@ -78,7 +78,7 @@ include("WECC-models/repc.jl")
 export WECC_large_PV, WECC_BESS, WECC_WT_4B, WTDTA1
 include("WECC-models/plantmodels.jl")
 
-export OpenIPSL_RePSSE, ref_rms_error
+export OpenIPSL_RePSSE_pv, OpenIPSL_RePSSE_wt, OpenIPSL_RePSSE_bess, ref_rms_error
 include("OpenIPSL/test/OpenIPSL_testenvRenewablePSSE.jl")
 
 end

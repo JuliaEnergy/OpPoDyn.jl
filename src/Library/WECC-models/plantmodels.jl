@@ -95,15 +95,15 @@
     @variables begin
         V_t(t), [guess=1, description="Raw terminal voltage"]
         δ_v(t), [guess=0.00045, description="voltage angle"]
-        pir(t), [guess=-0.015, description="negative terminal current real part"]
-        pii(t), [guess=-0.0567, description="negative terminal current im part"]
-        pvr(t), [guess=1, description=""]
-        pvi(t), [guess=0.00045, description=""]
+        pir(t), [guess=-0.014974521, description="negative terminal current real part"]
+        pii(t), [guess=-0.056663541, description="negative terminal current im part"]
+        pvr(t), [guess=0.9999999, description=""]
+        pvi(t), [guess=0.00044967497, description=""]
         P_gen(t), [guess=0.015, description=""]
-        Q_gen(t), [guess=-0.0567, description=""]
-        Vdiff(t), [guess=1, description=""]
+        Q_gen(t), [guess=-0.056656801, description=""]
+        Vdiff(t), [guess=1.0001042, description=""]
         Vreg(t), [guess=1, description=""]
-        Qbranch(t), [guess=-0.0567, description=""]
+        Qbranch(t), [guess=-0.056656801, description=""]
         Pbranch(t), [guess=0.015, description=""]
     end
     @parameters begin
@@ -247,7 +247,7 @@ end
             freqFlag   = false)
         f = Blocks.Constant(k=50.0)
         Vref = Blocks.Constant(k=1.0)
-        Qref = Blocks.Constant(k=-0.0567)
+        Qref = Blocks.Constant(k=-0.056658)
         #Qbranch = Blocks.Constant(k=-0.0567)
         #Pbranch = Blocks.Constant(k=0.015)
         #Vreg = Blocks.Constant(k=1.0)

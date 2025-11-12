@@ -1,4 +1,194 @@
-function OpenIPSL_RePSSE(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=1e0)
+function OpenIPSL_RePSSE_pv(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=1e0)
+    # copy constructor and set vidxs
+    bus1 = VertexModel(_bus1, vidx=1, name=:GEN1)
+
+    S_b = 100e6
+    #ω_b = 2π*50 #50 bei BESS und WT4B; 60 bei PV
+
+    bus3 = let
+        # OpenIPSL infinite bus parameters from SMIB base class
+        H = 0                    # H=0 makes it behave like infinite bus
+        M_b = 100e6
+        X_d = 0.2               # Internal impedance
+        D = 0
+        # V_b = 400e3
+
+        # pf results, just used for pf modek
+        # P_0 = 10.017110e6       # From OpenIPSL SMIB.mo
+        # Q_0 = 8.006544e6        # From OpenIPSL SMIB.mo
+        v_0 = 1.0
+        angle_0 = 0 #-0.0000157           # From OpenIPSL SMIB.mo
+
+        @named gencls_inf = PSSE_GENCLS(; S_b, ω_b, H, M_b, X_d, D)
+        busmodel = MTKBus(gencls_inf; name=:GEN2)
+        compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0), vidx=3)
+    end
+
+    bus2 = let
+        @named pwFault = ConstantYLoad(B=0, G=0, allow_zero_conductance=true)
+        busmodel = MTKBus(pwFault; name=:FAULT)
+        #v_0 = 1.0001
+        #angle_0 = deg2rad(0.014)
+        faultbus = compile_bus(busmodel, vidx=2) #, pf=pfSlack(V=v_0, δ=angle_0)
+
+        enable = ComponentAffect([], [:pwFault₊B, :pwFault₊G]) do u, p, ctx
+            p[:pwFault₊B] = -1 #B=-X/(X^2+R^2)
+            p[:pwFault₊G] = 1 #G=R/(X^2+R^2)
+        end
+        disable = ComponentAffect([], [:pwFault₊B, :pwFault₊G]) do u, p, ctx
+            p[:pwFault₊B] = 0
+            p[:pwFault₊G] = 0
+        end
+        enable_cb = PresetTimeComponentCallback(2, enable)
+        disable_cb = PresetTimeComponentCallback(2.15, disable)
+        set_callback!(faultbus, (enable_cb, disable_cb))
+        faultbus
+    end
+
+
+    # line template
+    pwLine = MTKLine(PiLine(; name=:PwLine))
+    line2 = compile_line(pwLine; name=:pwLine2,
+        src=:GEN1, dst=:FAULT,
+        PwLine₊X=0.0025, PwLine₊R=0.0025)
+
+    @named branchA = PiLine(; name=:pwLine,
+        X=0.025, R=0.025, B_src=0.025, B_dst=0.025)
+    @named branchB = PiLine(; name=:pwLine1,
+        X=0.025, R=0.025, B_src=0.025, B_dst=0.025)
+    linemodel = MTKLine(branchA, branchB)
+    parallelline = compile_line(linemodel, src=:FAULT, dst=:GEN2)
+
+
+    buses = [bus1, bus2, bus3]
+    lines = [parallelline, line2]
+    nw = Network(buses, lines; warn_order=false)
+
+    verbose = true
+    pfnw=nothing
+    pfs0=nothing
+    pfs=nothing
+    pfnw = isnothing(pfnw) ? powerflow_model(nw) : pfnw
+    pfs0 = isnothing(pfs0) ? NWState(pfnw) : pfnw
+    pfs = solve_powerflow(nw; pfnw, pfs0, verbose)
+    println(show_powerflow(pfs))
+    interface_vals = interface_values(pfs)
+    println(interface_vals)
+    # pfnw = powerflow_model(nw)
+    # pfs = solve_powerflow(pfnw)
+
+    if just_init
+        s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol=Inf, nwtol=Inf)
+        return s0
+    end
+
+
+    for sym in sym(bus1)
+        has_guess(bus1, sym) || continue
+        (sym==:PV₊repca₊p_0) && continue
+        (sym==:PV₊repca₊Voltage_dip) && continue
+        (sym==:PV₊repca₊V_droop) && continue
+        (sym==:PV₊repca₊V_in) && continue
+        (sym==:PV₊repca₊V_fltr) && continue
+        (sym==:PV₊repca₊ΔV) && continue
+        (sym==:PV₊repca₊Q_fltr) && continue
+        (sym==:PV₊repca₊ΔQ) && continue
+        (sym==:PV₊repca₊ΔQ_in) && continue
+        (sym==:PV₊repca₊ΔQ_dbd) && continue
+        (sym==:PV₊repca₊Q_e) && continue
+        (sym==:PV₊repca₊Q_x) && continue
+        (sym==:PV₊repca₊Q_res) && continue
+        (sym==:PV₊repca₊Q_I) && continue
+        (sym==:PV₊repca₊Q_lim) && continue
+        (sym==:PV₊repca₊Q_ext) && continue
+        (sym==:PV₊repca₊Δf_deadband) && continue
+        (sym==:PV₊repca₊Δf_corr) && continue
+        (sym==:PV₊repca₊P_branchp) && continue
+        (sym==:PV₊repca₊f_e) && continue
+        (sym==:PV₊repca₊P_e) && continue
+        (sym==:PV₊repca₊P_lim) && continue
+        (sym==:PV₊repca₊P_refa) && continue
+        (sym==:PV₊repca₊P_ref) && continue
+        (sym==:PV₊reecb₊Voltage_dip) && continue
+        (sym==:PV₊reecb₊V_tfilt) && continue
+        (sym==:PV₊reecb₊V_tfiltlim) && continue
+        (sym==:PV₊reecb₊ΔV_t) && continue
+        (sym==:PV₊reecb₊ΔV_tdbd) && continue
+        (sym==:PV₊reecb₊I_qinj) && continue
+        (sym==:PV₊reecb₊P_PF) && continue
+        (sym==:PV₊reecb₊Q_con) && continue
+        (sym==:PV₊reecb₊Q_lim) && continue
+        (sym==:PV₊reecb₊ΔQ) && continue
+        (sym==:PV₊reecb₊s_Q) && continue
+        (sym==:PV₊reecb₊s_Qint) && continue
+        (sym==:PV₊reecb₊V_in) && continue
+        (sym==:PV₊reecb₊V_lima) && continue
+        (sym==:PV₊reecb₊V_con) && continue
+        (sym==:PV₊reecb₊V_limb) && continue
+        (sym==:PV₊reecb₊ΔV) && continue
+        (sym==:PV₊reecb₊s_V) && continue
+        (sym==:PV₊reecb₊s_Vint) && continue
+        (sym==:PV₊reecb₊I_in) && continue
+        (sym==:PV₊reecb₊I_lim) && continue
+        (sym==:PV₊reecb₊I_t) && continue
+        (sym==:PV₊reecb₊ΔI) && continue
+        (sym==:PV₊reecb₊I_qin) && continue
+        (sym==:PV₊reecb₊I_qcon) && continue
+        (sym==:PV₊reecb₊I_sum) && continue
+        (sym==:PV₊reecb₊I_qcmd) && continue
+        (sym==:PV₊reecb₊P_refout) && continue
+        (sym==:PV₊reecb₊P_lim) && continue
+        (sym==:PV₊reecb₊ΔP) && continue
+        (sym==:PV₊reecb₊ΔP_lim) && continue
+        (sym==:PV₊reecb₊I_pref) && continue
+        (sym==:PV₊reecb₊I_pcmd) && continue
+        (sym==:PV₊reecb₊I_qmin) && continue
+        (sym==:PV₊reecb₊I_qmax) && continue
+        (sym==:PV₊reecb₊I_pmax) && continue
+        (sym==:PV₊reecb₊I_pmin) && continue
+        (sym==:PV₊regca₊I_qrsum) && continue
+        (sym==:PV₊regca₊I_qrlim) && continue
+        (sym==:PV₊regca₊I_qr) && continue
+        (sym==:PV₊regca₊ΔV) && continue
+        (sym==:PV₊regca₊I_hv) && continue
+        (sym==:PV₊regca₊I_hvlim) && continue
+        (sym==:PV₊regca₊I_q) && continue
+        (sym==:PV₊regca₊ΔI_q) && continue
+        (sym==:PV₊regca₊ΔI_pr) && continue
+        (sym==:PV₊regca₊I_pr) && continue
+        (sym==:PV₊regca₊ΔI_prlim) && continue
+        (sym==:PV₊regca₊I_pg) && continue
+        (sym==:PV₊regca₊y) && continue
+        (sym==:PV₊regca₊I_p) && continue
+        (sym==:PV₊regca₊V) && continue
+        (sym==:PV₊regca₊I_lvpl) && continue
+        (sym==:PV₊V_t) && continue
+        (sym==:PV₊δ_v) && continue
+        (sym==:PV₊pir) && continue
+        (sym==:PV₊pii) && continue
+        (sym==:PV₊pvr) && continue
+        (sym==:PV₊pvi) && continue
+        (sym==:PV₊P_gen) && continue
+        (sym==:PV₊Q_gen) && continue
+        (sym==:PV₊Vdiff) && continue
+        (sym==:PV₊Vreg) && continue
+        (sym==:PV₊Qbranch) && continue
+        (sym==:PV₊Pbranch) && continue
+        set_default!(bus1, sym, get_guess(bus1, sym))
+    end
+
+    s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol, nwtol)
+    #dump_initial_state(bus1)
+    init_residual(bus1; verbose=true)
+
+    prob = ODEProblem(nw, uflat(s0), (0,5), copy(pflat(s0)), callback=get_callbacks(nw))
+    sol = solve(prob, Rodas5P())
+    @assert SciMLBase.successful_retcode(sol) "Simulation was not successful: retcode=$(sol.retcode)"
+    sol
+end
+
+
+function OpenIPSL_RePSSE_bess(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=1e0)
     # copy constructor and set vidxs
     bus1 = VertexModel(_bus1, vidx=1, name=:GEN1)
 
@@ -84,95 +274,6 @@ function OpenIPSL_RePSSE(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=1e0
 
     for sym in sym(bus1)
         has_guess(bus1, sym) || continue
-        (sym==:PV₊repca₊p_0) && continue
-        (sym==:PV₊repca₊Voltage_dip) && continue
-        (sym==:PV₊repca₊V_droop) && continue
-        (sym==:PV₊repca₊V_in) && continue
-        (sym==:PV₊repca₊V_fltr) && continue
-        (sym==:PV₊repca₊ΔV) && continue
-        (sym==:PV₊repca₊Q_fltr) && continue
-        (sym==:PV₊repca₊ΔQ) && continue
-        (sym==:PV₊repca₊ΔQ_in) && continue
-        (sym==:PV₊repca₊ΔQ_dbd) && continue
-        (sym==:PV₊repca₊Q_e) && continue
-        (sym==:PV₊repca₊Q_x) && continue
-        (sym==:PV₊repca₊Q_res) && continue
-        (sym==:PV₊repca₊Q_I) && continue
-        (sym==:PV₊repca₊Q_lim) && continue
-        (sym==:PV₊repca₊Q_ext) && continue
-        (sym==:PV₊repca₊Δf_deadband) && continue
-        (sym==:PV₊repca₊Δf_corr) && continue
-        (sym==:PV₊repca₊P_branchp) && continue
-        (sym==:PV₊repca₊f_e) && continue
-        (sym==:PV₊repca₊P_e) && continue
-        (sym==:PV₊repca₊P_lim) && continue
-        (sym==:PV₊repca₊P_refa) && continue
-        (sym==:PV₊repca₊P_ref) && continue
-        (sym==:PV₊reecb₊Voltage_dip) && continue
-        (sym==:PV₊reecb₊V_tfilt) && continue
-        (sym==:PV₊reecb₊V_tfiltlim) && continue
-        (sym==:PV₊reecb₊ΔV_t) && continue
-        (sym==:PV₊reecb₊ΔV_tdbd) && continue
-        (sym==:PV₊reecb₊I_qinj) && continue
-        (sym==:PV₊reecb₊P_PF) && continue
-        (sym==:PV₊reecb₊Q_con) && continue
-        (sym==:PV₊reecb₊Q_lim) && continue
-        (sym==:PV₊reecb₊ΔQ) && continue
-        (sym==:PV₊reecb₊s_Q) && continue
-        (sym==:PV₊reecb₊s_Qint) && continue
-        (sym==:PV₊reecb₊V_in) && continue
-        (sym==:PV₊reecb₊V_lima) && continue
-        (sym==:PV₊reecb₊V_con) && continue
-        (sym==:PV₊reecb₊V_limb) && continue
-        (sym==:PV₊reecb₊ΔV) && continue
-        (sym==:PV₊reecb₊s_V) && continue
-        (sym==:PV₊reecb₊s_Vint) && continue
-        (sym==:PV₊reecb₊I_in) && continue
-        (sym==:PV₊reecb₊I_lim) && continue
-        (sym==:PV₊reecb₊I_t) && continue
-        (sym==:PV₊reecb₊ΔI) && continue
-        (sym==:PV₊reecb₊I_qin) && continue
-        (sym==:PV₊reecb₊I_qcon) && continue
-        (sym==:PV₊reecb₊I_sum) && continue
-        (sym==:PV₊reecb₊I_qcmd) && continue
-        (sym==:PV₊reecb₊P_refout) && continue
-        (sym==:PV₊reecb₊P_lim) && continue
-        (sym==:PV₊reecb₊ΔP) && continue
-        (sym==:PV₊reecb₊ΔP_lim) && continue
-        (sym==:PV₊reecb₊I_pref) && continue
-        (sym==:PV₊reecb₊I_pcmd) && continue
-        (sym==:PV₊reecb₊I_qmin) && continue
-        (sym==:PV₊reecb₊I_qmax) && continue
-        (sym==:PV₊reecb₊I_pmax) && continue
-        (sym==:PV₊reecb₊I_pmin) && continue
-        (sym==:PV₊regca₊I_qrsum) && continue
-        (sym==:PV₊regca₊I_qrlim) && continue
-        (sym==:PV₊regca₊I_qr) && continue
-        (sym==:PV₊regca₊ΔV) && continue
-        (sym==:PV₊regca₊I_hv) && continue
-        (sym==:PV₊regca₊I_hvlim) && continue
-        (sym==:PV₊regca₊I_q) && continue
-        (sym==:PV₊regca₊ΔI_q) && continue
-        (sym==:PV₊regca₊ΔI_pr) && continue
-        (sym==:PV₊regca₊I_pr) && continue
-        (sym==:PV₊regca₊ΔI_prlim) && continue
-        (sym==:PV₊regca₊I_pg) && continue
-        (sym==:PV₊regca₊y) && continue
-        (sym==:PV₊regca₊I_p) && continue
-        #(sym==:PV₊regca₊V) && continue
-        (sym==:PV₊regca₊I_lvpl) && continue
-        (sym==:PV₊V_t) && continue
-        #(sym==:PV₊δ_v) && continue
-        (sym==:PV₊pir) && continue
-        (sym==:PV₊pii) && continue
-        (sym==:PV₊pvr) && continue
-        (sym==:PV₊pvi) && continue
-        (sym==:PV₊P_gen) && continue
-        (sym==:PV₊Q_gen) && continue
-        (sym==:PV₊Vdiff) && continue
-        (sym==:PV₊Vreg) && continue
-        (sym==:PV₊Qbranch) && continue
-        (sym==:PV₊Pbranch) && continue
         #=(sym==:BESS₊repca₊p_0) && continue
         (sym==:BESS₊repca₊Voltage_dip) && continue
         (sym==:BESS₊repca₊V_droop) && continue
@@ -273,6 +374,105 @@ function OpenIPSL_RePSSE(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=1e0
         (sym==:BESS₊Vreg) && continue
         (sym==:BESS₊Qbranch) && continue
         (sym==:BESS₊Pbranch) && continue =#
+        set_default!(bus1, sym, get_guess(bus1, sym))
+    end
+
+    s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol, nwtol)
+    #dump_initial_state(bus1)
+    init_residual(bus1; verbose=true)
+
+    prob = ODEProblem(nw, uflat(s0), (0,5), copy(pflat(s0)), callback=get_callbacks(nw))
+    sol = solve(prob, Rodas5P())
+    @assert SciMLBase.successful_retcode(sol) "Simulation was not successful: retcode=$(sol.retcode)"
+    sol
+end
+
+function OpenIPSL_RePSSE_wt(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=1e0)
+    # copy constructor and set vidxs
+    bus1 = VertexModel(_bus1, vidx=1, name=:GEN1)
+
+    S_b = 100e6
+    #ω_b = 2π*50 #50 bei BESS und WT4B; 60 bei PV
+
+    bus3 = let
+        # OpenIPSL infinite bus parameters from SMIB base class
+        H = 0                    # H=0 makes it behave like infinite bus
+        M_b = 100e6
+        X_d = 0.2               # Internal impedance
+        D = 0
+        # V_b = 400e3
+
+        # pf results, just used for pf modek
+        # P_0 = 10.017110e6       # From OpenIPSL SMIB.mo
+        # Q_0 = 8.006544e6        # From OpenIPSL SMIB.mo
+        v_0 = 1.0
+        angle_0 = 0 #-0.0000157           # From OpenIPSL SMIB.mo
+
+        @named gencls_inf = PSSE_GENCLS(; S_b, ω_b, H, M_b, X_d, D)
+        busmodel = MTKBus(gencls_inf; name=:GEN2)
+        compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0), vidx=3)
+    end
+
+    bus2 = let
+        @named pwFault = ConstantYLoad(B=0, G=0, allow_zero_conductance=true)
+        busmodel = MTKBus(pwFault; name=:FAULT)
+        #v_0 = 1.0001
+        #angle_0 = deg2rad(0.014)
+        faultbus = compile_bus(busmodel, vidx=2) #, pf=pfSlack(V=v_0, δ=angle_0)
+
+        enable = ComponentAffect([], [:pwFault₊B, :pwFault₊G]) do u, p, ctx
+            p[:pwFault₊B] = -1 #B=-X/(X^2+R^2)
+            p[:pwFault₊G] = 1 #G=R/(X^2+R^2)
+        end
+        disable = ComponentAffect([], [:pwFault₊B, :pwFault₊G]) do u, p, ctx
+            p[:pwFault₊B] = 0
+            p[:pwFault₊G] = 0
+        end
+        enable_cb = PresetTimeComponentCallback(2, enable)
+        disable_cb = PresetTimeComponentCallback(2.15, disable)
+        set_callback!(faultbus, (enable_cb, disable_cb))
+        faultbus
+    end
+
+
+    # line template
+    pwLine = MTKLine(PiLine(; name=:PwLine))
+    line2 = compile_line(pwLine; name=:pwLine2,
+        src=:GEN1, dst=:FAULT,
+        PwLine₊X=0.0025, PwLine₊R=0.0025)
+
+    @named branchA = PiLine(; name=:pwLine,
+        X=0.025, R=0.025, B_src=0.025, B_dst=0.025)
+    @named branchB = PiLine(; name=:pwLine1,
+        X=0.025, R=0.025, B_src=0.025, B_dst=0.025)
+    linemodel = MTKLine(branchA, branchB)
+    parallelline = compile_line(linemodel, src=:FAULT, dst=:GEN2)
+
+
+    buses = [bus1, bus2, bus3]
+    lines = [parallelline, line2]
+    nw = Network(buses, lines; warn_order=false)
+
+    verbose = true
+    pfnw=nothing
+    pfs0=nothing
+    pfs=nothing
+    pfnw = isnothing(pfnw) ? powerflow_model(nw) : pfnw
+    pfs0 = isnothing(pfs0) ? NWState(pfnw) : pfnw
+    pfs = solve_powerflow(nw; pfnw, pfs0, verbose)
+    println(show_powerflow(pfs))
+    interface_vals = interface_values(pfs)
+    println(interface_vals)
+    # pfnw = powerflow_model(nw)
+    # pfs = solve_powerflow(pfnw)
+
+    if just_init
+        s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol=Inf, nwtol=Inf)
+        return s0
+    end
+
+    for sym in sym(bus1)
+        has_guess(bus1, sym) || continue
         #=(sym==:WT₊repca₊p_0) && continue
         (sym==:WT₊repca₊Voltage_dip) && continue
         (sym==:WT₊repca₊V_droop) && continue
@@ -387,6 +587,7 @@ function OpenIPSL_RePSSE(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=1e0
     @assert SciMLBase.successful_retcode(sol) "Simulation was not successful: retcode=$(sol.retcode)"
     sol
 end
+
 
 # Default GENROE machine for SMIB system for testing controllers
 function default_controller_smib_genroe()

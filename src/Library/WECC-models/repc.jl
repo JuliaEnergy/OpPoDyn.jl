@@ -6,15 +6,15 @@
     end
     @components begin
         V_reg = RealInput(guess=1) #from bus - was ist Unterschied zu Vt = raw terminal voltage ? initialized based on initial power flow solution for V_reg and Q_gen
-        Q_branch = RealInput(guess=-0.0567) #reactive power through a defined branch /from aggregated turbine model or collection point of wind plant
+        Q_branch = RealInput(guess=-0.056656801) #reactive power through a defined branch /from aggregated turbine model or collection point of wind plant
         P_branch = RealInput(guess=0.015) #from aggregated turbine model or collection point of wind plant
         freq = RealInput(guess=60) #from aggregated turbine model or collection point of wind plant
         V_ref = RealInput(guess=1)
-        Q_ref = RealInput(guess=-0.0567)
-        V_diff = RealInput(guess=1)
+        Q_ref = RealInput(guess=-0.056658)
+        V_diff = RealInput(guess=1.0001042)
         # outputs
-        Pref_out = RealOutput() # active power [pu]
-        Qext_out = RealOutput() # reactive power [pu]
+        Pref_out = RealOutput(guess=0.015) # active power [pu]
+        Qext_out = RealOutput(guess=-0.056656797) # reactive power [pu]
     end
     @parameters begin
         K_p, [description="Proportional gain in pu/pu"]
@@ -50,26 +50,26 @@
     end
     @variables begin
         Voltage_dip(t), [guess=0, description="freeze states if Voltagedip=1"]
-        V_droop(t), [guess=0.998, description="Input voltage for VcombFlag=0"]
-        V_in(t), [guess=1, description="resulting voltage after VcombFlag"]
-        V_fltr(t), [guess=0.99887, description="Voltage after filter"]
-        ΔV(t), [guess=0, description="Voltage difference between filter and reference"]
-        Q_fltr(t), [guess=-0.056657, description="Reactive power after filter"]
-        ΔQ(t), [guess=0, description="Reactive power differemce between filter and reference"]
-        ΔQ_in(t), [guess=0, description="Input depending on RefFlag=1 (ΔV) or RefFlag=0 (ΔQ)"]
-        ΔQ_dbd(t), [guess=0, description="Reactive power differece after deadband"]
-        Q_e(t), [guess=0, description="Reactive power after error limits"]
-        Q_x(t), [guess=-0.0567, description="Reactive power before limits"]
-        Q_res(t), [guess=0, description=""]
-        Q_I(t), [guess=-0.056635, description=""]
-        Q_lim(t), [guess=-0.0567, description="Reactive power after reactive power limits"]
-        Q_ext(t), [guess=-0.056657, description="Reactive power output"]
+        V_droop(t), [guess=0.99886686, description="Input voltage for VcombFlag=0"]
+        V_in(t), [guess=0.99886686, description="resulting voltage after VcombFlag"]
+        V_fltr(t), [guess=0.99886686, description="Voltage after filter"]
+        ΔV(t), [guess=0.001133136, description="Voltage difference between filter and reference"]
+        Q_fltr(t), [guess=-0.056656813, description="Reactive power after filter"]
+        ΔQ(t), [guess=-1.1867191e-6, description="Reactive power differemce between filter and reference"]
+        ΔQ_in(t), [guess=-1.1867191e-6, description="Input depending on RefFlag=1 (ΔV) or RefFlag=0 (ΔQ)"]
+        ΔQ_dbd(t), [guess=-1.1867191e-6, description="Reactive power differece after deadband"]
+        Q_e(t), [guess=-1.1867191e-6, description="Reactive power after error limits"]
+        Q_x(t), [guess=-0.056656797, description="Reactive power before limits"]
+        Q_res(t), [guess=-1.1867191e-6, description=""]
+        Q_I(t), [guess=-0.056635436, description=""]
+        Q_lim(t), [guess=-0.056656797, description="Reactive power after reactive power limits"]
+        Q_ext(t), [guess=-0.056656797, description="Reactive power output"]
         Δf_deadband(t), [guess=0, description="frequency difference after deadband"]
         Δf_corr(t), [guess=0, description="Frequency difference after droop"]
         P_branchp(t), [guess=0.015, description="Active power after T_p"]
-        f_e(t), [guess=0, description="frequency after frequency limits"]
+        f_e(t), [guess=1.4455451e-14, description="frequency after frequency limits"]
         P_e(t), [guess=0.015,description="Active power before power limits"]
-        P_lim(t), [guess=0015, description="Active power after power limits"]
+        P_lim(t), [guess=0.015, description="Active power after power limits"]
         P_refa(t), [guess=0.015, description="Active Power reference if Freq_flag=1"]
         P_ref(t), [guess=0.015, description="Active power output"]
     end

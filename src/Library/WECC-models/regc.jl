@@ -5,11 +5,11 @@
     @components begin
         # inputs
         Vt_in = RealInput(guess=1)
-        Iqcmd_in = RealInput(guess=-0.0567)
+        Iqcmd_in = RealInput(guess=-0.056656797)
         Ipcmd_in = RealInput(guess=0.015)
         # outputs
-        Iqout = RealOutput()
-        Ipout = RealOutput()
+        Iqout = RealOutput(guess=0.056656797)
+        Ipout = RealOutput(guess=0.015000018)
     end
     @parameters begin
         I_qrmax, [description="Maximum rate-of-change of reactive current (pu/s)"]
@@ -27,17 +27,17 @@
         I_0lim, [description=""]
     end
     @variables begin
-        I_qrsum(t), [guess=0, description=""]
-        I_qrlim(t), [guess=0, description=""]
-        I_qr(t), [guess=0.056657, description=""]
+        I_qrsum(t), [guess=1.9317881e-14, description=""]
+        I_qrlim(t), [guess=1.9317881e-14, description=""]
+        I_qr(t), [guess=0.056656797, description=""]
         ΔV(t), [guess=-0.2, description=""]
         I_hv(t), [guess=-0.14, description=""]
         I_hvlim(t), [guess=0, description=""]
-        I_q(t), [guess=0.0567, description="I_q after inverter current regulator with rate limits"]
-        ΔI_q(t), [guess=0.0567, description=""]
-        ΔI_pr(t), [guess=0, description=""]
+        I_q(t), [guess=0.056656797, description="I_q after inverter current regulator with rate limits"]
+        ΔI_q(t), [guess=0.056656797, description=""]
+        ΔI_pr(t), [guess=-7.359854e-12, description=""]
         I_pr(t), [guess=0.015, description=""]
-        ΔI_prlim(t), [guess=0, description=""]
+        ΔI_prlim(t), [guess=-7.359854e-12, description=""]
         I_pg(t), [guess=0.015, description=""]
         y(t), [guess=1, description=""]
         I_p(t), [guess=0.015, description="I_p after inverter current regulator with limits"]
