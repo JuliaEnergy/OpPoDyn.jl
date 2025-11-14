@@ -72,7 +72,7 @@ if isdefined(Main, :EXPORT_FIGURES) && Main.EXPORT_FIGURES
         ts = refine_timeseries(sol_pv.t)
 
         # Plot 1: pir & pii
-        ax1 = Axis(fig[1,1]; xlabel="Time [s]", ylabel="[pu]", title="Generator States: pir & pii")
+        ax1 = Axis(fig[1,1]; xlabel="Time [s]", ylabel="[pu]", title="PV Generator States: pir & pii")
         lines!(ax1, ref_pv.time, ref_pv[!, Symbol("pV.RenewableGenerator.p.ir")]; label="OpenIPSL pir", color=:blue, linewidth=2, alpha=0.7)
         lines!(ax1, ts, sol_pv(ts, idxs=VIndex(:GEN1, :PV₊pir)).u; label="PowerDynamics pir", color=:blue, linestyle=:dash, linewidth=2)
         lines!(ax1, ref_pv.time, ref_pv[!, Symbol("pV.RenewableGenerator.p.ii")]; label="OpenIPSL pii", color=:red, linewidth=2, alpha=0.7)

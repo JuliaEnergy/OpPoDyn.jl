@@ -34,7 +34,73 @@ BESS_BUS = let
     @named BESS = OpPoDyn.Library.WECC_BESS()
     busmodel = MTKBus(BESS; name=:GEN1)
     #compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
-    compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0))
+    bm = compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0))
+
+    guessformulas = @guessformula begin
+        # base equations
+        P0 = - 1 * (:busbar₊u_r*:busbar₊i_r + :busbar₊u_i*:busbar₊i_i)
+        Q0 = - 1 * (:busbar₊u_i*:busbar₊i_r - :busbar₊u_r*:busbar₊i_i)
+        V0 = sqrt(:busbar₊u_r^2+:busbar₊u_i^2)
+        Ip0 = - :busbar₊i_r
+        Iq0 = - :busbar₊i_i
+
+        #OpenIPSL inits
+        :BESS₊δ_v = 0.00045 #atan(:busbar₊u_i, :busbar₊u_r)=0.00044969 doesn't work
+        :BESS₊repca₊P_refa = 0.015 #P0
+        :BESS₊repca₊P_branchp = 0.015 #P0
+        :BESS₊repca₊P_e = 0.015 #P0
+        :BESS₊repca₊Q_I = -0.056635436 #Q0
+        :BESS₊repca₊Q_fltr = -0.056656813 #Q0
+        :BESS₊repca₊Q_ext = -0.056656797#Q0
+        :BESS₊repca₊V_fltr = 0.99886686#:BESS₊Vref₊k
+        :BESS₊reecc₊P_stor = 0.015#P0
+        :BESS₊reecc₊P_refout = 0.015#Ip0 * V0
+        :BESS₊reecc₊I_qin = -0.056656797 #-Iq0 - (-V0 +  :BESS₊reecc₊V_ref0) * :BESS₊reecc₊K_qv
+        :BESS₊reecc₊s_Vint = -0.0567#-Iq0 - (-V0 +  :BESS₊reecc₊V_ref0) * :BESS₊reecc₊K_qv
+        :BESS₊reecc₊s_Qint = 1 #V0
+        :BESS₊reecc₊P_PF = 0.015 #P0
+        :BESS₊reecc₊V_tfilt = 1 #V0
+        :BESS₊regca₊V = 1 #V0
+        :BESS₊regca₊I_pg = 0.015 #Ip0
+        :BESS₊regca₊I_qr = 0.056656797 #Iq0
+        :BESS₊regca₊I_hv = -0.14 #:BESS₊regca₊K_hv * (V0 - :BESS₊regca₊V_0lim)
+        #=
+        #calculated inits in forward direction
+        δ = atan(:busbar₊u_i, :busbar₊u_r)
+        :BESS₊δ_v = δ
+        :BESS₊repca₊P_branchp = P0
+        Δf = :BESS₊repca₊freq_ref - :BESS₊f₊k
+        Δf_dbd = if Δf < :BESS₊repca₊fdbd1
+            Δf - :BESS₊repca₊fdbd1
+        elseif Δf > :BESS₊repca₊fdbd2
+            Δf - :BESS₊repca₊fdbd2
+        else
+            0
+        end
+        Δf_corr = max(Δf_dbd * :BESS₊repca₊D_up, 0) + min(Δf_dbd *:BESS₊repca₊D_dn,0)
+        ΔP = :BESS₊repca₊P_plantref - P0 + Δf_corr
+        ΔP_lim = clamp(ΔP, :BESS₊repca₊femin, :BESS₊repca₊femax)
+        P_e = :BESS₊repca₊K_pg * ΔP_lim + P0
+        :BESS₊repca₊P_e = P_e
+        :BESS₊repca₊P_refa = P0
+        :BESS₊repca₊V_fltr = :BESS₊Vref₊k
+        :BESS₊repca₊Q_fltr = Q0
+        :BESS₊repca₊Q_I = Q0
+        :BESS₊repca₊Q_ext = Q0
+        :BESS₊reecc₊P_stor = P0
+        :BESS₊reecc₊P_refout = Ip0 * V0
+        :BESS₊reecc₊I_qin = -Iq0 - (-V0 +  :BESS₊reecc₊V_ref0) * :BESS₊reecc₊K_qv
+        :BESS₊reecc₊s_Vint = -Iq0 - (-V0 +  :BESS₊reecc₊V_ref0) * :BESS₊reecc₊K_qv
+        :BESS₊reecc₊s_Qint = V0
+        :BESS₊reecc₊P_PF = P0
+        :BESS₊reecc₊V_tfilt = V0
+        :BESS₊regca₊V = V0
+        :BESS₊regca₊I_pg = Ip0
+        :BESS₊regca₊I_qr = Iq0
+        :BESS₊regca₊I_hv = :BESS₊regca₊K_hv * (V0 - :BESS₊regca₊V_0lim) =#
+    end
+    add_guessformula!(bm, guessformulas)
+    bm
 end
 
 sol_bess = OpenIPSL_RePSSE_bess(BESS_BUS);
@@ -71,7 +137,7 @@ if isdefined(Main, :EXPORT_FIGURES) && Main.EXPORT_FIGURES
         ts = refine_timeseries(sol_bess.t)
 
         # Plot 1: pir & pii
-        ax1 = Axis(fig[1,1]; xlabel="Time [s]", ylabel="[pu]", title="Generator States: pir & pii")
+        ax1 = Axis(fig[1,1]; xlabel="Time [s]", ylabel="[pu]", title="BESS Generator States: pir & pii")
         lines!(ax1, ref_bess.time, ref_bess[!, Symbol("bESS.RenewableGenerator.p.ir")]; label="OpenIPSL pir", color=:blue, linewidth=2, alpha=0.7)
         lines!(ax1, ts, sol_bess(ts, idxs=VIndex(:GEN1, :BESS₊pir)).u; label="PowerDynamics pir", color=:blue, linestyle=:dash, linewidth=2)
         lines!(ax1, ref_bess.time, ref_bess[!, Symbol("bESS.RenewableGenerator.p.ii")]; label="OpenIPSL pii", color=:red, linewidth=2, alpha=0.7)

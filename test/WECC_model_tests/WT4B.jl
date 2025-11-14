@@ -76,7 +76,7 @@ if isdefined(Main, :EXPORT_FIGURES) && Main.EXPORT_FIGURES
         ts = refine_timeseries(sol_wt.t)
 
         # Plot 1: pir & pii
-        ax1 = Axis(fig[1,1]; xlabel="Time [s]", ylabel="[pu]", title="Generator States: pir & pii")
+        ax1 = Axis(fig[1,1]; xlabel="Time [s]", ylabel="[pu]", title="WT Generator States: pir & pii")
         lines!(ax1, ref_wt.time, ref_wt[!, Symbol("wind.RenewableGenerator.p.ir")]; label="OpenIPSL pir", color=:blue, linewidth=2, alpha=0.7)
         lines!(ax1, ts, sol_wt(ts, idxs=VIndex(:GEN1, :WT₊pir)).u; label="PowerDynamics pir", color=:blue, linestyle=:dash, linewidth=2)
         lines!(ax1, ref_wt.time, ref_wt[!, Symbol("wind.RenewableGenerator.p.ii")]; label="OpenIPSL pii", color=:red, linewidth=2, alpha=0.7)
