@@ -24,6 +24,7 @@ using LinearAlgebra: norm
    end
 end
 
+
 ####
 #### Machine Models
 ####
@@ -66,20 +67,23 @@ include("Transformers/DynawoFixedRatioTransformer.jl")
 export limiter, lowlimit, uplimit, deadband, LVPLogic, VDL
 include("WECC-models/functions.jl")
 
-export regc_a
+export regc_a, regc_a_pf
 include("WECC-models/regc.jl")
 
-export reec_a, reec_b, reec_c
+export reec_a, reec_b, reec_c, reec_c_pf
 include("WECC-models/reec.jl")
 
-export repc_a
+export repc_a, repc_a_pf
 include("WECC-models/repc.jl")
 
-export WECC_large_PV, WECC_BESS, WECC_WT_4B, WTDTA1
+export WECC_large_PV, WECC_BESS, WECC_WT_4B, WTDTA1, WECC_large_PV_pf
 include("WECC-models/plantmodels.jl")
 
 export OpenIPSL_RePSSE_pv, OpenIPSL_RePSSE_wt, OpenIPSL_RePSSE_bess, ref_rms_error
 include("OpenIPSL/test/OpenIPSL_testenvRenewablePSSE.jl")
+
+export PowerFactory_WECC_pv
+include("OpenIPSL/test/PowerFactory_test_WECC.jl")
 
 end
 

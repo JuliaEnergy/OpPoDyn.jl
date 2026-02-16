@@ -471,7 +471,7 @@ function OpenIPSL_RePSSE_wt(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=
         s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol=Inf, nwtol=Inf)
         return s0
     end
-
+   #=
     for sym in sym(bus1)
         has_guess(bus1, sym) || continue
         #=(sym==:WT₊repca₊p_0) && continue
@@ -578,6 +578,7 @@ function OpenIPSL_RePSSE_wt(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=
         (sym==:WT₊drive_train₊Δw) && continue =#
         set_default!(bus1, sym, get_guess(bus1, sym))
     end
+    =#
 
     s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol, nwtol)
     #dump_initial_state(bus1)
@@ -648,3 +649,5 @@ function ref_rms_error(sol, csv, idx, col)
 
     norm(_ref .- _sim) / sqrt(length(_ref))
 end
+
+

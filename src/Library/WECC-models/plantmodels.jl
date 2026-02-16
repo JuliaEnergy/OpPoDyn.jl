@@ -554,3 +554,202 @@ end
         W_tout.u ~ w_t
     end
 end
+
+
+@mtkmodel WECC_large_PV_pf begin
+    @structural_parameters begin
+        f_input = false
+        Vref_input = false
+        Qref_input = false
+        Qinit_input = false
+        Pinit_input = false
+    end
+    @components begin
+        terminal=Terminal()
+        regca = regc_a_pf(
+            I_qrmax = 999,
+            I_qrmin = -999,
+            T_gp    = 0.02,
+            T_gq    = 0.02,
+            T_fltr  = 0.02,
+            Brkpt   = 0.9,
+            Zerox   = 0.4,
+            L_vpl1  = 1.22,
+            rrpwr   = 10,
+            V_0lim = 1.2,
+            K_hv = 0.7,
+            lvpnt0 = 0.4,
+            lvpnt1 = 0.8,
+            I_0lim = -1.3,
+            L_vplsw = false)
+        reecb = Library.reec_b_pf(
+            V_dip   = 0,
+            V_up    = 999,
+            T_rv    = 0.02,
+            V_ref0  = 0,
+            dbd1    = -0.02,
+            dbd2    = 0.02,
+            K_qv    = 0.0,
+            I_qh1   = 1.05,
+            I_ql1   = -1.05,
+            T_p     = 0.02,
+            Q_min   = -0.4,
+            Q_max   = 0.4,
+            V_min   = 0.9,
+            V_max   = 1.1,
+            K_qp    = 1,
+            K_qi    = 10,
+            K_vp    = 0,
+            K_vi    = 40,
+            I_max   = 1.25,
+            T_iq    = 0.02,
+            T_pord  = 0.02,
+            P_min   = 0.0,
+            P_max   = 1.0,
+            dP_min  = -999,
+            dP_max  = 999,
+            PqFlag  = false,
+            QFlag   = false,
+            PfFlag  = false,
+            Vflag   = true)
+        repca = Library.repc_a_pf(
+            K_p        = 1,
+            K_i        = 10,
+            T_fltr1     = 0.02,
+            T_fltr2     = 0.02,
+            T_ft       = 0,
+            T_fv       = 0.1,
+            V_frz      = 0,
+            R_c        = 0,
+            X_c        = 0,
+            K_c        = 0.02,
+            e_max      = 0.1,
+            e_min      = -0.1,
+            dbd_up     = 0.0,
+            dbd_dn     = 0.0,
+            Q_max      = 0.4,
+            Q_min      = -0.4,
+            K_pg       = 1,
+            K_ig       = 10,
+            T_p        = 0.2,
+            fdbd1      = 0,
+            fdbd2      = 0,
+            femax      = 999,
+            femin      = -999,
+            P_max      = 1,
+            P_min      = 0,
+            T_lag      = 0.1,
+            D_dn       = 20.0,
+            D_up       = 10.0,
+            freq_ref   = 1, #in p.u.
+            RefFlag    = false,
+            VcombFlag  = true,
+            freqFlag   = false)
+        if f_input
+            f_in = RealInput()
+        end
+        if Vref_input
+            Vref_in = RealInput()
+        end
+        if Qref_input
+            Qref_in = RealInput()
+        end
+        if Qinit_input
+            Qinit_in = RealInput()
+        end
+        if Pinit_input
+            Pinit_in = RealInput()
+        end
+    end
+    @variables begin
+        V_t(t), [guess=1, description="Raw terminal voltage"]
+        δ_v(t), [guess=0.00045, description="voltage angle"]
+        pir(t), [guess=-0.014974521, description="negative terminal current real part"]
+        pii(t), [guess=-0.056663541, description="negative terminal current im part"]
+        pvr(t), [guess=0.9999999, description=""]
+        pvi(t), [guess=0.00044967497, description=""]
+        P_gen(t), [guess=0.015, description=""]
+        Q_gen(t), [guess=-0.056656801, description=""]
+        Vdiff(t), [guess=1.0001042, description=""]
+        Vreg_re(t), [guess=1, description=""]
+        Vreg_im(t), [guess=1, description=""]
+        Qbranch(t), [guess=-0.056656801, description=""]
+        Pbranch(t), [guess=0.015, description=""]
+        Ibranch(t), [guess=0.015, description=""]
+        P_plantref(t), [guess=1, description=""] #didn't find value in PowerFactory
+        f(t), [guess=1, description=""]
+        V_ref(t), [guess=1, description=""]
+        Q_ref(t), [guess=-0.056658, description=""]
+        Qinit(t), [guess=0, description=""]
+        Pinit(t), [guess=1, description=""]
+    end
+    @parameters begin
+        S_b=100e6, [description="System Base Power"]
+        #M_b=S_b, [description="Machine Base Power"]
+        if !f_input
+            f_set=1, [guess=1, description="frequency setpoint [pu]"]
+        end
+        if !Vref_input
+            Vref_set=1, [guess=1, description="[pu]"]
+        end
+        if !Qref_input
+            Qref_set=-0.056658, [guess=-0.056658, description="[pu]"]
+        end
+        if !Qinit_input
+            Qinit_set=0, [guess=0, description="[pu]"]
+        end
+        if !Pinit_input
+            Pinit_set=1, [guess=1, description="[pu]"]
+        end
+    end
+    @equations begin
+        f ~ f_input ? f_in.u : f_set
+        V_ref ~ Vref_input ? Vref_in.u : Vref_set
+        Q_ref ~ Qref_input ? Qref_in.u : Qref_set
+        Qinit ~ Qinit_input ? Qinit_in.u : Qinit_set
+        Pinit ~ Pinit_input ? Pinit_in.u : Pinit_set
+        #calculate inputs
+        V_t ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
+        δ_v ~ atan(terminal.u_i, terminal.u_r)
+        #regca.Vt_in.u ~ V_t
+        reecb.Vt_in.u ~ V_t
+        pii ~ - terminal.i_i
+        pir ~ - terminal.i_r
+        Ibranch ~ sqrt(pii^2 + pir^2)
+        pvr ~ terminal.u_r
+        pvi ~ terminal.u_i
+        P_gen ~ - (pvr*pir + pvi*pii)
+        Q_gen ~ - (pvi*pir - pvr*pii)
+        Pbranch ~  (pvr*terminal.i_r + pvi*terminal.i_i)
+        P_plantref ~ (pvr*terminal.i_r + pvi*terminal.i_i) #TODO Wert in PF
+        Qbranch ~  (pvi*terminal.i_r - pvr*terminal.i_i)
+        Vreg_re ~ terminal.u_r
+        Vreg_im ~ terminal.u_i
+        #Current injection from converter to terminal (negative for generation)
+        [regca.Ipout.u, regca.Iqout.u].~ -[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii]
+
+        #connect components
+        repca.freq ~ f.output
+        repca.V_ref ~ Vref
+        repca.Q_ref ~ Qref
+        repca.P_plantref.u ~ P_plantref #TODO Wert in PF
+        repca.Q_branch.u ~ Qbranch
+        repca.P_branch.u ~ Pbranch
+        repca.I_branch.u ~ Ibranch
+        repca.V_reg_re.u ~ Vreg_re
+        repca.V_reg_im.u ~ Vreg_im
+
+        reecb.Vt_in.u ~ V_t
+        reecb.P_e.u ~ P_gen
+        reecb.Q_gen.u ~ Q_gen
+        reecb.P_initial ~ Pinit
+        reecb.Q_initial ~ Qinit
+
+        connect(repca.Pref_out, reecb.Pref_in)
+        connect(repca.Qext_out, reecb.Qext_in)
+        connect(reecb.Iqcmd_out, regca.Iqcmd_in)
+        connect(reecb.Ipcmd_out, regca.Ipcmd_in)
+        connect(regca.V_tfilt, reecb.Vt_filt)
+    end
+end
+

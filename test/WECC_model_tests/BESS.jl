@@ -35,7 +35,7 @@ BESS_BUS = let
     busmodel = MTKBus(BESS; name=:GEN1)
     #compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
     bm = compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0))
-
+#=
     guessformulas = @guessformula begin
         # base equations
         P0 = - 1 * (:busbar₊u_r*:busbar₊i_r + :busbar₊u_i*:busbar₊i_i)
@@ -100,7 +100,7 @@ BESS_BUS = let
         :BESS₊regca₊I_hv = :BESS₊regca₊K_hv * (V0 - :BESS₊regca₊V_0lim) =#
     end
     add_guessformula!(bm, guessformulas)
-    bm
+    bm =#
 end
 
 sol_bess = OpenIPSL_RePSSE_bess(BESS_BUS);
