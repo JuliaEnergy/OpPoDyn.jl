@@ -39,7 +39,7 @@ jobs:
           arch: ${{ matrix.arch }}
       - name: Load Julia packages from cache
         id: julia-cache
-        uses: julia-actions/cache@v2
+        uses: julia-actions/cache@v3
       - uses: hexaeder/julia-buildpkg@main
       - uses: julia-actions/julia-runtest@v1
         with:
@@ -73,7 +73,7 @@ jobs:
           version: 'pre'
       - name: Load Julia packages from cache
         id: julia-cache
-        uses: julia-actions/cache@v2
+        uses: julia-actions/cache@v3
       - name: Configure doc environment
         shell: julia --project=docs --color=yes {0}
         run: |
