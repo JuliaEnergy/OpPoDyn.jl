@@ -563,6 +563,7 @@ end
         Qref_input = false
         Qinit_input = false
         Pinit_input = false
+        P_plantref_input = false
     end
     @components begin
         terminal=Terminal()
@@ -660,23 +661,26 @@ end
         if Pinit_input
             Pinit_in = RealInput()
         end
+        if P_plantref_input
+            P_plantref_in = RealInput()
+        end
     end
     @variables begin
         V_t(t), [guess=1.001047, description="Raw terminal voltage"]
-        δ_v(t), [guess=0.0023076, description="voltage angle"] #TODO deg oder rad?
+        δ_v(t), [guess=0.0023076, description="voltage angle in rad"]
         pir(t), [guess=0.799189, description="negative terminal current real part"]
         pii(t), [guess=0.301802, description="negative terminal current im part"]
         pvr(t), [guess=1.001044, description=""]
         pvi(t), [guess=0.00231, description=""]
-        P_gen(t), [guess=0.800721, description=""]
-        Q_gen(t), [guess=-0.30027, description=""]
+        #P_gen(t), [guess=0.800721, description=""]
+        #Q_gen(t), [guess=-0.30027, description=""]
         #Vdiff(t), [guess=, description=""]
-        Vreg_re(t), [guess=1.001044, description=""]
-        Vreg_im(t), [guess=0.00231, description=""]
-        Qbranch(t), [guess=-0.30027, description=""]
-        Pbranch(t), [guess=0.800721, description=""]
-        Ibranch(t), [guess=0.854276, description=""]
-        P_plantref(t), [guess=0.800721, description=""] #didn't find value in PowerFactory
+        #Vreg_re(t), [guess=1.001044, description=""]
+        #Vreg_im(t), [guess=0.00231, description=""]
+        Q_measure(t), [guess=-0.30027, description=""]
+        P_measure(t), [guess=0.800721, description=""]
+        I_measure(t), [guess=0.854276, description=""]
+        P_plantref(t), [guess=0.800721, description=""]
         f(t), [guess=1, description=""]
         V_ref(t), [guess=1.001047, description=""]
         Q_ref(t), [guess=-0.30027, description=""]
@@ -701,6 +705,9 @@ end
         if !Pinit_input
             Pinit_set=0.800721, [guess=0.800721, description="[pu]"]
         end
+        if !P_plantref_input
+            P_plantref_set=0.800721, [guess=0.800721, description="[pu]"]
+        end
     end
     @equations begin
         f ~ f_input ? f_in.u : f_set
@@ -708,23 +715,22 @@ end
         Q_ref ~ Qref_input ? Qref_in.u : Qref_set
         Qinit ~ Qinit_input ? Qinit_in.u : Qinit_set
         Pinit ~ Pinit_input ? Pinit_in.u : Pinit_set
+        P_plantref ~ P_plantref_input ? P_plantref_in.u : P_plantref_set
         #calculate inputs
         V_t ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
         δ_v ~ atan(terminal.u_i, terminal.u_r)
-        #regca.Vt_in.u ~ V_t
-        reecb.Vt_in.u ~ V_t
         pii ~ - terminal.i_i
         pir ~ - terminal.i_r
-        Ibranch ~ sqrt(pii^2 + pir^2)
         pvr ~ terminal.u_r
         pvi ~ terminal.u_i
-        P_gen ~ - (pvr*pir + pvi*pii)
-        Q_gen ~ - (pvi*pir - pvr*pii)
-        Pbranch ~  (pvr*terminal.i_r + pvi*terminal.i_i)
-        P_plantref ~ (pvr*terminal.i_r + pvi*terminal.i_i) #TODO Wert in PF
-        Qbranch ~  (pvi*terminal.i_r - pvr*terminal.i_i)
-        Vreg_re ~ terminal.u_r
-        Vreg_im ~ terminal.u_i
+        #P_gen ~ - (pvr*pir + pvi*pii)
+        #Q_gen ~ - (pvi*pir - pvr*pii)
+        I_measure ~ sqrt(pii^2 + pir^2)
+        P_measure ~  (pvr*terminal.i_r + pvi*terminal.i_i)
+        #P_plantref ~ (pvr*terminal.i_r + pvi*terminal.i_i) #TODO Wert in PF
+        Q_measure ~  (pvi*terminal.i_r - pvr*terminal.i_i)
+        #Vreg_re ~ terminal.u_r
+        #Vreg_im ~ terminal.u_i
         #Current injection from converter to terminal (negative for generation)
         [regca.Ipout.u, regca.Iqout.u].~ -[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii] #TODO entspricht das PF Berechnung?
         #[regca.Ipout.u, regca.Iqout.u].~ -[cos(0) sin(0); -sin(0) cos(0)] * [pir, pii] #TODO entspricht das PF Berechnung?
@@ -736,16 +742,16 @@ end
         repca.freq.u ~ f
         repca.V_ref.u ~ V_ref
         repca.Q_ref.u ~ Q_ref
-        repca.P_plantref.u ~ P_plantref #TODO Wert in PF
-        repca.Q_branch.u ~ Qbranch
-        repca.P_branch.u ~ Pbranch
-        repca.I_branch.u ~ Ibranch
-        repca.V_reg_re.u ~ Vreg_re
-        repca.V_reg_im.u ~ Vreg_im
+        repca.P_plantref.u ~ P_plantref 
+        repca.Q_branch.u ~ Q_measure
+        repca.P_branch.u ~ P_measure
+        repca.I_branch.u ~ I_measure
+        repca.V_reg_re.u ~ pvr
+        repca.V_reg_im.u ~ pvi
 
         reecb.Vt_in.u ~ V_t
-        reecb.P_e.u ~ P_gen
-        reecb.Q_gen.u ~ Q_gen
+        reecb.P_e.u ~ P_measure
+        reecb.Q_gen.u ~ Q_measure
         reecb.P_initial.u ~ Pinit
         reecb.Q_initial.u ~ Qinit
 

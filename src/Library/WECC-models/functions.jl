@@ -3,8 +3,8 @@ function deadband(x,low,high)
 end
 
 function limiter(x, lim_low, lim_high)
-    #ifelse(x<lim_low, lim_low, ifelse(x>lim_high, lim_high, x))
-    clamp(x, lim_low, lim_high)
+    ifelse(x<lim_low, lim_low, ifelse(x>lim_high, lim_high, x))
+    #clamp(x, lim_low, lim_high)
 end
 
 function lowlimit(x, lim_low)

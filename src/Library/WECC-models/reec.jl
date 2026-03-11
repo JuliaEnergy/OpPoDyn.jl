@@ -656,14 +656,14 @@ end
         I_qcon ~ ifelse(QFlag, I_lim, I_qin)
 
         I_sum ~ I_qcon + I_qinj
-        I_qcmd ~ clamp(I_sum, I_qmin, I_qmax) #limiter(I_sum, I_qmin, I_qmax)
+        I_qcmd ~ limiter(I_sum, I_qmin, I_qmax) #clamp(I_sum, I_qmin, I_qmax) #limiter(I_sum, I_qmin, I_qmax)
 
         #p-phase current
         P_limLag.in ~ Pref_in.u
         P_limLag.freeze ~ Voltage_dip
         P_lim ~ P_limLag.out
         I_pref ~ P_lim/V_tfiltlim
-        I_pcmd ~ clamp(I_pref, I_pmin, I_pmax) #limiter(I_pref, I_pmin, I_pmax)
+        I_pcmd ~ limiter(I_pref, I_pmin, I_pmax) #clamp(I_pref, I_pmin, I_pmax) #limiter(I_pref, I_pmin, I_pmax)
 
         #current limiter logic
         I_pmin ~ 0
