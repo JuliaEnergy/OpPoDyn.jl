@@ -79,7 +79,7 @@ include("WECC-models/repc.jl")
 export WECC_large_PV, WECC_BESS, WECC_WT_4B, WTDTA1, WECC_large_PV_pf
 include("WECC-models/plantmodels.jl")
 
-export OpenIPSL_RePSSE_pv, OpenIPSL_RePSSE_wt, OpenIPSL_RePSSE_bess, ref_rms_error
+export OpenIPSL_RePSSE_pv, OpenIPSL_RePSSE_wt, OpenIPSL_RePSSE_bess, ref_rms_error, OpenIPSL_RePSSE_pv_pf
 include("OpenIPSL/test/OpenIPSL_testenvRenewablePSSE.jl")
 
 export PowerFactory_WECC_pv

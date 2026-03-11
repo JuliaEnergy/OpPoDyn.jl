@@ -662,26 +662,26 @@ end
         end
     end
     @variables begin
-        V_t(t), [guess=1, description="Raw terminal voltage"]
-        δ_v(t), [guess=0.00045, description="voltage angle"]
-        pir(t), [guess=-0.014974521, description="negative terminal current real part"]
-        pii(t), [guess=-0.056663541, description="negative terminal current im part"]
-        pvr(t), [guess=0.9999999, description=""]
-        pvi(t), [guess=0.00044967497, description=""]
-        P_gen(t), [guess=0.015, description=""]
-        Q_gen(t), [guess=-0.056656801, description=""]
-        Vdiff(t), [guess=1.0001042, description=""]
-        Vreg_re(t), [guess=1, description=""]
-        Vreg_im(t), [guess=1, description=""]
-        Qbranch(t), [guess=-0.056656801, description=""]
-        Pbranch(t), [guess=0.015, description=""]
-        Ibranch(t), [guess=0.015, description=""]
-        P_plantref(t), [guess=1, description=""] #didn't find value in PowerFactory
+        V_t(t), [guess=1.001047, description="Raw terminal voltage"]
+        δ_v(t), [guess=0.0023076, description="voltage angle"] #TODO deg oder rad?
+        pir(t), [guess=0.799189, description="negative terminal current real part"]
+        pii(t), [guess=0.301802, description="negative terminal current im part"]
+        pvr(t), [guess=1.001044, description=""]
+        pvi(t), [guess=0.00231, description=""]
+        P_gen(t), [guess=0.800721, description=""]
+        Q_gen(t), [guess=-0.30027, description=""]
+        #Vdiff(t), [guess=, description=""]
+        Vreg_re(t), [guess=1.001044, description=""]
+        Vreg_im(t), [guess=0.00231, description=""]
+        Qbranch(t), [guess=-0.30027, description=""]
+        Pbranch(t), [guess=0.800721, description=""]
+        Ibranch(t), [guess=0.854276, description=""]
+        P_plantref(t), [guess=0.800721, description=""] #didn't find value in PowerFactory
         f(t), [guess=1, description=""]
-        V_ref(t), [guess=1, description=""]
-        Q_ref(t), [guess=-0.056658, description=""]
-        Qinit(t), [guess=0, description=""]
-        Pinit(t), [guess=1, description=""]
+        V_ref(t), [guess=1.001047, description=""]
+        Q_ref(t), [guess=-0.30027, description=""]
+        Qinit(t), [guess=-0.30027, description=""]
+        Pinit(t), [guess=0.800721, description=""]
     end
     @parameters begin
         S_b=100e6, [description="System Base Power"]
@@ -690,16 +690,16 @@ end
             f_set=1, [guess=1, description="frequency setpoint [pu]"]
         end
         if !Vref_input
-            Vref_set=1, [guess=1, description="[pu]"]
+            Vref_set=1.001046, [guess=1.001046, description="[pu]"]
         end
         if !Qref_input
-            Qref_set=-0.056658, [guess=-0.056658, description="[pu]"]
+            Qref_set=-0.30027, [guess=-0.30027, description="[pu]"]
         end
         if !Qinit_input
-            Qinit_set=0, [guess=0, description="[pu]"]
+            Qinit_set=-0.30027, [guess=-0.30027, description="[pu]"]
         end
         if !Pinit_input
-            Pinit_set=1, [guess=1, description="[pu]"]
+            Pinit_set=0.800721, [guess=0.800721, description="[pu]"]
         end
     end
     @equations begin
@@ -726,12 +726,16 @@ end
         Vreg_re ~ terminal.u_r
         Vreg_im ~ terminal.u_i
         #Current injection from converter to terminal (negative for generation)
-        [regca.Ipout.u, regca.Iqout.u].~ -[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii]
+        [regca.Ipout.u, regca.Iqout.u].~ -[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii] #TODO entspricht das PF Berechnung?
+        #[regca.Ipout.u, regca.Iqout.u].~ -[cos(0) sin(0); -sin(0) cos(0)] * [pir, pii] #TODO entspricht das PF Berechnung?
+        #[regca.Ipout.u, regca.Iqout.u] .~ [pir, pii]
+        #regca.Ipout.u ~ pir
+        #regca.Iqout.u ~ pii
 
         #connect components
-        repca.freq ~ f.output
-        repca.V_ref ~ Vref
-        repca.Q_ref ~ Qref
+        repca.freq.u ~ f
+        repca.V_ref.u ~ V_ref
+        repca.Q_ref.u ~ Q_ref
         repca.P_plantref.u ~ P_plantref #TODO Wert in PF
         repca.Q_branch.u ~ Qbranch
         repca.P_branch.u ~ Pbranch
@@ -742,8 +746,8 @@ end
         reecb.Vt_in.u ~ V_t
         reecb.P_e.u ~ P_gen
         reecb.Q_gen.u ~ Q_gen
-        reecb.P_initial ~ Pinit
-        reecb.Q_initial ~ Qinit
+        reecb.P_initial.u ~ Pinit
+        reecb.Q_initial.u ~ Qinit
 
         connect(repca.Pref_out, reecb.Pref_in)
         connect(repca.Qext_out, reecb.Qext_in)

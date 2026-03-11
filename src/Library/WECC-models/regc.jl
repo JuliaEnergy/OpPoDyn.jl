@@ -98,46 +98,46 @@ end
     end
     @components begin
         # inputs
-        #Vt_in = RealInput(guess=1) 
-        V_tfilt = RealInput(guess=1) #TODO von außen eingeben! (aus reec_b) oder manuell hier berechnen?
-        Iqcmd_in = RealInput(guess=-0.056656797)
-        Ipcmd_in = RealInput(guess=0.015)
+        #Vt_in = RealInput(guess=1)
+        V_tfilt = RealInput(guess=1.001047) #TODO von außen eingeben! (aus reec_b) oder manuell hier berechnen?
+        Iqcmd_in = RealInput(guess=-0.299956)
+        Ipcmd_in = RealInput(guess=0.799884)
         # outputs
-        Iqout = RealOutput(guess=0.056656797)
-        Ipout = RealOutput(guess=0.015000018)
+        Iqout = RealOutput(guess=0.299956)
+        Ipout = RealOutput(guess=0.799884)
 
-        simpleLag = PowerDynamics.Library.SimpleLag(K=1, T=T_fltr, guess=1)
-        SimpleLagLim = PowerDynamics.Library.SimpleLagLim(K=1, T=T_gq, outMin=I_qrmin, outMax=I_qrmax, guess=0.056656797)
-        SimpleLag_2uplims = PowerDynamics.Library.SimpleLag_2MaxLims(K=1, T=T_gp, doutMax=rrpwr, guess=0.015)
+        simpleLag = PowerDynamics.Library.SimpleLag(K=1, T=T_fltr, guess=1.001047)
+        SimpleLagLim = PowerDynamics.Library.SimpleLagLim(K=1, T=T_gq, outMin=I_qrmin, outMax=I_qrmax, guess=0.299956)
+        SimpleLag_2uplims = PowerDynamics.Library.SimpleLag_2MaxLims(K=1, T=T_gp, doutMax=rrpwr, guess=0.799884, guessin=0.799884, guessx=0.799884)
     end
     @variables begin
-        I_qrsum(t), [guess=1.9317881e-14, description=""]
-        I_qrlim(t), [guess=1.9317881e-14, description=""]
-        I_qr(t), [guess=0.056656797, description=""]
-        o2(t), [guess=0.056656797, description=""]
-        Hi_V_flag(t), [guess=false, description="If Vt<=V_0lim -> 0 ;  if Vt>V_0lim -> 1"]
+        #I_qrsum(t), [guess=1.9317881e-14, description=""]
+        #I_qrlim(t), [guess=1.9317881e-14, description=""]
+        I_qr(t), [guess=0.299956, description=""]
+        o2(t), [guess=0.30027, description=""]
+        Hi_V_flag(t), [guess=0, description="If Vt<=V_0lim -> 0 ;  if Vt>V_0lim -> 1"]
         o3(t), [guess=0, description=""]
-        V_tfiltlim(t), [guess=1, description=""]
-        ΔV(t), [guess=-0.2, description=""]
-        I_hv(t), [guess=-0.14, description=""]
+        V_tfiltlim(t), [guess=1.001047, description=""]
+        ΔV(t), [guess=-0.198954, description=""]
+        I_hv(t), [guess=-0.139268, description=""]
         I_hvlim(t), [guess=0, description=""]
-        Q_gen(t), [guess=0.056656797, description=""]
-        I_q(t), [guess=0.056656797, description="I_q after inverter current regulator with rate limits"]
-        ΔI_q(t), [guess=0.056656797, description=""]
-        ΔI_pr(t), [guess=-7.359854e-12, description=""]
-        I_pr(t), [guess=0.015, description=""]
-        ΔI_prlim(t), [guess=-7.359854e-12, description=""]
-        I_pg(t), [guess=0.015, description=""]
-        Vt_scaled(t), [guess=1, description=""]
-        P_gen(t), [guess=0.015, description=""]
-        I_p(t), [guess=0.015, description="I_p after inverter current regulator with limits"]
-        V(t), [guess=1, description="V_t after filter"]
-        I_lvpl(t), [guess=1.22, description="current resulting from low voltage power logic"]
+        Q_gen(t), [guess=0.30027, description=""]
+        I_q(t), [guess=0.299956, description="I_q after inverter current regulator with rate limits"]
+        ΔI_q(t), [guess=0.30027, description=""]
+        #ΔI_pr(t), [guess=-7.359854e-12, description=""]
+        I_pr(t), [guess=0.799884, description=""]
+        #ΔI_prlim(t), [guess=-7.359854e-12, description=""]
+        #I_pg(t), [guess=0.015, description=""]
+        Vt_scaled(t), [guess=1.001047, description=""]
+        P_gen(t), [guess=0.800721, description=""]
+        I_p(t), [guess=0.799884, description="I_p after inverter current regulator with limits"]
+        V(t), [guess=1.001047, description="V_t after filter"]
+        I_lvpl(t), [guess=999.99, description="current resulting from low voltage power logic"]
     end
     @equations begin
         #q-phase current
-        SimpleLagLim.in ~ Iqcmd_in.u #TODO passt der Block -> -1 in PF? Block Definition hier anschauen!
-        I_qr ~ SimpleLagLim.out
+        SimpleLagLim.in ~ Iqcmd_in.u 
+        I_qr ~ -SimpleLagLim.out #negative as in PF equation
         o2 ~ I_qr * V_tfilt.u
         Hi_V_flag ~ ifelse(V_tfilt.u>V_0lim, 1, 0)
         ΔV ~ V_tfilt.u - V_0lim
@@ -154,7 +154,7 @@ end
         simpleLag.in ~ V_tfilt.u
         V ~ simpleLag.out
 
-        I_lvpl ~ ifelse(L_vplsw, LVPLogic(V, Zerox, Brkpt, L_vpl1), 999) #no upper limit if switch of
+        I_lvpl ~ ifelse(L_vplsw, LVPLogic(V, Zerox, Brkpt, L_vpl1), 999.99) #no upper limit if switch of
         SimpleLag_2uplims.in ~ Ipcmd_in.u
         SimpleLag_2uplims.outMax ~ I_lvpl
         I_pr ~ SimpleLag_2uplims.out

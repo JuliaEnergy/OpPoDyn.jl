@@ -14,31 +14,33 @@ using DataFrames
 using CairoMakie
 using Test
 
+#=
 ref_pv = CSV.read(
     joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV","modelica_results_extended.csv"),
     DataFrame;
     drop=(i,name) -> contains(string(name), "nrows="),
     silencewarnings=true
 )
+    =#
 
 # bus 1 is provided from outside
 PV_BUS = let
     ω_b = 2π*50
 
     # Powerflow results
-    v_0 = 1.0
-    angle_0 = 0.0004339 #deg2rad(1.4753617387995086)
-    P_0 = 0.015
-    Q_0 = -0.056658
+    #v_0 = 1.001048
+    #angle_0 = 0.1  #deg2rad() ?
+    P_0 = 0.8888
+    Q_0 = -0.3333
 
     @named PV = OpPoDyn.Library.WECC_large_PV_pf()
     busmodel = MTKBus(PV; name=:GEN1)
     #compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
-    compile_bus(busmodel, pf=pfPV(V=v_0, P=P_0))
-    #compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0))
+    #compile_bus(busmodel, pf=pfPV(V=v_0, P=P_0))
+    compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0))
 end
 
-sol_pv = OpenIPSL_RePSSE_pv(PV_BUS; ω_b = 2π*50);
+sol_pv = OpenIPSL_RePSSE_pv_pf(PV_BUS; ω_b = 2π*50);
 
 
 ## perform tests for all variables of interest
@@ -130,7 +132,7 @@ if isdefined(Main, :EXPORT_FIGURES) && Main.EXPORT_FIGURES
     save(joinpath(pkgdir(OpPoDyn),"docs","src","assets","OpenIPSL_valid","PV_comparison.png"), fig)
 end
 
-
+#=
 # --- Load extended reference data ---
 ref_pv_extended = CSV.read(
     joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV","modelica_results_extended.csv"),
@@ -138,6 +140,7 @@ ref_pv_extended = CSV.read(
     drop=(i,name) -> contains(string(name), "nrows="),
     silencewarnings=true
 )
+=#
 
 # --- Refine simulation timeseries ---
 ts = refine_timeseries(sol_pv.t)
