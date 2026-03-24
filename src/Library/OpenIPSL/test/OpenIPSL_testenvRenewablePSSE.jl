@@ -654,14 +654,15 @@ end
 function OpenIPSL_RePSSE_pv_pf(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=1e0)
     # copy constructor and set vidxs
     bus1 = VertexModel(_bus1, vidx=1, name=:GEN1)
-
+    @named junction = compile_bus(MTKBus(), vidx=2)
+    loopback = LoopbackConnection(; src=:GEN1, dst=:junction, potential=[:u_r, :u_i], flow=[:i_r, :i_i])
     #v_0 = 1.0
     #angle_0 = 0
 
     #@named slack =  SlackDifferential()
     #busmodel = MTKBus(slack; name=:slack_src)
     #bus2 = compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0), vidx=2)
-    slack = compile_bus(SlackAlgebraic(name=:slack_src), vidx=2)
+    slack = compile_bus(SlackAlgebraic(name=:slack_src), vidx=3)
 
     # line
     U_b = 230000
@@ -669,11 +670,11 @@ function OpenIPSL_RePSSE_pv_pf(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwt
     Z_b = U_b^2/S_b
     pwLine = MTKLine(PiLine(; name=:PwLine))
     line = compile_line(pwLine; name=:pwLine,
-        src=:GEN1, dst=:slack_src,
+        src=:junction, dst=:slack_src,
         PwLine₊X=1/Z_b, PwLine₊R=1/Z_b)
 
-    buses = [bus1, slack]
-    lines = [line]
+    buses = [bus1, junction, slack]
+    lines = [line, loopback]
     nw = Network(buses, lines; warn_order=false)
 
     verbose = true
@@ -682,7 +683,7 @@ function OpenIPSL_RePSSE_pv_pf(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwt
     pfs=nothing
     pfnw = isnothing(pfnw) ? powerflow_model(nw) : pfnw
     pfs0 = isnothing(pfs0) ? NWState(pfnw) : pfnw
-    pfs = solve_powerflow(nw; pfnw, pfs0, verbose)
+    pfs = solve_powerflow(nw; pfnw, pfs0, verbose,t=0)
     println(show_powerflow(pfs))
     interface_vals = interface_values(pfs)
     println(interface_vals)
@@ -693,100 +694,6 @@ function OpenIPSL_RePSSE_pv_pf(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwt
         s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol=Inf, nwtol=Inf)
         return s0
     end
-#=
-    for sym in sym(bus1)
-        has_guess(bus1, sym) || continue
-        (sym==:PV₊repca₊p_0) && continue
-        (sym==:PV₊repca₊Voltage_dip) && continue
-        (sym==:PV₊repca₊V_droop) && continue
-        (sym==:PV₊repca₊V_in) && continue
-        (sym==:PV₊repca₊V_fltr) && continue
-        (sym==:PV₊repca₊ΔV) && continue
-        (sym==:PV₊repca₊Q_fltr) && continue
-        (sym==:PV₊repca₊ΔQ) && continue
-        (sym==:PV₊repca₊ΔQ_in) && continue
-        (sym==:PV₊repca₊ΔQ_dbd) && continue
-        (sym==:PV₊repca₊Q_e) && continue
-        (sym==:PV₊repca₊Q_x) && continue
-        (sym==:PV₊repca₊Q_res) && continue
-        (sym==:PV₊repca₊Q_I) && continue
-        (sym==:PV₊repca₊Q_lim) && continue
-        (sym==:PV₊repca₊Q_ext) && continue
-        (sym==:PV₊repca₊Δf_deadband) && continue
-        (sym==:PV₊repca₊Δf_corr) && continue
-        (sym==:PV₊repca₊P_branchp) && continue
-        (sym==:PV₊repca₊f_e) && continue
-        (sym==:PV₊repca₊P_e) && continue
-        (sym==:PV₊repca₊P_lim) && continue
-        (sym==:PV₊repca₊P_refa) && continue
-        (sym==:PV₊repca₊P_ref) && continue
-        (sym==:PV₊reecb₊Voltage_dip) && continue
-        (sym==:PV₊reecb₊V_tfilt) && continue
-        (sym==:PV₊reecb₊V_tfiltlim) && continue
-        (sym==:PV₊reecb₊ΔV_t) && continue
-        (sym==:PV₊reecb₊ΔV_tdbd) && continue
-        (sym==:PV₊reecb₊I_qinj) && continue
-        (sym==:PV₊reecb₊P_PF) && continue
-        (sym==:PV₊reecb₊Q_con) && continue
-        (sym==:PV₊reecb₊Q_lim) && continue
-        (sym==:PV₊reecb₊ΔQ) && continue
-        (sym==:PV₊reecb₊s_Q) && continue
-        (sym==:PV₊reecb₊s_Qint) && continue
-        (sym==:PV₊reecb₊V_in) && continue
-        (sym==:PV₊reecb₊V_lima) && continue
-        (sym==:PV₊reecb₊V_con) && continue
-        (sym==:PV₊reecb₊V_limb) && continue
-        (sym==:PV₊reecb₊ΔV) && continue
-        (sym==:PV₊reecb₊s_V) && continue
-        (sym==:PV₊reecb₊s_Vint) && continue
-        (sym==:PV₊reecb₊I_in) && continue
-        (sym==:PV₊reecb₊I_lim) && continue
-        (sym==:PV₊reecb₊I_t) && continue
-        (sym==:PV₊reecb₊ΔI) && continue
-        (sym==:PV₊reecb₊I_qin) && continue
-        (sym==:PV₊reecb₊I_qcon) && continue
-        (sym==:PV₊reecb₊I_sum) && continue
-        (sym==:PV₊reecb₊I_qcmd) && continue
-        (sym==:PV₊reecb₊P_refout) && continue
-        (sym==:PV₊reecb₊P_lim) && continue
-        (sym==:PV₊reecb₊ΔP) && continue
-        (sym==:PV₊reecb₊ΔP_lim) && continue
-        (sym==:PV₊reecb₊I_pref) && continue
-        (sym==:PV₊reecb₊I_pcmd) && continue
-        (sym==:PV₊reecb₊I_qmin) && continue
-        (sym==:PV₊reecb₊I_qmax) && continue
-        (sym==:PV₊reecb₊I_pmax) && continue
-        (sym==:PV₊reecb₊I_pmin) && continue
-        (sym==:PV₊regca₊I_qrsum) && continue
-        (sym==:PV₊regca₊I_qrlim) && continue
-        (sym==:PV₊regca₊I_qr) && continue
-        (sym==:PV₊regca₊ΔV) && continue
-        (sym==:PV₊regca₊I_hv) && continue
-        (sym==:PV₊regca₊I_hvlim) && continue
-        (sym==:PV₊regca₊I_q) && continue
-        (sym==:PV₊regca₊ΔI_q) && continue
-        (sym==:PV₊regca₊ΔI_pr) && continue
-        (sym==:PV₊regca₊I_pr) && continue
-        (sym==:PV₊regca₊ΔI_prlim) && continue
-        (sym==:PV₊regca₊I_pg) && continue
-        (sym==:PV₊regca₊y) && continue
-        (sym==:PV₊regca₊I_p) && continue
-        #(sym==:PV₊regca₊V) && continue
-        (sym==:PV₊regca₊I_lvpl) && continue
-        (sym==:PV₊V_t) && continue
-        #(sym==:PV₊δ_v) && continue
-        (sym==:PV₊pir) && continue
-        (sym==:PV₊pii) && continue
-        (sym==:PV₊pvr) && continue
-        (sym==:PV₊pvi) && continue
-        (sym==:PV₊P_gen) && continue
-        (sym==:PV₊Q_gen) && continue
-        (sym==:PV₊Vdiff) && continue
-        (sym==:PV₊Vreg) && continue
-        (sym==:PV₊Qbranch) && continue
-        (sym==:PV₊Pbranch) && continue
-        set_default!(bus1, sym, get_guess(bus1, sym))
-    end=#
 
     s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol, nwtol)
     #dump_initial_state(bus1)

@@ -136,7 +136,7 @@ end
     end
     @equations begin
         #q-phase current
-        SimpleLagLim.in ~ Iqcmd_in.u 
+        SimpleLagLim.in ~ Iqcmd_in.u
         I_qr ~ -SimpleLagLim.out #negative as in PF equation
         o2 ~ I_qr * V_tfilt.u
         Hi_V_flag ~ ifelse(V_tfilt.u>V_0lim, 1, 0)
@@ -156,7 +156,7 @@ end
 
         I_lvpl ~ ifelse(L_vplsw, LVPLogic(V, Zerox, Brkpt, L_vpl1), 999.99) #no upper limit if switch of
         SimpleLag_2uplims.in ~ Ipcmd_in.u
-        SimpleLag_2uplims.outMax ~ I_lvpl
+        SimpleLag_2uplims.outMax ~ 1#I_lvpl
         I_pr ~ SimpleLag_2uplims.out
         #P_gen ~ ifelse(Vt_in.u <= lvpnt0, 0, ifelse(Vt_in.u >= lvpnt1, 1, (Vt_in.u-lvpnt0)/(lvpnt1-lvpnt0)))
         Vt_scaled ~ V_tfilt.u * LVPLogic(V_tfilt.u, lvpnt0, lvpnt1, 1) #LVACM
