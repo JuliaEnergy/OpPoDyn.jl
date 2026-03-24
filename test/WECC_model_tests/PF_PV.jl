@@ -38,7 +38,7 @@ PV_BUS = let
     #set_pfmodel!(busmodel, pfPQ(P=P_0, Q=Q_0; current_source=true, assume_io_coupling=true))
     #compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0))
     #compile_bus(busmodel, pf=pfPV(V=v_0, P=P_0))
-    compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0; current_source=true, assume_io_coupling=true))
+    compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0; current_source=true)) #, assume_io_coupling=true
 end
 
 sol_pv = OpenIPSL_RePSSE_pv_pf(PV_BUS; ω_b = 2π*50);

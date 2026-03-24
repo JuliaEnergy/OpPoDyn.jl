@@ -683,7 +683,7 @@ function OpenIPSL_RePSSE_pv_pf(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwt
     pfs=nothing
     pfnw = isnothing(pfnw) ? powerflow_model(nw) : pfnw
     pfs0 = isnothing(pfs0) ? NWState(pfnw) : pfnw
-    pfs = solve_powerflow(nw; pfnw, pfs0, verbose,t=0)
+    pfs = solve_powerflow(nw; pfnw, pfs0, verbose)
     println(show_powerflow(pfs))
     interface_vals = interface_values(pfs)
     println(interface_vals)
