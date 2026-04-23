@@ -695,6 +695,25 @@ function OpenIPSL_RePSSE_pv_pf(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwt
         return s0
     end
 
+    # Pin underdetermined integrator states to their initial guesses.
+    # These states become decoupled from the equation system when structural flags are false:
+    # Vflag=false    → V_lima, PI_freeze.x      (reec_b_pf)
+    # QFlag=false    → I_lim,  PI_freeze_var.x   (reec_b_pf)
+    # freqFlag=false → P_lim,  PI_lim_P.x, P_refa (repc_a_pf)
+    for sym in sym(bus1)
+        has_guess(bus1, sym) || continue
+        sym ∈ (
+            :PV₊reecb₊V_lima,
+            :PV₊reecb₊PI_freeze₊x,
+            :PV₊reecb₊I_lim,
+            :PV₊reecb₊PI_freeze_var₊x,
+            :PV₊repca₊P_lim,
+            :PV₊repca₊PI_lim_P₊x,
+            :PV₊repca₊P_refa,
+        ) || continue
+        set_default!(bus1, sym, get_guess(bus1, sym))
+    end
+
     s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol, nwtol)
     #dump_initial_state(bus1)
     init_residual(bus1; verbose=true)

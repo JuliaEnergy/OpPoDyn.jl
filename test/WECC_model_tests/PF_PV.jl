@@ -30,8 +30,8 @@ PV_BUS = let
     # Powerflow results
     v_0 = 1.001047
     #angle_0 = 0.1
-    P_0 = 0.8888
-    Q_0 = -0.3333
+    P_0 = 0.8888 #0.800721
+    Q_0 = -0.3333 #-0.30027
 
     @named PV = OpPoDyn.Library.WECC_large_PV_pf()
     busmodel = compile_bus(MTKBus(PV); current_source=true)
