@@ -1,3 +1,5 @@
+EXPORT_FIGURES = true
+
 using PowerDynamics
 using OpPoDyn
 using OpPoDyn.Library
@@ -14,7 +16,7 @@ using Test
 
 
 ref_pv = CSV.read(
-    joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV_pf","variables-testcase-without-event_addVariableNames.csv"),
+    joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV_pf","variables-testcase3Bus-with-event_addVariableNames.csv"),
     DataFrame;
     header = 3,
     decimal = ',',
@@ -29,16 +31,15 @@ PV_BUS = let
 
     # Powerflow results
     v_0 = 1.001047
-    #angle_0 = 0.1
-    P_0 = 0.8888 
+    P_0 = 0.8888
     Q_0 = -0.3333
 
     @named PV = OpPoDyn.Library.WECC_large_PV_pf()
     busmodel = compile_bus(MTKBus(PV); current_source=true)
-    compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0; current_source=true)) #, assume_io_coupling=true
+    compile_bus(busmodel, pf=pfPQ(P=P_0, Q=Q_0; current_source=true))
 end
 
-sol_pv = OpenIPSL_RePSSE_pv_pf(PV_BUS; ω_b = 2π*50);
+sol_pv = OpenIPSL_RePSSE_pv_pf_3bus(PV_BUS; ω_b = 2π*50);
 
 
 ## perform tests for all variables of interest
@@ -123,6 +124,5 @@ if isdefined(Main, :EXPORT_FIGURES) && Main.EXPORT_FIGURES
 
         fig
     end
-    save(joinpath(pkgdir(OpPoDyn),"docs","src","assets","PowerFactory_valid","PV_comparison.png"), fig)
+    save(joinpath(pkgdir(OpPoDyn),"docs","src","assets","PowerFactory_valid","PV_3bus_comparison_withLinefault_error.png"), fig)
 end
-

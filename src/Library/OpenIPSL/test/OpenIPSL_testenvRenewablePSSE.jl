@@ -723,3 +723,95 @@ function OpenIPSL_RePSSE_pv_pf(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwt
     @assert SciMLBase.successful_retcode(sol) "Simulation was not successful: retcode=$(sol.retcode)"
     sol
 end
+
+
+function OpenIPSL_RePSSE_pv_pf_3bus(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=1e0)
+    bus1 = VertexModel(_bus1, vidx=1, name=:GEN1)
+    @named junction  = compile_bus(MTKBus(), vidx=2)
+    slack            = compile_bus(SlackAlgebraic(name=:slack_src), vidx=3)
+    @named fault_bus = compile_bus(MTKBus(), vidx=4)
+
+    loopback = LoopbackConnection(; src=:GEN1, dst=:junction, potential=[:u_r, :u_i], flow=[:i_r, :i_i])
+
+    U_b = 230000
+    S_b = 100000000
+    Z_b = U_b^2/S_b
+
+    # Existing line: junction → slack_src (same parameters as 2-bus case)
+    line_junc_slack = compile_line(
+        MTKLine(PiLine(; name=:PwLine));
+        name=:line_junc_slack,
+        src=:junction, dst=:slack_src,
+        PwLine₊X=1/Z_b, PwLine₊R=1/Z_b)
+
+    # New line: fault_bus → junction (PiLine_fault, can be short-circuited)
+    line_fault_junc = compile_line(
+        MTKLine(PiLine_fault(; name=:PwLineFault));
+        name=:line_fault_junc,
+        src=:fault_bus, dst=:junction,
+        PwLineFault₊X=1/Z_b, PwLineFault₊R=1/Z_b,
+        PwLineFault₊G_src=0, PwLineFault₊B_src=0,
+        PwLineFault₊G_dst=0, PwLineFault₊B_dst=0,
+        PwLineFault₊pos=0.5)
+
+    # t=0.1s: three-phase short circuit at 50% of line fault_bus→junction
+    _enable_short = ComponentAffect([], [:PwLineFault₊shortcircuit]) do u, p, ctx
+        @info "Short circuit activated on line $(ctx.src)→$(ctx.dst) at t = $(ctx.t)s"
+        p[:PwLineFault₊shortcircuit] = 1
+    end
+    shortcircuit_cb = PresetTimeComponentCallback(0.1, _enable_short)
+
+    # t=0.2s: disconnect line (fault clearing)
+    _disable_line = ComponentAffect([], [:PwLineFault₊active]) do u, p, ctx
+        @info "Line $(ctx.src)→$(ctx.dst) disconnected at t = $(ctx.t)s"
+        p[:PwLineFault₊active] = 0
+    end
+    deactivate_cb = PresetTimeComponentCallback(0.2, _disable_line)
+
+    set_callback!(line_fault_junc, (shortcircuit_cb, deactivate_cb))
+
+    # New line: fault_bus → slack_src (same parameters as existing line)
+    line_fault_slack = compile_line(
+        MTKLine(PiLine(; name=:PwLine2));
+        name=:line_fault_slack,
+        src=:fault_bus, dst=:slack_src,
+        PwLine2₊X=1/Z_b, PwLine2₊R=1/Z_b)
+
+    buses = [bus1, junction, slack, fault_bus]
+    lines = [loopback, line_junc_slack, line_fault_junc, line_fault_slack]
+    nw = Network(buses, lines; warn_order=false)
+
+    pfnw = powerflow_model(nw)
+    pfs0 = NWState(pfnw)
+    pfs  = solve_powerflow(nw; pfnw, pfs0, verbose=true)
+    println(show_powerflow(pfs))
+    println(interface_values(pfs))
+
+    if just_init
+        s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol=Inf, nwtol=Inf)
+        return s0
+    end
+
+    # Pin underdetermined integrator states (same structural flags as 2-bus case)
+    for sym in sym(bus1)
+        has_guess(bus1, sym) || continue
+        sym ∈ (
+            :PV₊reecb₊V_lima,
+            :PV₊reecb₊PI_freeze₊x,
+            :PV₊reecb₊I_lim,
+            :PV₊reecb₊PI_freeze_var₊x,
+            :PV₊repca₊P_lim,
+            :PV₊repca₊PI_lim_P₊x,
+            :PV₊repca₊P_refa,
+        ) || continue
+        set_default!(bus1, sym, get_guess(bus1, sym))
+    end
+
+    s0 = initialize_from_pf!(nw; subverbose=[VIndex(1)], tol, nwtol)
+    init_residual(bus1; verbose=true)
+
+    prob = ODEProblem(nw, uflat(s0), (0,5), copy(pflat(s0)), callback=get_callbacks(nw))
+    sol = solve(prob, Rodas5P())
+    @assert SciMLBase.successful_retcode(sol) "Simulation was not successful: retcode=$(sol.retcode)"
+    sol
+end
