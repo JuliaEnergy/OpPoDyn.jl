@@ -555,7 +555,7 @@ end
     end
 end
 
-
+# WECC Model as used in https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7741608&tag=1
 @mtkmodel WECC_large_PV_pf begin
     @structural_parameters begin
         f_input = false
@@ -632,7 +632,7 @@ end
             Q_min      = -0.4,
             K_pg       = 1,
             K_ig       = 10,
-            T_p        = 0.2,
+            T_p        = 0.02,
             fdbd1      = 0,
             fdbd2      = 0,
             femax      = 999,
@@ -710,7 +710,7 @@ end
         end
     end
     @equations begin
-        f ~ f_input ? f_in.u : f_set
+        f ~ f_input ? f_in.u : f_set #TODO: only works when Freq_flag=false; needs to be measured!
         V_ref ~ Vref_input ? Vref_in.u : Vref_set
         Q_ref ~ Qref_input ? Qref_in.u : Qref_set
         Qinit ~ Qinit_input ? Qinit_in.u : Qinit_set
@@ -719,8 +719,8 @@ end
         #calculate inputs
         V_t ~ sqrt(terminal.u_r^2 + terminal.u_i^2)
         δ_v ~ atan(terminal.u_i, terminal.u_r)
-        pii ~ - terminal.i_i
-        pir ~ - terminal.i_r
+        pii ~  terminal.i_i
+        pir ~ terminal.i_r
         pvr ~ terminal.u_r
         pvi ~ terminal.u_i
         #P_gen ~ - (pvr*pir + pvi*pii)
@@ -732,7 +732,7 @@ end
         #Vreg_re ~ terminal.u_r
         #Vreg_im ~ terminal.u_i
         #Current injection from converter to terminal (negative for generation)
-        [regca.Ipout.u, regca.Iqout.u].~ -[cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii] #TODO entspricht das PF Berechnung?
+        [regca.Ipout.u, regca.Iqout.u].~ [cos(δ_v) sin(δ_v); -sin(δ_v) cos(δ_v)] * [pir, pii] #TODO entspricht das PF Berechnung?
         #[regca.Ipout.u, regca.Iqout.u].~ -[cos(0) sin(0); -sin(0) cos(0)] * [pir, pii] #TODO entspricht das PF Berechnung?
         #[regca.Ipout.u, regca.Iqout.u] .~ [pir, pii]
         #regca.Ipout.u ~ pir
@@ -742,7 +742,7 @@ end
         repca.freq.u ~ f
         repca.V_ref.u ~ V_ref
         repca.Q_ref.u ~ Q_ref
-        repca.P_plantref.u ~ P_plantref 
+        repca.P_plantref.u ~ P_plantref
         repca.Q_branch.u ~ Q_measure
         repca.P_branch.u ~ P_measure
         repca.I_branch.u ~ I_measure

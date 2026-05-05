@@ -569,8 +569,12 @@ end
         simpleLag = PowerDynamics.Library.SimpleLag(K=1, T=T_rv, guess=1.001047)
         simpleLag1 = PowerDynamics.Library.SimpleLag(K=1, T=T_p, guess=0.800721)
         deadband = PowerDynamics.Library.DeadZone(uMax=dbd2, uMin=dbd1)
-        PI_freeze = PowerDynamics.Library.P_I_Lim_freeze(K_p=K_qp, K_i=K_qi, T=1, outMin=V_min, outMax=V_max, guess=1.001047, guessx=1.001047)
-        PI_freeze_var = PowerDynamics.Library.P_I_varLim_freeze(K_p=K_vp, K_i=K_vi, T=1, guess=-0.299956, guessx=-0.299956)
+        if Vflag && QFlag
+            PI_freeze = PowerDynamics.Library.P_I_Lim_freeze(K_p=K_qp, K_i=K_qi, T=1, outMin=V_min, outMax=V_max, guess=1.001047, guessx=1.001047)
+        end
+        if QFlag
+            PI_freeze_var = PowerDynamics.Library.P_I_varLim_freeze(K_p=K_vp, K_i=K_vi, T=1, guess=-0.299956, guessx=-0.299956)
+        end
         simpleLag_freeze = PowerDynamics.Library.SimpleLag_freeze(K=1, T=T_iq, guess=-0.299956, guessx=-0.299956)
         P_limLag = PowerDynamics.Library.SimpleLag_2Lims_freeze(K=1, T=T_pord, doutMin=dP_min, doutMax=dP_max, outMin=P_min, outMax=P_max, guess=0.800721, guessin=0.800721, guessx=0.800721)
     end
@@ -583,19 +587,17 @@ end
         I_qinj(t), [guess=0, description="Limited current injection q-Phase from Voltage"]
         P_PF(t), [guess=0.800721, description="Inverter active power after filter"]
         Q_con(t), [guess=-0.30027, description="Reactive Power after PfFlag"]
-        Q_lim(t), [guess=-0.30027, description="ReactivePower after limiter"]
-        ΔQ(t), [guess=0, description="Difference between Q_lim and Q_gen"]
-        #s_Q(t), [guess=4.8269116e-9, description="Frozen state in Q regulator"]
-        #s_Qint(t), [guess=1, description=""]
-        #V_in(t), [guess=1, description="Voltage after local Q regulator"]
-        V_lima(t), [guess=1.001047, description="Limited voltage after Q regulator"]
-        V_con(t), [guess=1.001047, description="Voltage after Vflag"]
-        V_limb(t), [guess=1.001047, description="Limited voltage V_con"]
-        ΔV(t), [guess=0, description="Difference between V_limb and V_tfilt"]
-        #s_V(t), [guess=6.6613381e-14, description="Frozen state at local voltage regulator"]
-        #s_Vint(t), [guess=-0.0567, description=""]
-        #I_in(t), [guess=-0.0567, description="Current after local voltage regulator"]
-        I_lim(t), [guess=-0.299956, description="limited current after voltage regulator"]
+        if Vflag && QFlag
+            Q_lim(t), [guess=-0.30027, description="ReactivePower after limiter"]
+            ΔQ(t), [guess=0, description="Difference between Q_lim and Q_gen"]
+            V_lima(t), [guess=1.001047, description="Limited voltage after Q regulator"]
+        end
+        if QFlag
+            V_con(t), [guess=1.001047, description="Voltage after Vflag"]
+            V_limb(t), [guess=1.001047, description="Limited voltage V_con"]
+            ΔV(t), [guess=0, description="Difference between V_limb and V_tfilt"]
+            I_lim(t), [guess=-0.299956, description="limited current after voltage regulator"]
+        end
         I_t(t), [guess=-0.299956, description="Current from Q_con/V_tfiltlim"]
         #ΔI(t), [guess=-1.9310942e-14, description=""]
         I_qin(t), [guess=-0.299956, description="Current after Reactive current regulator"]
@@ -634,26 +636,33 @@ end
         P_PF ~ simpleLag1.out
 
         Q_con ~ ifelse(PfFlag, P_PF * Q_initial.u/P_initial.u, Qext_in.u)  #ifelse(PfFlag, P_PF * tan(P_faref.u), Qext_in.u)
-        Q_lim ~ clamp(Q_con, Q_min, Q_max) #limiter(Q_con, Q_min, Q_max)
-        ΔQ ~ Q_lim - Q_gen.u
-        PI_freeze.in ~ ΔQ
-        PI_freeze.freeze ~ Voltage_dip
-        V_lima ~ PI_freeze.out
-
-        V_con ~ ifelse(Vflag, V_lima, Q_con) #Vflag * V_lima + (1-Vflag) * V_ref0
-        V_limb ~ clamp(V_con, V_min, V_max) #limiter(V_con, V_min, V_max)
-        ΔV ~ V_limb - V_tfilt
-        PI_freeze_var.in ~ ΔV
-        PI_freeze_var.freeze ~ Voltage_dip
-        PI_freeze_var.outMin ~ I_qmin
-        PI_freeze_var.outMax ~ I_qmax
-        I_lim ~ PI_freeze_var.out
-
+        if Vflag && QFlag
+            Q_lim ~ clamp(Q_con, Q_min, Q_max)
+            ΔQ ~ Q_lim - Q_gen.u
+            PI_freeze.in ~ ΔQ
+            PI_freeze.freeze ~ Voltage_dip
+            V_lima ~ PI_freeze.out
+            V_con ~ V_lima
+        end
+        if !Vflag && QFlag
+            V_con ~ Q_con
+        end
+        if QFlag
+            V_limb ~ clamp(V_con, V_min, V_max)
+            ΔV ~ V_limb - V_tfilt
+            PI_freeze_var.in ~ ΔV
+            PI_freeze_var.freeze ~ Voltage_dip
+            PI_freeze_var.outMin ~ I_qmin
+            PI_freeze_var.outMax ~ I_qmax
+            I_lim ~ PI_freeze_var.out
+            I_qcon ~ I_lim
+        else
+            I_qcon ~ I_qin
+        end
         I_t ~ Q_con / V_tfiltlim
         simpleLag_freeze.in ~ I_t
         simpleLag_freeze.freeze ~ Voltage_dip
         I_qin ~ simpleLag_freeze.out
-        I_qcon ~ ifelse(QFlag, I_lim, I_qin)
 
         I_sum ~ I_qcon + I_qinj
         I_qcmd ~ limiter(I_sum, I_qmin, I_qmax) #clamp(I_sum, I_qmin, I_qmax) #limiter(I_sum, I_qmin, I_qmax)

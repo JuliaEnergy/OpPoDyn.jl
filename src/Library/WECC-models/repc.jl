@@ -196,15 +196,17 @@ end
         Qext_out = RealOutput(guess=-0.30027) # reactive power [pu]
 
         #building blocks
-        simpleLag = PowerDynamics.Library.SimpleLag(K=1, T=T_p, guess=0.800721)
-        simpleLag1 = PowerDynamics.Library.SimpleLag(K=1, T=T_lag, guess=0.800721)
         simpleLag2 = PowerDynamics.Library.SimpleLag(K=1, T=T_fltr2, guess=-0.30027)
         simpleLag3 = PowerDynamics.Library.SimpleLag(K=1, T=T_fltr1, guess=1.001047)
         leadLag = PowerDynamics.Library.LeadLag(K=1, T1=T_ft, T2=T_fv, guess=-0.30027)
         deadband = PowerDynamics.Library.DeadZone(uMax=dbd_up, uMin=dbd_dn)
-        f_deadband = PowerDynamics.Library.DeadZone(uMax=fdbd2, uMin=fdbd1)
         PI_lim_Q = PowerDynamics.Library.P_I_Lim_freeze(K_p=K_p, K_i=K_i, T=1, outMin=Q_min, outMax=Q_max, guess=-0.30027, guessx=-0.30027)
-        PI_lim_P = PowerDynamics.Library.P_I_Lim(K_p=K_pg, K_i=K_ig, T=1, outMin=P_min, outMax=P_max, guess=0.800721, guessx=0.800721)
+        if freqFlag
+            simpleLag = PowerDynamics.Library.SimpleLag(K=1, T=T_p, guess=0.800721)
+            simpleLag1 = PowerDynamics.Library.SimpleLag(K=1, T=T_lag, guess=0.800721)
+            f_deadband = PowerDynamics.Library.DeadZone(uMax=fdbd2, uMin=fdbd1)
+            PI_lim_P = PowerDynamics.Library.P_I_Lim(K_p=K_pg, K_i=K_ig, T=1, outMin=P_min, outMax=P_max, guess=0.800721, guessx=0.800721)
+        end
     end
     @variables begin
         Voltage_dip(t), [guess=0, description="freeze states if Voltagedip=1"]
@@ -224,13 +226,14 @@ end
         #Q_I(t), [guess=-0.056635436, description=""]
         Q_lim(t), [guess=-0.30027, description="Reactive power after reactive power limits"]
         Q_ext(t), [guess=-0.30027, description="Reactive power output"]
-        Δf_deadband(t), [guess=0, description="frequency difference after deadband"]
-        Δf_corr(t), [guess=0, description="Frequency difference after droop"]
-        P_branchp(t), [guess=0.800721, description="Active power after T_p"]
-        f_e(t), [guess=0, description="frequency after frequency limits"]
-        #P_e(t), [guess=0.015,description="Active power before power limits"]
-        P_lim(t), [guess=0.800721, description="Active power after power limits"]
-        P_refa(t), [guess=0.800721, description="Active Power reference if Freq_flag=1"]
+        if freqFlag
+            Δf_deadband(t), [guess=0, description="frequency difference after deadband"]
+            Δf_corr(t), [guess=0, description="Frequency difference after droop"]
+            P_branchp(t), [guess=0.800721, description="Active power after T_p"]
+            f_e(t), [guess=0, description="frequency after frequency limits"]
+            P_lim(t), [guess=0.800721, description="Active power after power limits"]
+            P_refa(t), [guess=0.800721, description="Active Power reference if Freq_flag=1"]
+        end
         P_ref(t), [guess=0.800721, description="Active power output"]
     end
     @equations begin
@@ -269,25 +272,21 @@ end
         Q_ext ~ leadLag.out
 
         #active power control
-        #Δf_deadband ~ deadband(freq_ref-freq.u, fdbd1, fdbd2)
-        f_deadband.in ~ freq_ref-freq.u
-        Δf_deadband ~ f_deadband.out
-
-        Δf_corr ~ max(Δf_deadband * D_up, 0) + min(Δf_deadband * D_dn, 0) #lowlimit(Δf_deadband * D_up, 0) + uplimit(Δf_deadband * D_dn, 0)
-
-        #T_p * Dt(P_branchp) ~ P_branch.u - P_branchp
-        simpleLag.in ~ P_branch.u
-        P_branchp ~ simpleLag.out
-
-        f_e ~ clamp(P_plantref.u-P_branchp+Δf_corr, femin, femax) #limiter(P_plantref-P_branchp+Δf_corr, femin, femax)
-        PI_lim_P.in ~ f_e
-        P_lim ~ PI_lim_P.out
-
-        #T_lag * Dt(P_refa) ~ P_lim - P_refa
-        simpleLag1.in ~ P_lim
-        P_refa ~ simpleLag1.out
-
-        P_ref ~ ifelse(freqFlag, P_refa, P_plantref.u)
+        if freqFlag
+            f_deadband.in ~ freq_ref-freq.u
+            Δf_deadband ~ f_deadband.out
+            Δf_corr ~ max(Δf_deadband * D_up, 0) + min(Δf_deadband * D_dn, 0)
+            simpleLag.in ~ P_branch.u
+            P_branchp ~ simpleLag.out
+            f_e ~ clamp(P_plantref.u-P_branchp+Δf_corr, femin, femax)
+            PI_lim_P.in ~ f_e
+            P_lim ~ PI_lim_P.out
+            simpleLag1.in ~ P_lim
+            P_refa ~ simpleLag1.out
+            P_ref ~ P_refa
+        else
+            P_ref ~ P_plantref.u
+        end
         #outputs
         Pref_out.u ~ P_ref
         Qext_out.u ~ Q_ext
