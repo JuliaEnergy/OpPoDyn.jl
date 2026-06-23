@@ -1,5 +1,5 @@
-src_path = raw"C:\Users\smmywael\.julia\dev\OpPoDyn\test\WECC_model_tests\PV_pf\variables-testcase3Bus-without-event_addVariableNames.csv"
-main_path = raw"C:\Users\smmywael\.julia\dev\OpPoDyn\test\WECC_model_tests\PV_pf\variables-testcase3Bus-with-event_addVariableNames.csv"
+src_path = raw"C:\Users\smmywael\.julia\dev\OpPoDyn\test\WECC_model_tests\PV_pf\testcase2Bus_variables-testcase-with-event_staticLoad.csv"
+main_path = raw"C:\Users\smmywael\.julia\dev\OpPoDyn\test\WECC_model_tests\PV_pf\testcase2Bus_variables-testcase-with-event_staticLoad_SystemBase.csv"
 
 function parse_row(line)
     cells = split(rstrip(line, ['\n', '\r']), ';')

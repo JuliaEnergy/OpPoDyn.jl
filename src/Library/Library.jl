@@ -3,6 +3,7 @@ module Library
 using ArgCheck: @argcheck
 using ModelingToolkit: ModelingToolkit, @named, @mtkmodel, @variables, @parameters, simplify, connect,
                        t_nounits as t, D_nounits as Dt
+using Symbolics: Symbolics
 using ModelingToolkit: @unpack, Equation, Num, System # needed for @mtkmodel?
 using ModelingToolkitStandardLibrary.Blocks #: RealInput, RealOutput
 using NonlinearSolve: NonlinearProblem
@@ -76,7 +77,8 @@ include("WECC-models/reec.jl")
 export repc_a, repc_a_pf
 include("WECC-models/repc.jl")
 
-export WECC_large_PV, WECC_BESS, WECC_WT_4B, WTDTA1, WECC_large_PV_pf
+export WECC_large_PV, WECC_BESS, WECC_WT_4B, WTDTA1, WECC_large_PV_pf, WECC_large_PV_prescribed,
+       set_prescribed_terminal!
 include("WECC-models/plantmodels.jl")
 
 export OpenIPSL_RePSSE_pv, OpenIPSL_RePSSE_wt, OpenIPSL_RePSSE_bess, ref_rms_error, OpenIPSL_RePSSE_pv_pf, OpenIPSL_RePSSE_pv_pf_3bus

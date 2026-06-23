@@ -189,7 +189,7 @@ end
         P_branch = RealInput(guess=0.800721) #from aggregated turbine model or collection point of wind plant
         I_branch = RealInput(guess=0.854276)
         freq = RealInput(guess=1) #from aggregated turbine model or collection point of wind plant
-        V_ref = RealInput(guess=1.001047)
+        V_ref = RealInput(guess=0.903563)
         Q_ref = RealInput(guess=-0.30027)
         # outputs
         Pref_out = RealOutput(guess=0.800721) # active power [pu]

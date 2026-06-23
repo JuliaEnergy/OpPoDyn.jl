@@ -654,28 +654,62 @@ end
 function OpenIPSL_RePSSE_pv_pf(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwtol=1e0)
     # copy constructor and set vidxs
     bus1 = VertexModel(_bus1, vidx=1, name=:GEN1)
-    @named junction = compile_bus(MTKBus(), vidx=2)
-    loopback = LoopbackConnection(; src=:GEN1, dst=:junction, potential=[:u_r, :u_i], flow=[:i_r, :i_i])
-    #v_0 = 1.0
-    #angle_0 = 0
 
-    #@named slack =  SlackDifferential()
-    #busmodel = MTKBus(slack; name=:slack_src)
-    #bus2 = compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0), vidx=2)
-    slack = compile_bus(SlackAlgebraic(name=:slack_src), vidx=3)
+    P_load = 30e6   # W
+    Q_load = 50e6   # var (inductive)
+    S_b    = 100e6
+    U_b    = 230000
+    Z_b    = U_b^2 / S_b
 
-    # line
-    U_b = 230000
-    S_b = 100000000
-    Z_b = U_b^2/S_b
-    pwLine = MTKLine(PiLine(; name=:PwLine))
-    line = compile_line(pwLine; name=:pwLine,
-        src=:junction, dst=:slack_src,
-        PwLine₊X=1/Z_b, PwLine₊R=1/Z_b)
+    function make_junction(G, B)
+        @named junc_load = ConstantYLoad(G=G, B=B, allow_zero_conductance=true)
+        busmodel = MTKBus(junc_load; name=:junction)
+        junc = compile_bus(busmodel, vidx=2)
+        _disable = ComponentAffect([], [:junc_load₊G, :junc_load₊B]) do u, p, ctx
+            @info "Load disconnected at junction bus at t = $(ctx.t)s"
+            p[:junc_load₊G] = 0
+            p[:junc_load₊B] = 0
+        end
+        set_callback!(junc, PresetTimeComponentCallback(1.0, _disable))
+        junc
+    end
 
-    buses = [bus1, junction, slack]
-    lines = [line, loopback]
-    nw = Network(buses, lines; warn_order=false)
+    function make_network(junction)
+        loopback = LoopbackConnection(; src=:GEN1, dst=:junction, potential=[:u_r, :u_i], flow=[:i_r, :i_i])
+        #v_0 = 1.0
+        #angle_0 = 0
+
+        #@named slack =  SlackDifferential()
+        #busmodel = MTKBus(slack; name=:slack_src)
+        #bus2 = compile_bus(busmodel, pf=pfSlack(V=v_0, δ=angle_0), vidx=2)
+        slack = compile_bus(SlackAlgebraic(name=:slack_src), vidx=3)
+
+        # line (100× longer than original: R=X=100/Z_b)
+        pwLine = MTKLine(PiLine(; name=:PwLine))
+        line = compile_line(pwLine; name=:pwLine,
+            src=:junction, dst=:slack_src,
+            PwLine₊X=100/Z_b, PwLine₊R=100/Z_b)
+
+        Network([bus1, junction, slack], [line, loopback]; warn_order=false)
+    end
+
+    # Iterative self-consistent admittance: G = P/(V_lf^2 * S_b) where V_lf is the power flow voltage
+    # Converges when the power flow voltage no longer changes (typically 2-3 iterations)
+    G_load, B_load = P_load/S_b, -Q_load/S_b
+    V_lf = 1.0
+    for _ in 1:50
+        pfs_tmp = solve_powerflow(make_network(make_junction(G_load, B_load)); verbose=false)
+        V_new   = pfs_tmp[VIndex(2, :busbar₊u_mag)]
+        abs(V_new - V_lf) < 1e-10 && break
+        V_lf   = V_new
+        G_load = P_load / (V_lf^2 * S_b)
+        B_load = -Q_load / (V_lf^2 * S_b)
+    end
+    @info "Self-consistent V_lf = $(round(V_lf; digits=6)) pu → G=$(round(G_load;digits=6)), B=$(round(B_load;digits=6))"
+
+    # Pass 2: build network with self-consistent admittance
+    junction = make_junction(G_load, B_load)
+    nw       = make_network(junction)
 
     verbose = true
     pfnw=nothing

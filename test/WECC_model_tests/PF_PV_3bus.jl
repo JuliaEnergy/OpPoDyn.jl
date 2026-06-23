@@ -16,7 +16,16 @@ using Test
 
 
 ref_pv = CSV.read(
-    joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV_pf","variables-testcase3Bus-with-event_addVariableNames.csv"),
+    joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV_pf","variables-testcase3Bus-with-event_addVariableNames_withoutThresholdOperationVoltage_correctSystemBase.csv"),
+    DataFrame;
+    header = 3,
+    decimal = ',',
+    drop = (i, name) -> contains(string(name), "nrows="),
+    silencewarnings = true
+)
+
+ref_pv_nothresh = CSV.read(
+    joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV_pf","variables-testcase3Bus-with-event_addVariableNames_withoutThresholdOperationVoltage_correctSystemBase.csv"),
     DataFrame;
     header = 3,
     decimal = ',',
@@ -178,13 +187,24 @@ end
 
 # Input measures comparison: PowerFactory vs. simulation
 ref_inputs = CSV.read(
-    joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV_pf","testcase3Bus-with-event_InputMeasures.csv"),
+    joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV_pf","measures-testcase3Bus-with-event_staticLoad_SystemBase_moreTimesteps.csv"),
     DataFrame;
     header = 3,
+    delim = ';',
     decimal = ',',
     silencewarnings = true
 )
 rename!(ref_inputs, 1 => :time)
+
+ref_inputs_nothresh = CSV.read(
+    joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV_pf","testcase3Bus-with-event_InputMeasures_withoutThresholdOperationVoltage.csv"),
+    DataFrame;
+    header = 3,
+    delim = ';',
+    decimal = ',',
+    silencewarnings = true
+)
+rename!(ref_inputs_nothresh, 1 => :time)
 
 if isdefined(Main, :EXPORT_FIGURES) && Main.EXPORT_FIGURES
     fig_inputs = let
@@ -232,4 +252,197 @@ if isdefined(Main, :EXPORT_FIGURES) && Main.EXPORT_FIGURES
         fig
     end
     save(joinpath(pkgdir(OpPoDyn),"docs","src","assets","PowerFactory_valid","PV_3bus_input_measures.png"), fig_inputs)
+end
+
+
+# Bus A voltage comparison: PowerFactory vs. Julia
+if isdefined(Main, :EXPORT_FIGURES) && Main.EXPORT_FIGURES
+    fig_busA = let
+        ts_refined = refine_timeseries(sol_pv.t, 20)
+        ts = ts_refined[(ts_refined .>= 0.05) .& (ts_refined .<= 0.5)]
+        idx = (ref_pv.time .>= 0.05) .& (ref_pv.time .<= 0.5)
+        t_ref = ref_pv.time[idx]
+
+        # Julia: bus voltage at node 1 (= Point A) in network reference frame
+        ur_jl = sol_pv(ts, idxs=VIndex(1, :busbar₊u_r)).u
+        ui_jl = sol_pv(ts, idxs=VIndex(1, :busbar₊u_i)).u
+        V_jl  = sqrt.(ur_jl .^ 2 .+ ui_jl .^ 2)
+        δ_jl  = atan.(ui_jl, ur_jl) .* (180 / π)
+
+        fig = Figure(resolution=(1100, 900))
+
+        ax1 = Axis(fig[1,1]; xlabel="Time [s]", ylabel="|V| [pu]",   title="Voltage Magnitude — Point A")
+        lines!(ax1, t_ref, ref_pv.bus1_V[idx];     label="PowerFactory", color=:blue,  linewidth=2, alpha=0.7)
+        lines!(ax1, ts,    V_jl;                    label="Julia",        color=:red,   linewidth=2, linestyle=:dash)
+        axislegend(ax1; position=:rb)
+
+        ax2 = Axis(fig[1,2]; xlabel="Time [s]", ylabel="δ [°]",      title="Voltage Angle — Point A")
+        lines!(ax2, t_ref, ref_pv.bus1_delta[idx];  label="PowerFactory", color=:blue,  linewidth=2, alpha=0.7)
+        lines!(ax2, ts,    δ_jl;                    label="Julia",        color=:red,   linewidth=2, linestyle=:dash)
+        axislegend(ax2; position=:rb)
+
+        ax3 = Axis(fig[2,1]; xlabel="Time [s]", ylabel="u_r [pu]",   title="Real Part of Voltage — Point A")
+        lines!(ax3, t_ref, ref_pv.bus1_vr[idx];     label="PowerFactory", color=:blue,  linewidth=2, alpha=0.7)
+        lines!(ax3, ts,    ur_jl;                   label="Julia",        color=:red,   linewidth=2, linestyle=:dash)
+        axislegend(ax3; position=:rb)
+
+        ax4 = Axis(fig[2,2]; xlabel="Time [s]", ylabel="u_i [pu]",   title="Imaginary Part of Voltage — Point A")
+        lines!(ax4, t_ref, ref_pv.bus1_vi[idx];     label="PowerFactory", color=:blue,  linewidth=2, alpha=0.7)
+        lines!(ax4, ts,    ui_jl;                   label="Julia",        color=:red,   linewidth=2, linestyle=:dash)
+        axislegend(ax4; position=:rb)
+
+        fig
+    end
+    save(joinpath(pkgdir(OpPoDyn),"docs","src","assets","PowerFactory_valid","PV_3bus_busA_voltage.png"), fig_busA)
+end
+
+
+# First values after t = 0.1 s
+let
+    println("\n", "="^70)
+    println("Erste Werte nach t = 0.1 s — Knoten A (Point A)")
+    println("="^70)
+
+    csv_idx = findfirst(ref_pv.time .> 0.1)
+    println("\nCSV (PowerFactory)  — t = $(ref_pv.time[csv_idx]) s")
+    println("  |V|  (bus1_V)     = $(ref_pv.bus1_V[csv_idx])")
+    println("  δ    (bus1_delta) = $(ref_pv.bus1_delta[csv_idx]) °")
+    println("  u_r  (bus1_vr)    = $(ref_pv.bus1_vr[csv_idx])")
+    println("  u_i  (bus1_vi)    = $(ref_pv.bus1_vi[csv_idx])")
+
+    jl_t   = sol_pv.t[findfirst(sol_pv.t .> 0.1)]
+    ur_jl1 = sol_pv(jl_t, idxs=VIndex(1, :busbar₊u_r))
+    ui_jl1 = sol_pv(jl_t, idxs=VIndex(1, :busbar₊u_i))
+    V_jl1  = sqrt(ur_jl1^2 + ui_jl1^2)
+    δ_jl1  = atan(ui_jl1, ur_jl1) * 180 / π
+    println("\nJulia (OpPoDyn)     — t = $jl_t s")
+    println("  |V|               = $V_jl1")
+    println("  δ                 = $δ_jl1 °")
+    println("  u_r               = $ur_jl1")
+    println("  u_i               = $ui_jl1")
+end
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Open-Loop-Test des PV-Bus (vorgeschriebene Klemmengrößen):
+# Alle 4 Klemmengrößen (pvr, pvi, pir, pii) werden aus der CSV vorgegeben.
+# pir_out / pii_out sind der vom Modell (REGCA) berechnete Klemmenstrom.
+# Wenn das Modell korrekt ist, sollten pir_out ≈ pir und pii_out ≈ pii gelten.
+# ══════════════════════════════════════════════════════════════════════════════
+include(joinpath(@__DIR__, "open_loop_utils.jl"))
+include(joinpath(@__DIR__, "prescribed_pv_test.jl"))
+
+#if isdefined(Main, :EXPORT_FIGURES) && Main.EXPORT_FIGURES
+    res_presc = prescribed_pv_test(
+        ref_inputs;
+        obs_df = ref_pv,
+    )
+
+    regc_keys    = ["regc_Iqr", "regc_o2", "regc_o3", "regc_dIq", "regc_Qgen", "regc_Vtfiltlim"]
+    repc_q_diag_keys = ["repc_Qfltr", "repc_dQ", "repc_dQin", "repc_dQdbd", "repc_Qe", "repc_Qlim"]
+    exclude_keys = union(regc_keys, repc_q_diag_keys)
+    fig_presc = comparison_figure(
+        (; sol=res_presc.sol, dat=OrderedDict(k => v for (k, v) in res_presc.dat if k ∉ exclude_keys));
+        tmin=0.0, tmax=0.3,
+    )
+    #save(joinpath(pkgdir(OpPoDyn),"docs","src","assets","PowerFactory_valid","PV_3bus_openloop.png"), fig_presc)
+
+    # Diagnostic plot: REGC internals (I_qr, o2, o3, ΔI_q, Q_gen, V_tfiltlim)
+    fig_regc_diag = comparison_figure(
+        (; sol=res_presc.sol, dat=OrderedDict(k => res_presc.dat[k] for k in regc_keys));
+        tmin=0.0, tmax=0.3,
+    )
+    #save(joinpath(pkgdir(OpPoDyn),"docs","src","assets","PowerFactory_valid","PV_3bus_regc_diag.png"), fig_regc_diag)
+
+    # Q_ext Signalpfad: Q_branch → Q_fltr → ΔQ → ΔQ_in → ΔQ_dbd → Q_e → Q_lim → Q_ext
+    repc_q_keys = ["repc_Qbranch", "repc_Qfltr", "repc_dQ", "repc_dQin",
+                   "repc_dQdbd", "repc_Qe", "repc_Qlim", "repc_Qext"]
+    fig_repc_q_diag = comparison_figure(
+        (; sol=res_presc.sol, dat=OrderedDict(k => res_presc.dat[k] for k in repc_q_keys));
+        tmin=0.0, tmax=0.3,
+    )
+#end
+
+# CSV consistency check: sqrt(pir²+pii²) vs repc_Ibranch, pvi·pir-pvr·pii vs repc_Qbranch
+let
+    idx = (ref_inputs.time .>= 0.09) .& (ref_inputs.time .<= 0.14)
+    t   = ref_inputs.time[idx]
+    pir = ref_inputs.pir[idx]
+    pii = ref_inputs.pii[idx]
+    pvr = ref_inputs.pvr[idx]
+    pvi = ref_inputs.pvi[idx]
+
+    idx2  = (ref_pv.time .>= 0.09) .& (ref_pv.time .<= 0.14)
+    t2    = ref_pv.time[idx2]
+
+    fig = Figure(size=(900, 400))
+
+    ax1 = Axis(fig[1,1]; xlabel="Time [s]", title="I_branch: √(pir²+pii²) vs repc_Ibranch")
+    lines!(ax1, t,  sqrt.(pir.^2 .+ pii.^2);         label="√(pir²+pii²)  [ref_inputs]", linewidth=2)
+    lines!(ax1, t2, ref_pv.repc_Ibranch[idx2];        label="repc_Ibranch   [ref_pv]",    linewidth=2, linestyle=:dash)
+    lines!(ax1, t,  ref_inputs.I_measure[idx];        label="I_measure      [ref_inputs]", linewidth=2, color=:black)
+    axislegend(ax1; position=:rt)
+
+    ax2 = Axis(fig[1,2]; xlabel="Time [s]", title="Q_branch: pvi·pir-pvr·pii vs repc_Qbranch")
+    lines!(ax2, t,  pvi.*pir .- pvr.*pii;             label="pvi·pir-pvr·pii  [ref_inputs]", linewidth=2)
+    lines!(ax2, t2, ref_pv.repc_Qbranch[idx2];        label="repc_Qbranch     [ref_pv]",    linewidth=2, linestyle=:dash)
+    lines!(ax2, t,  ref_inputs.Q_measure[idx];        label="Q_measure        [ref_inputs]", linewidth=2, color=:black)
+    axislegend(ax2; position=:rt)
+
+    global fig_csv_check = fig
+end
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Open-Loop-Test ohne Switch-off-Threshold (PF-Threshold = 0):
+# Vergleich mit PF-Daten bei deaktiviertem min. Betriebsspannungs-Schwellwert.
+# ══════════════════════════════════════════════════════════════════════════════
+res_presc_nothresh = prescribed_pv_test(
+    ref_inputs_nothresh;
+    obs_df = ref_pv_nothresh,
+)
+
+fig_presc_nothresh = comparison_figure(
+    (; sol=res_presc_nothresh.sol, dat=OrderedDict(k => v for (k, v) in res_presc_nothresh.dat if k ∉ exclude_keys));
+    tmin=0.0, tmax=0.3,
+)
+
+# Q_fltr detail: compare Q_branch, simpleLag2 internal state, and Q_fltr
+# from high-resolution PowerFactory export vs. Julia simulation
+ref_qfltr = CSV.read(
+    joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV_pf","testcase3Bus-with-event_QbranchQfltr_moretimesteps.csv"),
+    DataFrame;
+    header = 3,
+    delim = ';',
+    decimal = ',',
+    silencewarnings = true
+)
+rename!(ref_qfltr, 1 => :time)
+
+fig_qfltr_detail = let
+    sys  = res_presc.sys
+    sol  = res_presc.sol
+    tsim = _ol_refine(sol.t, 5)
+    tsim = tsim[(tsim .>= 0.0) .& (tsim .<= 0.3)]
+    idx  = (ref_qfltr.time .>= 0.0) .& (ref_qfltr.time .<= 0.3)
+    t_ref = ref_qfltr.time[idx]
+    idx_in = (ref_inputs.time .>= 0.0) .& (ref_inputs.time .<= 0.3)
+
+    fig = Figure(size=(900, 900))
+
+    ax1 = Axis(fig[1,1]; xlabel="Time [s]", ylabel="[pu]", title="Q_branch")
+    lines!(ax1, ref_inputs.time[idx_in], ref_inputs.Q_measure[idx_in]; label="PowerFactory", color=:blue, linewidth=2, alpha=0.7)
+    lines!(ax1, tsim, sol(tsim; idxs=sys.Q_measure).u;                  label="Julia",        color=:red,  linewidth=2, linestyle=:dash)
+    axislegend(ax1)
+
+    ax2 = Axis(fig[2,1]; xlabel="Time [s]", ylabel="[pu]", title="simpleLag2 internal state (x_fltr2)")
+    lines!(ax2, t_ref, ref_qfltr.xfltr2[idx];            label="PowerFactory",     color=:blue, linewidth=2, alpha=0.7)
+    lines!(ax2, tsim, sol(tsim; idxs=sys.repca.simpleLag2.out).u;    label="Julia (= Q_fltr)", color=:red,  linewidth=2, linestyle=:dash)
+    axislegend(ax2)
+
+    ax3 = Axis(fig[3,1]; xlabel="Time [s]", ylabel="[pu]", title="Q_fltr")
+    lines!(ax3, t_ref, ref_qfltr.Q_fltr[idx];             label="PowerFactory", color=:blue, linewidth=2, alpha=0.7)
+    lines!(ax3, tsim, sol(tsim; idxs=sys.repca.Q_fltr).u; label="Julia",        color=:red,  linewidth=2, linestyle=:dash)
+    axislegend(ax3)
+
+    fig
 end

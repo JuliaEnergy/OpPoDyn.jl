@@ -677,8 +677,8 @@ end
         #current limiter logic
         I_pmin ~ 0
         I_qmin ~ - I_qmax
-        I_pmax ~ ifelse(PqFlag, I_max, sqrt(I_max^2 - min(I_qcmd^2, I_max^2)))
-        I_qmax ~ ifelse(PqFlag, sqrt(I_max^2 - min(I_pcmd^2, I_max^2)), I_max)
+        I_pmax ~ ifelse(PqFlag, I_max, sqrt(I_max^2 - min(I_sum^2, I_max^2))) #ifelse(PqFlag, I_max, sqrt(I_max^2 - min(I_qcmd^2, I_max^2)))
+        I_qmax ~ ifelse(PqFlag, sqrt(I_max^2 - min(I_pref^2, I_max^2)), I_max) #ifelse(PqFlag, sqrt(I_max^2 - min(I_pcmd^2, I_max^2)), I_max)
         #outputs
         Iqcmd_out.u ~ I_qcmd
         Ipcmd_out.u ~ I_pcmd

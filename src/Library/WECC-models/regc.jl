@@ -107,7 +107,7 @@ end
         Ipout = RealOutput(guess=0.799884)
 
         simpleLag = PowerDynamics.Library.SimpleLag(K=1, T=T_fltr, guess=1.001047)
-        SimpleLagLim = PowerDynamics.Library.SimpleLagLim(K=1, T=T_gq, outMin=I_qrmin, outMax=I_qrmax, guess=0.299956)
+        SimpleLagLim = PowerDynamics.Library.SimpleLagLim(K=1, T=T_gq, outMin=I_qrmin, outMax=I_qrmax, guess=-0.299956)
         SimpleLag_2uplims = PowerDynamics.Library.SimpleLag_2MaxLims(K=1, T=T_gp, doutMax=rrpwr, guess=0.799884, guessin=0.799884, guessx=0.799884)
     end
     @variables begin
@@ -156,7 +156,7 @@ end
 
         I_lvpl ~ ifelse(L_vplsw, LVPLogic(V, Zerox, Brkpt, L_vpl1), 999.99) #no upper limit if switch of
         SimpleLag_2uplims.in ~ Ipcmd_in.u
-        SimpleLag_2uplims.outMax ~ 1#I_lvpl
+        SimpleLag_2uplims.outMax ~ I_lvpl
         I_pr ~ SimpleLag_2uplims.out
         #P_gen ~ ifelse(Vt_in.u <= lvpnt0, 0, ifelse(Vt_in.u >= lvpnt1, 1, (Vt_in.u-lvpnt0)/(lvpnt1-lvpnt0)))
         Vt_scaled ~ V_tfilt.u * LVPLogic(V_tfilt.u, lvpnt0, lvpnt1, 1) #LVACM
