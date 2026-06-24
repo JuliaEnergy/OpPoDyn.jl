@@ -688,7 +688,9 @@ function OpenIPSL_RePSSE_pv_pf(_bus1; ω_b=2π*50, just_init=false, tol=1e0, nwt
         pwLine = MTKLine(PiLine(; name=:PwLine))
         line = compile_line(pwLine; name=:pwLine,
             src=:junction, dst=:slack_src,
-            PwLine₊X=100/Z_b, PwLine₊R=100/Z_b)
+            PwLine₊X=100/Z_b, PwLine₊R=100/Z_b,
+            PwLine₊B_src=0.0, PwLine₊B_dst=0.0,
+            PwLine₊G_src=0.0, PwLine₊G_dst=0.0)
 
         Network([bus1, junction, slack], [line, loopback]; warn_order=false)
     end

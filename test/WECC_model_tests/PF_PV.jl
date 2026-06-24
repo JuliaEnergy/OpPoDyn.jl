@@ -1,4 +1,5 @@
 using PowerDynamics
+
 using OpPoDyn
 using OpPoDyn.Library
 
@@ -15,7 +16,7 @@ using Printf
 
 
 ref_pv = CSV.read(
-    joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV_pf","variables-testcase2Bus-with-event_withoutThresholdOperationVoltage_correctSystemBase_moreTimesteps.csv"),
+    joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV_pf","variables-testcase2Bus-with-event_staticLoad_SystemBase_IdealSlack.csv"),
     DataFrame;
     header = 3,
     decimal = ',',
@@ -24,7 +25,7 @@ ref_pv = CSV.read(
 )
 
 ref_measures = CSV.read(
-    joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV_pf","measures-testcase2Bus-with-event_staticLoad_SystemBase_moreTimesteps.csv"),
+    joinpath(pkgdir(OpPoDyn),"test","WECC_model_tests","PV_pf","measures-testcase2Bus-with-event_staticLoad_SystemBase_IdealSlack.csv"),
     DataFrame;
     header = 3,
     delim = ';',
@@ -82,30 +83,6 @@ let t0 = 0.99
     end
 end
 
-# ── Post-Fault-Vergleich Julia vs. PowerFactory ───────────────────────────
-# t=1.001s: Strom und V_t direkt nach dem Fault (algebraische Reinitialisierung)
-let t0 = 1.001
-    i_pf = argmin(abs.(ref_pv.time .- t0))
-    check = [
-        (VIndex(:GEN1, :PV₊V_t),          "reec_Vt",      "V_t     "),
-        (VIndex(:GEN1, :PV₊Q_measure),    "repc_Qbranch", "Q_branch"),
-        (VIndex(:GEN1, :PV₊P_measure),    "repc_Pbranch", "P_branch"),
-        (VIndex(:GEN1, :PV₊reecb₊I_qcmd), "reec_Iqcmd",   "I_qcmd  "),
-        (VIndex(:GEN1, :PV₊reecb₊I_pcmd), "reec_Ipcmd",   "I_pcmd  "),
-        (VIndex(:GEN1, :PV₊regca₊I_q),    "regc_Iq",      "regca_Iq"),
-        (VIndex(:GEN1, :PV₊regca₊I_p),    "regc_Ip",      "regca_Ip"),
-        (VIndex(:GEN1, :PV₊regca₊I_qr),   "regc_Iqr",     "regca_Iqr"),
-    ]
-    println("\n=== Post-Fault t=$(t0)s (Stromzustände + V_t) ===")
-    @printf("%-12s  %12s  %12s  %12s\n", "Variable", "Julia", "PF", "Diff")
-    for (idx, col, name) in check
-        jv = sol_pv(t0, idxs=idx)
-        col_sym = Symbol(col)
-        col_sym ∉ propertynames(ref_pv) && (@printf("%-12s  %12.6f  %12s\n", name, jv, "(no col)"); continue)
-        pv = ref_pv[i_pf, col_sym]
-        @printf("%-12s  %12.6f  %12.6f  %+.2e\n", name, jv, pv, jv - pv)
-    end
-end
 
 # t=1.02s und t=1.3s: zeitliche Entwicklung der Abweichung
 let check = [
