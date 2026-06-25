@@ -52,59 +52,6 @@ end
 
 sol_pv = OpenIPSL_RePSSE_pv_pf(PV_BUS; ω_b = 2π*50);
 
-# ── Vorfehlerzustand-Vergleich Julia vs. PowerFactory ────────────────────────
-let t0 = 0.99
-    i_pf = argmin(abs.(ref_pv.time .- t0))
-
-    check = [
-        (VIndex(:GEN1, :PV₊V_t),          "reec_Vt",    "V_t        "),
-        (VIndex(:GEN1, :PV₊pvr),          "repc_vregr", "pvr        "),
-        (VIndex(:GEN1, :PV₊pvi),          "repc_vregi", "pvi        "),
-        (VIndex(:GEN1, :PV₊repca₊Q_ext),  "repc_Qext",  "Q_ext      "),
-        (VIndex(:GEN1, :PV₊repca₊P_ref),  "repc_Pref",  "P_ref      "),
-        (VIndex(:GEN1, :PV₊reecb₊I_qcmd), "reec_Iqcmd", "I_qcmd     "),
-        (VIndex(:GEN1, :PV₊reecb₊I_pcmd), "reec_Ipcmd", "I_pcmd     "),
-        (VIndex(:GEN1, :PV₊regca₊I_q),    "regc_Iq",    "regca_I_q  "),
-        (VIndex(:GEN1, :PV₊regca₊I_p),    "regc_Ip",    "regca_I_p  "),
-        (VIndex(:GEN1, :PV₊regca₊I_qr),   "regc_Iqr",   "regca_I_qr "),
-    ]
-
-    println("\n=== Vorfehlerzustand t=$(t0)s: Julia vs. PowerFactory ===")
-    @printf("%-16s  %12s  %12s  %12s\n", "Variable", "Julia", "PF", "Diff")
-    for (idx, col, name) in check
-        jv  = sol_pv(t0, idxs=idx)
-        col_sym = Symbol(col)
-        if col_sym ∉ propertynames(ref_pv)
-            @printf("%-16s  %12.6f  %12s  %12s\n", name, jv, "(no col)", "—")
-            continue
-        end
-        pv = ref_pv[i_pf, col_sym]
-        @printf("%-16s  %12.6f  %12.6f  %+.2e\n", name, jv, pv, jv - pv)
-    end
-end
-
-
-# t=1.02s und t=1.3s: zeitliche Entwicklung der Abweichung
-let check = [
-        (VIndex(:GEN1, :PV₊V_t),          "reec_Vt",      "V_t     "),
-        (VIndex(:GEN1, :PV₊Q_measure),    "repc_Qbranch", "Q_branch"),
-        (VIndex(:GEN1, :PV₊P_measure),    "repc_Pbranch", "P_branch"),
-        (VIndex(:GEN1, :PV₊reecb₊I_pcmd), "reec_Ipcmd",   "I_pcmd  "),
-        (VIndex(:GEN1, :PV₊regca₊I_p),    "regc_Ip",      "regca_Ip"),
-    ]
-    for t0 in [1.02, 1.3]
-        i_pf = argmin(abs.(ref_pv.time .- t0))
-        println("\n=== Post-Fault t=$(t0)s ===")
-        @printf("%-10s  %12s  %12s  %12s\n", "Variable", "Julia", "PF", "Diff")
-        for (idx, col, name) in check
-            jv = sol_pv(t0, idxs=idx)
-            col_sym = Symbol(col)
-            col_sym ∉ propertynames(ref_pv) && continue
-            pv = ref_pv[i_pf, col_sym]
-            @printf("%-10s  %12.6f  %12.6f  %+.2e\n", name, jv, pv, jv - pv)
-        end
-    end
-end
 
 ## perform tests for all variables of interest
 # Plant controls (repc_a)
@@ -129,6 +76,65 @@ end
 
 #Input Plot
 if isdefined(Main, :EXPORT_FIGURES) && Main.EXPORT_FIGURES
+    fig1 = let
+        fig = Figure(resolution=(1400, 1500))
+        ts   = range(0.0, 1.5; length=2000)
+        xlims = (0.0, 1.5)
+
+        ax1 = Axis(fig[1,1]; xlabel="Time [s]", ylabel="[pu]", title="pvr (V real)", limits=(xlims..., nothing, nothing))
+        lines!(ax1, ref_pv.time, ref_pv[!, Symbol("repc_vregr")]; label="PowerFactory", color=:blue, linewidth=2, alpha=0.7)
+        lines!(ax1, ts, sol_pv(ts, idxs=VIndex(:GEN1, :PV₊pvr)).u; label="Julia", color=:blue, linestyle=:dash, linewidth=2)
+        axislegend(ax1)
+
+        ax2 = Axis(fig[1,2]; xlabel="Time [s]", ylabel="[pu]", title="pvi (V imag)", limits=(xlims..., nothing, nothing))
+        lines!(ax2, ref_pv.time, ref_pv[!, Symbol("repc_vregi")]; label="PowerFactory", color=:green, linewidth=2, alpha=0.7)
+        lines!(ax2, ts, sol_pv(ts, idxs=VIndex(:GEN1, :PV₊pvi)).u; label="Julia", color=:green, linestyle=:dash, linewidth=2)
+        axislegend(ax2)
+
+        ax3 = Axis(fig[2,1]; xlabel="Time [s]", ylabel="[pu]", title="P_ref", limits=(xlims..., nothing, nothing))
+        lines!(ax3, ref_pv.time, ref_pv[!, Symbol("repc_Pref")]; label="PowerFactory", color=:blue, linewidth=2, alpha=0.7)
+        lines!(ax3, ts, sol_pv(ts, idxs=VIndex(:GEN1, :PV₊repca₊P_ref)).u; label="Julia", color=:blue, linestyle=:dash, linewidth=2)
+        axislegend(ax3)
+
+        ax4 = Axis(fig[2,2]; xlabel="Time [s]", ylabel="[pu]", title="Q_ext", limits=(xlims..., nothing, nothing))
+        lines!(ax4, ref_pv.time, ref_pv[!, Symbol("repc_Qext")]; label="PowerFactory", color=:red, linewidth=2, alpha=0.7)
+        lines!(ax4, ts, sol_pv(ts, idxs=VIndex(:GEN1, :PV₊repca₊Q_ext)).u; label="Julia", color=:red, linestyle=:dash, linewidth=2)
+        axislegend(ax4)
+
+        ax5 = Axis(fig[3,1]; xlabel="Time [s]", ylabel="[pu]", title="I_pcmd", limits=(xlims..., nothing, nothing))
+        lines!(ax5, ref_pv.time, ref_pv[!, Symbol("reec_Ipcmd")]; label="PowerFactory", color=:purple, linewidth=2, alpha=0.7)
+        lines!(ax5, ts, sol_pv(ts, idxs=VIndex(:GEN1, :PV₊reecb₊I_pcmd)).u; label="Julia", color=:purple, linestyle=:dash, linewidth=2)
+        axislegend(ax5)
+
+        ax6 = Axis(fig[3,2]; xlabel="Time [s]", ylabel="[pu]", title="I_qcmd", limits=(xlims..., nothing, nothing))
+        lines!(ax6, ref_pv.time, ref_pv[!, Symbol("reec_Iqcmd")]; label="PowerFactory", color=:orange, linewidth=2, alpha=0.7)
+        lines!(ax6, ts, sol_pv(ts, idxs=VIndex(:GEN1, :PV₊reecb₊I_qcmd)).u; label="Julia", color=:orange, linestyle=:dash, linewidth=2)
+        axislegend(ax6)
+
+        ax7 = Axis(fig[4,1]; xlabel="Time [s]", ylabel="[pu]", title="I_pout (regca)", limits=(xlims..., nothing, nothing))
+        lines!(ax7, ref_pv.time, ref_pv[!, Symbol("regc_Ip")]; label="PowerFactory", color=:red, linewidth=2, alpha=0.7)
+        lines!(ax7, ts, sol_pv(ts, idxs=VIndex(:GEN1, :PV₊regca₊I_p)).u; label="Julia", color=:red, linestyle=:dash, linewidth=2)
+        axislegend(ax7)
+
+        ax8 = Axis(fig[4,2]; xlabel="Time [s]", ylabel="[pu]", title="I_qout (regca)", limits=(xlims..., nothing, nothing))
+        lines!(ax8, ref_pv.time, ref_pv[!, Symbol("regc_Iq")]; label="PowerFactory", color=:teal, linewidth=2, alpha=0.7)
+        lines!(ax8, ts, sol_pv(ts, idxs=VIndex(:GEN1, :PV₊regca₊I_q)).u; label="Julia", color=:teal, linestyle=:dash, linewidth=2)
+        axislegend(ax8)
+
+        ax9 = Axis(fig[5,1]; xlabel="Time [s]", ylabel="[pu]", title="pir (I real)", limits=(xlims..., nothing, nothing))
+        lines!(ax9, ref_measures.time, ref_measures.ir; label="PowerFactory", color=:red, linewidth=2, alpha=0.7)
+        lines!(ax9, ts, sol_pv(ts, idxs=VIndex(:GEN1, :PV₊pir)).u; label="Julia", color=:red, linestyle=:dash, linewidth=2)
+        axislegend(ax9)
+
+        ax10 = Axis(fig[5,2]; xlabel="Time [s]", ylabel="[pu]", title="pii (I imag)", limits=(xlims..., nothing, nothing))
+        lines!(ax10, ref_measures.time, ref_measures.ii; label="PowerFactory", color=:teal, linewidth=2, alpha=0.7)
+        lines!(ax10, ts, sol_pv(ts, idxs=VIndex(:GEN1, :PV₊pii)).u; label="Julia", color=:teal, linestyle=:dash, linewidth=2)
+        axislegend(ax10)
+
+        fig
+    end
+    save(joinpath(pkgdir(OpPoDyn),"docs","src","assets","PowerFactory_valid","PV_comparison_overview.png"), fig1)
+
     fig2 = let
         fig = Figure(resolution=(1400, 1200))
         ts   = range(0.0, 1.5; length=2000)

@@ -16,6 +16,8 @@ function prescribed_pv_test(
     solver         = Rodas5P(autodiff=false),
     obs_df         = nothing,
     calc_measures  = false,   # if true: I/P/Q_measure computed from pvr/pvi/pir/pii instead of CSV
+    P0             = 0.8888,  # initial active power reference (overrides model default)
+    Q0             = -0.3333, # initial reactive power reference (overrides model default)
 )
     pvr_d   = collect(Float64, df[!, :pvr])
     pvi_d   = collect(Float64, df[!, :pvi])
@@ -39,10 +41,44 @@ function prescribed_pv_test(
     g  = ModelingToolkit.get_guesses(sys)
     u0 = Float64[get(g, s, 0.0) for s in unknowns(sys)]
 
+    # Compute initial terminal voltage magnitude from CSV
+    V0 = sqrt(pvr_d[1]^2 + pvi_d[1]^2)
+
+    # Override initial states so the model starts in steady state at (P0, Q0)
+    # instead of the hardcoded 2-bus guess values (0.800721, -0.30027)
+    OLD_Q0 = -0.30027
+    for (i, s) in enumerate(unknowns(sys))
+        sstr = string(s)
+        # REPC: Q_fltr, PI integral, leadLag → Q0
+        if contains(sstr, "repca") &&
+           (contains(sstr, "simpleLag2") || contains(sstr, "PI_lim_Q") || contains(sstr, "leadLag"))
+            if get(g, s, 0.0) ≈ OLD_Q0
+                u0[i] = Q0
+            end
+        # REEC: P_refout lag (P_limLag) → P0
+        elseif contains(sstr, "reecb") && contains(sstr, "P_limLag")
+            u0[i] = P0
+        # REEC: I_qin lag (simpleLag_freeze) → Q0/V0
+        elseif contains(sstr, "reecb") && contains(sstr, "simpleLag_freeze")
+            u0[i] = Q0/V0
+        # REGCA: I_pr lag with rate limit (SimpleLag_2uplims) → P0/V0
+        elseif contains(sstr, "regca") && contains(sstr, "SimpleLag_2uplims")
+            u0[i] = P0/V0
+        # REGCA: I_qr lag (SimpleLagLim) → Q0/V0
+        elseif contains(sstr, "regca") && contains(sstr, "SimpleLagLim")
+            u0[i] = Q0/V0
+        end
+    end
+
     # _callback_sat_min/_max: internal limiter parameters not set by default
     sat_defaults = [p => 0.0 for p in parameters(sys)
                     if contains(string(p), "_callback_sat")]
-    prob = ODEProblem(sys, u0, tspan, sat_defaults)
+    # Override plant-level initial condition parameters (P0/Q0)
+    init_params = [p => (contains(string(p), "Qref_set") || contains(string(p), "Qinit_set") ? Q0 : P0)
+                   for p in parameters(sys)
+                   if any(s -> contains(string(p), s),
+                          ["P_plantref_set", "Pinit_set", "Qref_set", "Qinit_set"])]
+    prob = ODEProblem(sys, u0, tspan, vcat(sat_defaults, init_params))
 
     sol  = solve(prob, solver; tstops=ts, initializealg=SciMLBase.NoInit())
     @info "prescribed_pv_test: retcode=$(sol.retcode), nsteps=$(length(sol.t))"

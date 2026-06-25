@@ -60,7 +60,11 @@
         ΔI_pr ~ Ipcmd_in.u - I_pr
         ΔI_prlim ~ min(ΔI_pr, rrpwr) #uplimit(ΔI_pr, rrpwr)
         T_g * Dt(I_pg) ~ ΔI_prlim
-        I_pr ~ ifelse(L_vplsw, min(I_pg, I_lvpl), I_pg)  #ifelse(L_vplsw, uplimit(I_pg, I_lvpl), I_pg) #L_vplsw * uplimit(I_pg, I_lvpl) + (1-L_vplsw) * I_pg
+        if L_vplsw
+            I_pr ~ min(I_pg, I_lvpl)
+        else
+            I_pr ~ I_pg
+        end
 
         #T_fltr * Dt(V) ~ Vt_in.u - V
         simpleLag.in ~ Vt_in.u

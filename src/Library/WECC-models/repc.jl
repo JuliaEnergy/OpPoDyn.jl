@@ -37,26 +37,27 @@
         p_0, [guess=0.015, description="Initial active power in pu"]
     end
     @components begin
-        V_reg = RealInput(guess=1) #from bus - was ist Unterschied zu Vt = raw terminal voltage ? initialized based on initial power flow solution for V_reg and Q_gen
-        Q_branch = RealInput(guess=-0.056656801) #reactive power through a defined branch /from aggregated turbine model or collection point of wind plant
-        P_branch = RealInput(guess=0.015) #from aggregated turbine model or collection point of wind plant
-        freq = RealInput(guess=60) #from aggregated turbine model or collection point of wind plant
+        V_reg = RealInput(guess=1)
+        Q_branch = RealInput(guess=-0.056656801)
+        P_branch = RealInput(guess=0.015)
+        freq = RealInput(guess=60)
         V_ref = RealInput(guess=1)
         Q_ref = RealInput(guess=-0.056658)
         V_diff = RealInput(guess=1.0001042)
         # outputs
-        Pref_out = RealOutput(guess=0.015) # active power [pu]
-        Qext_out = RealOutput(guess=-0.056656797) # reactive power [pu]
-
+        Pref_out = RealOutput(guess=0.015)
+        Qext_out = RealOutput(guess=-0.056656797)
 
         #building blocks
-        simpleLag = PowerDynamics.Library.SimpleLag(K=1, T=T_p, guess=0.015)
-        simpleLag1 = PowerDynamics.Library.SimpleLag(K=1, T=T_lag, guess=0.015)
         simpleLag2 = PowerDynamics.Library.SimpleLag(K=1, T=T_fltr, guess=-0.056656813)
         simpleLag3 = PowerDynamics.Library.SimpleLag(K=1, T=T_lag, guess=0.99886686)
         leadLag = PowerDynamics.Library.LeadLag(K=1, T1=T_ft, T2=T_fv, guess=-0.056656797)
         deadband = PowerDynamics.Library.DeadZone(uMax=dbd_up, uMin=dbd_dn)
-        f_deadband = PowerDynamics.Library.DeadZone(uMax=fdbd2, uMin=fdbd1)
+        if freqFlag
+            simpleLag = PowerDynamics.Library.SimpleLag(K=1, T=T_p, guess=0.015)
+            simpleLag1 = PowerDynamics.Library.SimpleLag(K=1, T=T_lag, guess=0.015)
+            f_deadband = PowerDynamics.Library.DeadZone(uMax=fdbd2, uMin=fdbd1)
+        end
     end
     @variables begin
         Voltage_dip(t), [guess=0, description="freeze states if Voltagedip=1"]
@@ -74,68 +75,70 @@
         Q_I(t), [guess=-0.056635436, description=""]
         Q_lim(t), [guess=-0.056656797, description="Reactive power after reactive power limits"]
         Q_ext(t), [guess=-0.056656797, description="Reactive power output"]
-        Δf_deadband(t), [guess=0, description="frequency difference after deadband"]
-        Δf_corr(t), [guess=0, description="Frequency difference after droop"]
-        P_branchp(t), [guess=0.015, description="Active power after T_p"]
-        f_e(t), [guess=1.4455451e-14, description="frequency after frequency limits"]
-        P_e(t), [guess=0.015,description="Active power before power limits"]
-        P_lim(t), [guess=0.015, description="Active power after power limits"]
-        P_refa(t), [guess=0.015, description="Active Power reference if Freq_flag=1"]
+        if freqFlag
+            Δf_deadband(t), [guess=0, description="frequency difference after deadband"]
+            Δf_corr(t), [guess=0, description="Frequency difference after droop"]
+            P_branchp(t), [guess=0.015, description="Active power after T_p"]
+            f_e(t), [guess=1.4455451e-14, description="frequency after frequency limits"]
+            P_e(t), [guess=0.015, description="Active power before power limits"]
+            P_lim(t), [guess=0.015, description="Active power after power limits"]
+            P_refa(t), [guess=0.015, description="Active Power reference if Freq_flag=1"]
+        end
         P_ref(t), [guess=0.015, description="Active power output"]
     end
     @equations begin
-        Voltage_dip ~ ifelse(V_reg.u<V_frz, 1,0) #0
+        Voltage_dip ~ ifelse(V_reg.u<V_frz, 1,0)
         #reactive power control
         V_droop ~ K_c * Q_branch.u + V_reg.u
-        V_in ~ ifelse(VcombFlag, V_diff.u, V_droop) #VcombFlag * V_diff.u + (1-VcombFlag) * V_droop
+        if VcombFlag
+            V_in ~ V_diff.u
+        else
+            V_in ~ V_droop
+        end
 
-        #T_fltr * Dt(V_fltr) ~ V_in - V_fltr
         simpleLag3.in ~ V_in
         V_fltr ~ simpleLag3.out
 
         ΔV ~ V_ref.u - V_fltr
 
-        #T_fltr * Dt(Q_fltr) ~ Q_branch.u - Q_fltr
         simpleLag2.in ~ Q_branch.u
         Q_fltr ~ simpleLag2.out
 
         ΔQ ~ Q_ref.u - Q_fltr
-        ΔQ_in ~ ifelse(RefFlag, ΔV, ΔQ) #RefFlag * ΔV + (1-RefFlag)*ΔQ
+        if RefFlag
+            ΔQ_in ~ ΔV
+        else
+            ΔQ_in ~ ΔQ
+        end
 
-        #ΔQ_dbd ~ deadband(ΔQ_in, dbd_dn, dbd_up)
         deadband.in ~ ΔQ_in
         ΔQ_dbd ~ deadband.out
 
-        Q_e ~ clamp(ΔQ_dbd, e_min, e_max) #limiter(ΔQ_dbd, e_min, e_max)
+        Q_e ~ clamp(ΔQ_dbd, e_min, e_max)
         Q_res ~ (1-Voltage_dip) * Q_e
         Dt(Q_I) ~ K_i * Q_res
         Q_x ~ K_p * Q_e + Q_I
-        Q_lim ~ clamp(Q_x, Q_min, Q_max) #limiter(Q_x, Q_min, Q_max)
+        Q_lim ~ clamp(Q_x, Q_min, Q_max)
 
-        #T_fv * Dt(Q_ext) - T_ft* Dt(Q_lim) ~ Q_lim - Q_ext
         leadLag.in ~ Q_lim
         Q_ext ~ leadLag.out
 
         #active power control
-        #Δf_deadband ~ deadband(freq_ref-freq.u, fdbd1, fdbd2)
-        f_deadband.in ~ freq_ref-freq.u
-        Δf_deadband ~ f_deadband.out
-
-        Δf_corr ~ max(Δf_deadband * D_up, 0) + min(Δf_deadband * D_dn, 0) #lowlimit(Δf_deadband * D_up, 0) + uplimit(Δf_deadband * D_dn, 0)
-
-        #T_p * Dt(P_branchp) ~ P_branch.u - P_branchp
-        simpleLag.in ~ P_branch.u
-        P_branchp ~ simpleLag.out
-
-        f_e ~ clamp(P_plantref-P_branchp+Δf_corr, femin, femax) #limiter(P_plantref-P_branchp+Δf_corr, femin, femax)
-        Dt(P_e) - Dt(f_e) * K_pg ~ K_ig * f_e
-        P_lim ~ clamp(P_e, P_min, P_max) #limiter(P_e, P_min, P_max)
-
-        #T_lag * Dt(P_refa) ~ P_lim - P_refa
-        simpleLag1.in ~ P_lim
-        P_refa ~ simpleLag1.out
-
-        P_ref ~ ifelse(freqFlag, P_refa, p_0) #freqFlag * P_refa + (1-freqFlag) * p_0
+        if freqFlag
+            f_deadband.in ~ freq_ref-freq.u
+            Δf_deadband ~ f_deadband.out
+            Δf_corr ~ max(Δf_deadband * D_up, 0) + min(Δf_deadband * D_dn, 0)
+            simpleLag.in ~ P_branch.u
+            P_branchp ~ simpleLag.out
+            f_e ~ clamp(P_plantref-P_branchp+Δf_corr, femin, femax)
+            Dt(P_e) - Dt(f_e) * K_pg ~ K_ig * f_e
+            P_lim ~ clamp(P_e, P_min, P_max)
+            simpleLag1.in ~ P_lim
+            P_refa ~ simpleLag1.out
+            P_ref ~ P_refa
+        else
+            P_ref ~ p_0
+        end
         #outputs
         Pref_out.u ~ P_ref
         Qext_out.u ~ Q_ext
