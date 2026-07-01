@@ -16,8 +16,8 @@ OrdinaryDiffEqNonlinearSolve = "127b3ac7-2247-4354-8eb6-78cf4e7c58e8"
 OrdinaryDiffEqRosenbrock = "43230ef6-c299-4910-a778-202eb28ce4ce"
 OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
 
-[sources]
-OpPoDyn = {path = ".."}
+[sources.OpPoDyn]
+path = ".."
 
 [compat]
 CSV = "0.10.15"
@@ -27,7 +27,7 @@ DiffEqCallbacks = "≥0.0.1"
 Documenter = "1.11.4"
 DocumenterInterLinks = "1.0.0"
 Graphs = "≥0.0.1"
-JSON = "0.21.4"
+JSON = "0.21.4, 1"
 Literate = "2.20.1"
 ModelingToolkit = "≥0.0.1"
 NetworkDynamics = "≥0.0.1"
