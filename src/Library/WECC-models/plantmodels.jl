@@ -376,7 +376,7 @@ end
             P_max   = 1.0,
             dP_min  = -99,
             dP_max  = 99,
-            PfFlag  = false,
+            PfFlag  = true,
             Vflag   = false,
             QFlag   = false,
             PqFlag  = false)
@@ -414,7 +414,7 @@ end
             RefFlag    = false,
             VcombFlag  = false,
             freqFlag   = false)
-        drive_train = Library.WTDTA1()
+        drive_train = Library.WTDTA1(H=0.01, freq1=10, D_shaft=0.015)
         f = Blocks.Constant(k=50.0)
         Vref = Blocks.Constant(k=1.0)
         Qref = Blocks.Constant(k=-0.056658)
@@ -512,12 +512,12 @@ end
         W_gout = RealOutput(guess=1)
     end
     @parameters begin
-        D_shaft=1, [description="Shaft damping factor"]
-        H=5.3, [description="Total inertia constant"]
+        D_shaft=0.015, [description="Shaft damping factor"]
+        H=0.01, [description="Total inertia constant"]
         H_tfrac=0.92, [description="Turbine inertia fraction, H_t/H"]
         K_damp=0, [description=""]
         fn=50, [description="System nominal frequency in Hz"]
-        freq1=2.132, [description="First shaft torsional resonancy frequency"]
+        freq1=10, [description="First shaft torsional resonancy frequency"]
     end
     @variables begin
         w_tin(t), [guess=0, description=""]

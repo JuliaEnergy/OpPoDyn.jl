@@ -9,7 +9,7 @@
 #   PowerDynamics.SimpleLag        → "…₊internal(t)"
 #   PowerDynamics.LeadLag          → "…₊internal(t)"
 #   PowerDynamics.SimpleLagLim     → "…₊x(t)"
-#   OpPoDyn.P_I_Lim_freeze         → "…₊x(t)"
+#   OpPoDyn.P_I_Lim_freeze         → "…₊out(t)"  (integral state, renamed to match LimitedIntegratorBase)
 #   OpPoDyn.SimpleLag_2MaxLims     → "…₊x(t)"
 #   OpPoDyn.SimpleLag_freeze       → "…₊x(t)"
 #   OpPoDyn.SimpleLag_2Lims_freeze → "…₊x(t)"
@@ -89,9 +89,9 @@ function prescribed_pv_test_2bus(
     u0 = Float64[get(g, s, 0.0) for s in unknowns(sys)]
 
     # ── REPC (repca) ──────────────────────────────────────────────────────────
-    # PI_lim_Q.x   OpPoDyn P_I_Lim_freeze, state "x"
+    # PI_lim_Q.out   P_I_Lim_freeze integral state (renamed from x to match LimitedIntegratorBase)
     # FROZEN — cannot self-correct when Q-error = 0
-    _override_match!(u0, sys, ["PI_lim_Q", "x"],        Q_0)
+    _override_match!(u0, sys, ["PI_lim_Q", "out"],        Q_0)
     # leadLag.internal  PowerDynamics LeadLag, state "internal"
     # Q_ext lag (T_fv=0.1s): converges to PI output → must be set explicitly
     _override_match!(u0, sys, ["leadLag", "internal"],   Q_0)

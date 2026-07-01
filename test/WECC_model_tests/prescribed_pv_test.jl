@@ -79,6 +79,7 @@ function prescribed_pv_test(
                    if any(s -> contains(string(p), s),
                           ["P_plantref_set", "Pinit_set", "Qref_set", "Qinit_set"])]
     prob = ODEProblem(sys, u0, tspan, vcat(sat_defaults, init_params))
+    prob = PowerDynamics.Library.attach_limint_callbacks_ode(sys, prob)
 
     sol  = solve(prob, solver; tstops=ts, initializealg=SciMLBase.NoInit())
     @info "prescribed_pv_test: retcode=$(sol.retcode), nsteps=$(length(sol.t))"

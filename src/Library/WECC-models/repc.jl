@@ -268,7 +268,7 @@ end
         Q_e ~ clamp(ΔQ_dbd, e_min, e_max) #limiter(ΔQ_dbd, e_min, e_max)
         PI_lim_Q.in ~ Q_e
         PI_lim_Q.freeze ~ Voltage_dip
-        Q_lim ~ PI_lim_Q.out
+        Q_lim ~ PI_lim_Q.pi_out
 
         #T_fv * Dt(Q_ext) - T_ft* Dt(Q_lim) ~ Q_lim - Q_ext
         leadLag.in ~ Q_lim

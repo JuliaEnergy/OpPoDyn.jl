@@ -462,7 +462,7 @@ end
         if Vflag && QFlag
             Q_lim(t), [guess=-0.056656797, description="ReactivePower after limiter"]
             ΔQ(t), [guess=4.8269116e-9, description="Difference between Q_lim and Q_gen"]
-            s_Q(t), [guess=1, description="Q regulator integrator state"]
+            s_Q(t), [guess=4.8269116e-9, description=""]
             V_in(t), [guess=1, description="Voltage after local Q regulator"]
             V_lima(t), [guess=1, description="Limited voltage after Q regulator"]
         end
@@ -470,7 +470,7 @@ end
             V_con(t), [guess=1, description="Voltage after Vflag"]
             V_limb(t), [guess=0.9, description="Limited voltage V_con"]
             ΔV(t), [guess=-0.1, description="Difference between V_limb and V_tfilt"]
-            s_V(t), [guess=-0.056658, description="V regulator integrator state"]
+            s_V(t), [guess=-0.1, description=""]
             I_in(t), [guess=-0.216658, description="Current after local voltage regulator"]
             I_lim(t), [guess=-0.216658, description="limited current after voltage regulator"]
         end
@@ -697,7 +697,7 @@ end
             ΔQ ~ Q_lim - Q_gen.u
             PI_freeze.in ~ ΔQ
             PI_freeze.freeze ~ Voltage_dip
-            V_lima ~ PI_freeze.out
+            V_lima ~ PI_freeze.pi_out
             V_con ~ V_lima
         end
         if !Vflag && QFlag
@@ -708,9 +708,9 @@ end
             ΔV ~ V_limb - V_tfilt
             PI_freeze_var.in ~ ΔV
             PI_freeze_var.freeze ~ Voltage_dip
-            PI_freeze_var.outMin ~ I_qmin
-            PI_freeze_var.outMax ~ I_qmax
-            I_lim ~ PI_freeze_var.out
+            PI_freeze_var.min ~ I_qmin
+            PI_freeze_var.max ~ I_qmax
+            I_lim ~ PI_freeze_var.pi_out
             I_qcon ~ I_lim
         else
             I_qcon ~ I_qin
