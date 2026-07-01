@@ -25,8 +25,8 @@ SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 SparseConnectivityTracer = "9f842d2f-2579-4b1d-911e-f412cf18a3f5"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
-[sources]
-OpPoDyn = {path = ".."}
+[sources.OpPoDyn]
+path = ".."
 
 [compat]
 Aqua = "0.8.12"
@@ -37,7 +37,7 @@ DiffEqCallbacks = "≥0.0.1"
 ExplicitImports = "1.11.2"
 Graphs = "≥0.0.1"
 JLD2 = "0.6"
-JSON = "0.21.4"
+JSON = "0.21.4, 1"
 LinearAlgebra = "≥0.0.1"
 Makie = "0.24"
 ModelingToolkit = "≥0.0.1"
